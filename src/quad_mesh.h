@@ -13,6 +13,7 @@ namespace hlk {
 		// Derived Structures
 		int n; // Number of vertices
 		int m; // Number of quads
+		int e; // Number of edges
 
 		// Triangulated Quads (center-fanned)
 		// Each triangle represents a side (half-edge) of the quad
@@ -35,8 +36,8 @@ namespace hlk {
 		// TTi is the inverse: it says which side of the neigboring quad
 		// was opposite
 		// TT[4*q+i,0] / 4 is the i-th quad neighbor of quad q
-		Eigen::MatrixX3i TT;
-		Eigen::MatrixX3i TTi;
+		Eigen::MatrixXi TT;
+		Eigen::MatrixXi TTi;
 
 		// Vertex-Triangle Adjacency in F_t
 		// VF matches sides to vertices
@@ -63,7 +64,7 @@ namespace hlk {
 
 		// boundary information
 		std::vector<bool> is_border_vertex;
-		Eigen::MatrixX2i boundary_edges; // vertex pairs
+		Eigen::MatrixXi boundary_edges; // vertex pairs
 		Eigen::VectorXi boundary_sides; // indices
 		Eigen::VectorXi boundary_quads; // indices
 
@@ -72,7 +73,7 @@ namespace hlk {
 		// label surfaces
 		Eigen::MatrixX3d V_l;
 
-		void populate_derived_fields();
+		void init();
 
 		// Mesh Queries
 		int quad(int side); // Get the quad a side belongs to

@@ -9,11 +9,9 @@
 #include <igl/per_vertex_normals.h>
 #include <igl/EPS.h>
 
-#include <igl/copyleft/cgal/wire_mesh.h>
-
 
 namespace hlk {
-	void QuadMesh::populate_derived_fields()
+	void QuadMesh::init()
 	{
 		// Use maxCoeff instead of V.rows() to remain idempotent
 		n = F_q.maxCoeff() + 1;
@@ -40,7 +38,7 @@ namespace hlk {
 		boundary_quads = boundary_quads.array() - n;
 
 		is_border_vertex = igl::is_border_vertex(F_t);
-		is_boundary_side = std::vector<bool>(n + m, false);
+		is_boundary_side = std::vector<bool>(4*m, false);
 		for (int i = 0; i < boundary_sides.size(); ++i) {
 			is_boundary_side[boundary_sides[i]] = true;
 		}
@@ -71,13 +69,14 @@ namespace hlk {
 
 
 		// Setup floating coordinates for labels
-		Eigen::MatrixX3d N;
+		Eigen::MatrixXd N;
 		igl::per_vertex_normals(V, F_t, N);
 		V_l = V + N * igl::DOUBLE_EPS * 2;
 
 
 		// Compute edges (pairs of flip-adjacent sides)
 		int num_edges = (4 * m - boundary_sides.size()) / 2;
+		e = num_edges;
 		sides_to_edges = std::vector<int>(4 * m);
 		edges_to_sides.resize(num_edges, 2);
 
@@ -233,32 +232,4 @@ namespace hlk {
 		}
 		return loop;
 	}
-}
-
-int main(void) {
-	hlk::QuadMesh qm;
-	Eigen::MatrixXd V;
-	Eigen::MatrixXi F_q;
-	V.resize(4, 3);
-	V << 
-		0, 0, 0,
-		0, 1, 0,
-		1, 1, 0,
-		1, 0, 0;
-	F_q.resize(1, 4);
-	F_q << 0, 1, 2, 3;
-
-	qm.V = V;
-	qm.F_q = F_q;
-
-	qm.populate_derived_fields();
-
-	std::cout << "V = " << std::endl << qm.V << std::endl;
-	std::cout << "F_t = " << std::endl << qm.F_t << std::endl;
-	std::cout << "TT = " << std::endl << qm.TT << std::endl;
-	std::cout << "TTi = " << std::endl << qm.TTi << std::endl;
-
-
-	//igl::copyleft::cgal::wire_mesh(qm.V, qm.unique_sides,)
-
 }

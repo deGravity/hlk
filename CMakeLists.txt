@@ -15,16 +15,24 @@ option(LIBIGL_WITH_OPENGL_GLFW_IMGUI "Use imGUI" ON)
 option(LIBIGL_WITH_COMISO "Use CoMiso" ON)
 option(LIBIGL_WITH_CGAL "Use CGAL" ON)
 
+# Note - many LIBIGL functions do not work as a static library
+# (for example, igl::copyleft::cgal::wire_mesh), and you have less
+# lee-way when creating matrices (safest to use MatrixXd and MatrixXi
+# rather than explicitly declaring dimensions). Comment this out
+# in case of such problems
+
+# Currently disabled because igl::writeOBJ is not working
 #option(LIBIGL_USE_STATIC_LIBRARY "Use libigl as static library" ON)
 
 # Hack for libigl linking: https://github.com/libigl/libigl/issues/1229
 set(MSVC_RUNTIME "dynamic")
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-find_package(LIBIGL REQUIRED QUIET)
-find_package(Z3 REQUIRED CONFIG)
+find_package(CGAL REQUIRED COMPONENTS Core)
 find_package(glm REQUIRED)
-find_package(CGAL REQUIRED)
+find_package(LIBIGL REQUIRED)
+find_package(Z3 REQUIRED CONFIG)
+
 
 #add_subdirectory(ext/libigl EXCLUDE_FROM_ALL)
 add_subdirectory(ext/libQEx EXCLUDE_FROM_ALL)
@@ -44,6 +52,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${Z3_CXX_INCLUDE_DIRS} ${QEX_
 target_link_libraries(${PROJECT_NAME} 
 	Eigen3::Eigen 
 	CGAL::CGAL
+	#CGAL::CGAL_Core
 	igl::core 
 	igl::opengl 
 	igl::opengl_glfw 
