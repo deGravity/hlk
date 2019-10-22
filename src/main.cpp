@@ -38,7 +38,7 @@ int main(void) {
 
 
 	Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> R, G, B, A;
-	igl::png::readPNG("orange.png", R, G, B, A);
+	igl::png::readPNG("jade.png", R, G, B, A);
 
 	/*
 	Eigen::MatrixXd V;
