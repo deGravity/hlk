@@ -92,12 +92,16 @@ int main(void) {
 		//hlk::set_glyph(Q.LUV, Q.quadrant_slot(i,0), hlk::glyphs::GEAR, Eigen::RowVector4d(0.0, 1.0, 0.0, 1.0), Q.UV, Q.C);
 	}
 
+	for (auto& slot : Q.vertex_slots) {
+		hlk::set_glyph(Q.LUV, slot, hlk::glyphs::NONE, Eigen::RowVector4d(0.0, 0.0, 0.0, 0.0), Q.UV, Q.C);
+	}
+
 	hlk::set_glyph(Q.LUV, Q.quadrant_slots[0], hlk::glyphs::GEAR, Eigen::RowVector4d(0.0, 1.0, 0.0, 1.0), Q.UV, Q.C);
 	hlk::set_glyph(Q.LUV, Q.quad_center_slot(3), hlk::glyphs::CIRCLE, Eigen::RowVector4d(0.0, 1.0, 1.0, 1.0), Q.UV, Q.C);
 
 	hlk::set_glyph(Q.LUV, Q.half_edge_slots[9], hlk::glyphs::SEAM, Eigen::RowVector4d(0.5, .4, 1.0, 1.0), Q.UV, Q.C);
 
-	hlk::set_glyph(Q.LUV, Q.dual_half_edge_slots[9], hlk::glyphs::SOLID_ARROW, Eigen::RowVector4d(1, 1, 0, 1.0), Q.UV, Q.C);
+	hlk::set_glyph(Q.LUV, Q.dual_half_edge_slots[9], hlk::glyphs::SOLID_LINE, Eigen::RowVector4d(1, 1, 0, 1.0), Q.UV, Q.C);
 	hlk::set_glyph(Q.LUV, Q.vertex_slots[3], hlk::glyphs::CIRCLE, Eigen::RowVector4d(0.0, 1.0, 1.0, 1.0), Q.UV, Q.C);
 
 	hlk::set_glyph(Q.LUV, Q.edge_slots[2], hlk::glyphs::SPIRAL, Eigen::RowVector4d(0.0, 0.0, 0.0, 1.0), Q.UV, Q.C);
@@ -141,11 +145,20 @@ int main(void) {
 
 	*/
 
+	std::vector<int> loop = Q.dual_loop(0, 0);
+	for (int side : loop) {
+		Q.set_glyph(
+			Q.dual_half_edge_slots[side], // Where
+			hlk::glyphs::THIN_SOLID_LINE, // Which Texture
+			hlk::color::WHITE // What Color
+		);
+	}
+
 	viewer.data().set_mesh(Q.LV, Q.LF);
 	viewer.data().set_texture(R, G, B, A);
 	viewer.data().set_uv(Q.UV);
 	viewer.data().show_texture = true;
-	//viewer.data().show_lines = false;
+	viewer.data().show_lines = false;
 	viewer.data().set_colors(Q.C);
 	
 	viewer.launch();

@@ -191,6 +191,7 @@ namespace hlk {
 			quads.push_back(next);
 		}
 		next = opposite_side(side);
+		quads.push_back(next);
 		while (flip_side(next) >= 0) {
 			next = opposite_side(flip_side(next));
 			if (next == opposite_side(side)) break;

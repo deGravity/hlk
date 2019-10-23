@@ -5,6 +5,8 @@
 #include <igl/per_vertex_normals.h>
 #include <igl/local_basis.h>
 
+#include "glyph.h"
+
 namespace hlk {
 
 	void make_quadrant(
@@ -145,7 +147,7 @@ namespace hlk {
 				vpos - x * dual_edge_width / 2,
 				vpos - y * dual_edge_width / 2;
 			Eigen::VectorXi vertex_slot;
-			make_rect(vertex_corners, uv, 15, label_vertices, label_faces, label_uvs, vertex_slot);
+			make_rect(vertex_corners, uv, 180, label_vertices, label_faces, label_uvs, vertex_slot);
 			slots.push_back(vertex_slot);
 			vertex_slots.push_back(vertex_slot);
 		}
@@ -258,6 +260,11 @@ namespace hlk {
 			UV.row(i) = label_uvs[i];
 			LUV.row(i) = label_uvs[i];
 		}
+	}
+
+	void LabeledQuadMesh::set_glyph(const Eigen::VectorXi& slot, const Eigen::MatrixXd& glyph, const Eigen::RowVector4d& color)
+	{
+		hlk::set_glyph(LUV, slot, glyph, color, UV, C);
 	}
 
 }

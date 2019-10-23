@@ -21,7 +21,7 @@ namespace hlk {
 		std::vector<Eigen::VectorXi> half_edge_slots;
 		std::vector<Eigen::VectorXi> edge_slots;
 		std::vector<Eigen::VectorXi> quad_slots;
-		std::vector<Eigen::VectorXi> quadrant_slots; // q1-q4 for each face
+		std::vector<Eigen::VectorXi> quadrant_slots; // labeled by vertex index for each face
 
 		const Eigen::VectorXi& dual_half_edge_slot(int quad, int quad_side);
 		const Eigen::VectorXi& half_edge_slot(int quad, int quad_side);
@@ -31,6 +31,8 @@ namespace hlk {
 
 		void init();
 		void init(double edge_width, double dual_edge_width);
+
+		void set_glyph(const Eigen::VectorXi& slot, const Eigen::MatrixXd& glyph, const Eigen::RowVector4d& color);
 		
 	};
 
