@@ -106,7 +106,7 @@ def read_key_file(filename, w, h):
     glyph_mats = {}
     for name in glyphs.keys():
         pos = glyphs[name]
-        a = (pos[0] / w, (h-pos[1])/h)
+        a = (pos[0] / w, (h-(pos[1] + pos[3]))/h)
         d = (pos[2] / w, pos[3] / h)
         mat = np.array([[d[0], 0],[0, d[1]],[a[0], a[1]]])
         glyph_mats[name] = mat

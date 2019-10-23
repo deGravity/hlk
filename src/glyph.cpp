@@ -13,10 +13,12 @@ namespace hlk {
 	{
 		// uv_out[slot] = [uv_in[slot] |  1] * glyph
 		Eigen::MatrixXd S;
+		Eigen::MatrixXd uv_in_slot;
+		igl::slice(uv_in, slot, 1, uv_in_slot);
 		Eigen::MatrixXd ONE = Eigen::MatrixXd::Ones(slot.size(), 1);
-		igl::cat(2, uv_in, ONE, S);
+		igl::cat(2, uv_in_slot, ONE, S);
 		Eigen::MatrixXd SG = S * glyph;
-		igl::slice_into(uv_out, slot, SG);
+		igl::slice_into(SG, slot, 1, uv_out);		
 	}
 
 	void set_glyph(
@@ -59,7 +61,7 @@ namespace hlk {
 		Eigen::MatrixXd& color_out)
 	{
 		for (int r = 0; r < slot.size(); ++r) {
-			color_out.row(r) = color;
+			color_out.row(slot[r]) = color;
 		}
 	}
 }

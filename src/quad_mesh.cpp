@@ -68,12 +68,6 @@ namespace hlk {
 		}
 
 
-		// Setup floating coordinates for labels
-		Eigen::MatrixXd N;
-		igl::per_vertex_normals(V, F_t, N);
-		V_l = V + N * igl::DOUBLE_EPS * 2;
-
-
 		// Compute edges (pairs of flip-adjacent sides)
 		int num_edges = (4 * m - boundary_sides.size()) / 2;
 		e = num_edges;

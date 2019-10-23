@@ -68,11 +68,6 @@ namespace hlk {
 		Eigen::VectorXi boundary_sides; // indices
 		Eigen::VectorXi boundary_quads; // indices
 
-		// Label Vertices
-		// These float epsilon above the real vertices, and are used to create
-		// label surfaces
-		Eigen::MatrixX3d V_l;
-
 		void init();
 
 		// Mesh Queries
