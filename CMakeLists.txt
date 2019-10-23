@@ -27,10 +27,10 @@ option(LIBIGL_WITH_CGAL "Use CGAL" ON)
 # Hack for libigl linking: https://github.com/libigl/libigl/issues/1229
 set(MSVC_RUNTIME "dynamic")
 
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(CGAL REQUIRED COMPONENTS Core)
 find_package(glm REQUIRED)
 find_package(LIBIGL REQUIRED)
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(Z3 REQUIRED CONFIG)
 
 
