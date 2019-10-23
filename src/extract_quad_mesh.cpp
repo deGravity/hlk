@@ -48,9 +48,8 @@ namespace hlk {
 		const Eigen::MatrixXi& F,
 		const Eigen::MatrixXd& TC,
 		const Eigen::MatrixXi& FTC,
-		QuadMesh& Q)
-	{
-		igl::writeOBJ("tmp_in.obj", V, F, Eigen::MatrixXd(), Eigen::MatrixXd(), TC, FTC);
+		QuadMesh& Q) {
+		igl::writeOBJ("tmp_in.obj", V, F, Eigen::MatrixXd(), Eigen::MatrixXi(), TC, FTC);
 		QExCMD("tmp_in.obj", "tmp_out.obj");
 		read_quad_mesh("tmp_out.obj", Q);	
 	}

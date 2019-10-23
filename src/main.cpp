@@ -9,6 +9,8 @@
 
 #include <igl/png/readPNG.h>
 #include "glyphs.h"
+#include <igl/opengl/create_shader_program.h>
+#include <igl/opengl/destroy_shader_program.h>
 
 int main(void) {
 
