@@ -11,8 +11,7 @@
 
 
 namespace hlk {
-	void QuadMesh::init()
-	{
+	void QuadMesh::init() {
 		// Use maxCoeff instead of V.rows() to remain idempotent
 		n = F_q.maxCoeff() + 1;
 		m = F_q.rows();
@@ -31,7 +30,6 @@ namespace hlk {
 		// Compute adjacencies on T_t
 		igl::triangle_triangle_adjacency(F_t, TT, TTi);
 		igl::vertex_triangle_adjacency(V.rows(), F_t, VF, VI);
-
 
 		igl::boundary_facets(F_t, boundary_edges, boundary_sides, boundary_quads);
 		// The quad-centered vertices are after all of the others, so they are n too high
@@ -67,12 +65,22 @@ namespace hlk {
 			if (is_singularity[i]) singular_vertices.push_back(i);
 		}
 
+        // Find faces around singularities
+        singular_quads.clear();
+        for (int vi : singular_vertices) {
+            for (int nrow = 0; nrow < F_q.rows(); ++nrow) {
+                for (int j = 0; j < 4; ++j) {
+                    if (F_q(nrow, j) == vi) {
+                        singular_quads.push_back(nth_side(nrow, 0));
+                    }
+                }
+            }
+        }
 
 		// Setup floating coordinates for labels
 		Eigen::MatrixXd N;
 		igl::per_vertex_normals(V, F_t, N);
-		V_l = V + N * igl::DOUBLE_EPS * 2;
-
+        V_l = V + N * igl::DOUBLE_EPS * 2;
 
 		// Compute edges (pairs of flip-adjacent sides)
 		int num_edges = (4 * m - boundary_sides.size()) / 2;
@@ -101,61 +109,48 @@ namespace hlk {
 				}
 			}
 		}
-		
-
 	}
-	int QuadMesh::quad(int side)
-	{
+
+	int QuadMesh::quad(int side) {
 		return side / 4;
 	}
-	int QuadMesh::nth_side(int quad, int index)
-	{
+	
+    int QuadMesh::nth_side(int quad, int index) {
 		assert(quad < m); // Must be a valid quad index
-		return 4*quad+index;
+		return 4 * quad + index;
 	}
-	int QuadMesh::side_u(int side)
-	{
-		return F_t(side, 0);
-		return F_t(side, 1);
-	}
-	int QuadMesh::side_v(int side)
-	{
-		return 0;
-	}
-	int QuadMesh::flip_side(int side)
-	{
-		return TT(side,0);
-	}
-	int QuadMesh::opposite_side(int side)
-	{
+
+	int QuadMesh::side_u(int side) { return F_t(side, 0); }
+
+	int QuadMesh::side_v(int side) { return F_t(side, 1); }
+
+	int QuadMesh::flip_side(int side) { return TT(side, 0); }
+
+	int QuadMesh::next_side(int side) { return TT(side, 1); }
+
+	int QuadMesh::prev_side(int side) { return TT(side, 2); }
+
+	int QuadMesh::opposite_side(int side) {
 		return next_side(next_side(side));
 	}
-	int QuadMesh::next_side(int side)
-	{
-		return TT(side,1);
-	}
-	int QuadMesh::prev_side(int side)
-	{
-		return TT(side,2);
-	}
-	int QuadMesh::next_cross_vertex(int side)
-	{
+    
+    int QuadMesh::next_cross_vertex(int side) {
 		// Stop at singularities and boundaries
 		if (is_singularity[side_v(side)] || flip_side(next_side(side)) < 0) {
 			return -1;
 		}
 		return next_side(flip_side(next_side(side)));
 	}
-	int QuadMesh::prev_cross_vertex(int side)
-	{
+
+	int QuadMesh::prev_cross_vertex(int side) {
 		// Stop at singularities and boundaries
 		if (is_singularity[side_u(side)] || flip_side(prev_side(side)) < 0) {
 			return -1;
 		}
 		return prev_side(flip_side(prev_side(side)));
 	}
-	std::vector<int> QuadMesh::out_sides(int vertex)
-	{
+
+	std::vector<int> QuadMesh::out_sides(int vertex) {
 		assert(vertex < n); // Must be a mesh, not face, vertex
 		std::vector<int> outward_sides;
 		for (int i = 0; i < VF[vertex].size(); ++i) {
@@ -165,8 +160,8 @@ namespace hlk {
 		}
 		return outward_sides;
 	}
-	std::vector<int> QuadMesh::in_sides(int vertex)
-	{
+
+	std::vector<int> QuadMesh::in_sides(int vertex) {
 		assert(vertex < n); // Must be a mesh, not face, vertex
 		std::vector<int> outward_sides;
 		for (int i = 0; i < VF[vertex].size(); ++i) {
@@ -176,18 +171,18 @@ namespace hlk {
 		}
 		return outward_sides;
 	}
-	std::vector<int> QuadMesh::sides(int quad)
-	{
+
+	std::vector<int> QuadMesh::sides(int quad) {
 		assert(quad < m); // Must be a valid quad index
-		// Colud use VF, but don't have to since mesh is pure-quad
+		// Could use VF, but don't have to since mesh is pure-quad
 		std::vector<int> quad_sides(4);
 		for (int i = 0; i < 4; ++i) {
 			quad_sides[i] = 4 * quad + i;
 		}
 		return quad_sides;
 	}
-	std::vector<int> QuadMesh::dual_loop(int side)
-	{
+
+	std::vector<int> QuadMesh::dual_loop(int side) {
 		std::vector<int> quads;
 		quads.push_back(quad(side));
 		int next = side;
@@ -202,16 +197,15 @@ namespace hlk {
 			if (next == opposite_side(side)) break;
 			quads.push_back(next);
 		}
-
 		return quads;
 	}
-	std::vector<int> QuadMesh::dual_loop(int quad, int index)
-	{
+
+	std::vector<int> QuadMesh::dual_loop(int quad, int index) {
 		assert(quad < m); // Must be a valid quad index
 		return dual_loop(nth_side(quad, index));
 	}
-	std::vector<int> QuadMesh::side_loop(int start_side)
-	{
+
+	std::vector<int> QuadMesh::side_loop(int start_side) {
 		std::vector<int> loop;
 		loop.push_back(start_side);
 		int next_side = next_cross_vertex(start_side);
@@ -221,8 +215,8 @@ namespace hlk {
 		}
 		return loop;
 	}
-	std::vector<int> QuadMesh::reverse_side_loop(int start_side)
-	{
+
+	std::vector<int> QuadMesh::reverse_side_loop(int start_side) {
 		std::vector<int> loop;
 		loop.push_back(start_side);
 		int next_side = prev_cross_vertex(start_side);
@@ -232,4 +226,128 @@ namespace hlk {
 		}
 		return loop;
 	}
+
+    //////////////////////////////////////////////////////////////////////////////
+
+    bool QuadMesh::is_course_loop(int curr_he, Cardinal c) {
+
+        int count = 0;
+        int max_to_check = n; // disjoint_set.max_row_length;
+        std::map<int, Cardinal> face_directions;
+        std::unordered_set<int> visited_hes;
+
+        while (count < max_to_check) {
+            int quad_face = quad(curr_he);
+            std::vector<int> hes = sides(quad_face);
+            for (int idx = 0; idx < 4; ++idx) {
+                visited_hes.emplace(hes[idx]);
+                face_directions[hes[idx]] = (Cardinal)((c + idx) % 4);
+            }
+            int opp_he = opposite_side(curr_he);
+            if (flip_side(opp_he) < 0) break;
+            curr_he = flip_side(opp_he);
+            if (visited_hes.find(curr_he) != visited_hes.end()) {
+                return face_directions[curr_he] == c;
+            }
+            ++count;
+        }
+
+        return false;
+    }
+
+    bool QuadMesh::perp_direction_check(
+        int curr_he,
+        std::unordered_set<int>& ortho_visited,
+        const std::unordered_set<int>& visited,
+        const std::map<int, Cardinal>& face_directions) {
+
+        Cardinal c_opp = (Cardinal)((face_directions.at(curr_he) + 2) % 4);
+
+        while (true) {
+
+            int quad_face = quad(curr_he);
+            std::vector<int> hes = sides(quad_face);
+            for (int idx = 0; idx < 4; ++idx) {
+                ortho_visited.emplace(hes[idx]);
+            }
+            int opp_he = opposite_side(curr_he);
+            if (flip_side(opp_he) < 0) break;
+
+            curr_he = flip_side(opp_he);
+            if (ortho_visited.find(curr_he) != ortho_visited.end()) break;
+
+            if (face_directions.find(curr_he) != face_directions.end()) {
+                if (face_directions.at(curr_he) == c_opp) {
+                    // reached back, this is a helix
+                    return true;
+                }
+            }
+        }
+    }
+
+    bool QuadMesh::helix_free(std::unordered_set<int>& helix, Cardinal c) {
+
+        int nskip = 1; // disjoint_set.min_row_length;
+        helix.clear();
+
+        for (int curr_he : singular_quads) {
+
+            if (is_course_loop(curr_he, c)) continue;
+
+            bool found = false;
+            int count = 0;
+
+            while (true) {
+                std::map<int, Cardinal> face_directions;
+                std::unordered_set<int> visited;
+
+                int quad_face = quad(curr_he);
+                std::vector<int> hes = sides(quad_face);
+                for (int idx = 0; idx < 4; ++idx) {
+                    visited.emplace(hes[idx]);
+                    face_directions[hes[idx]] = (Cardinal)((c + idx) % 4);
+                }
+                int opp_he = opposite_side(curr_he);
+                if (flip_side(opp_he) < 0) break;
+
+                if (count > nskip) {
+
+                    std::unordered_set<int> ortho_visited;
+                    if (perp_direction_check(prev_side(curr_he),
+                        ortho_visited, visited, face_directions)) {
+
+                        std::unordered_set<int> curr_helix;
+                        curr_helix.insert(visited.begin(), visited.end());
+                        curr_helix.insert(ortho_visited.begin(), ortho_visited.end());
+                        found = true;
+                        if (helix.size() < curr_helix.size()) {
+                            helix = curr_helix;
+                        }
+                    }
+
+                    ortho_visited.clear();
+                    if (perp_direction_check(prev_side(opp_he),
+                        ortho_visited, visited, face_directions)) {
+
+                        std::unordered_set<int> curr_helix;
+                        curr_helix.insert(visited.begin(), visited.end());
+                        curr_helix.insert(ortho_visited.begin(), ortho_visited.end());
+                        found = true;
+                        if (helix.size() < curr_helix.size()) {
+                            helix = curr_helix;
+                        }
+                    }
+                }
+
+                if (found) break;
+
+                curr_he = flip_side(opp_he);
+                ++count;
+                if (visited.find(curr_he) != visited.end()) break;
+            }
+        }
+
+        return helix.empty();
+    }
+
 }

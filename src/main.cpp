@@ -1,21 +1,22 @@
-#include <igl/opengl/glfw/Viewer.h>
-#include <igl/file_dialog_open.h>
-
-#include "read_quad_mesh.h"
-#include "quad_mesh.h"
-
-#include "optimizer.h"
 #include <iostream>
 
-#include <igl/png/readPNG.h>
-#include "glyphs.h"
+#include <igl/file_dialog_open.h>
+#include <igl/opengl/glfw/Viewer.h>
 #include <igl/opengl/create_shader_program.h>
 #include <igl/opengl/destroy_shader_program.h>
+#include <igl/png/readPNG.h>
+
+#include "glyphs.h"
+#include "optimizer.h"
+#include "quad_mesh.h"
+#include "read_quad_mesh.h"
+#include "remeshing_plugin.h"
+
+using namespace hlk;
 
 int main(void) {
-
-	// Test Optimizer and Z3
 	/*
+	// Test Optimizer and Z3
 	hlk::Optimizer opt;
 
 	auto a = opt.get_bool_prop("a");
@@ -32,17 +33,13 @@ int main(void) {
 	}
 
 	std::cout << "a = " << a->val << " , b = " << b->val << " , c = " << c->val;
-	*/
-
 
 	// Test transparent overlays
 	igl::opengl::glfw::Viewer viewer;
 
-
 	Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> R, G, B, A;
 	igl::png::readPNG("ceramic.png", R, G, B, A);
 
-	/*
 	Eigen::MatrixXd V;
 	Eigen::MatrixXi F;
 	V.resize(4, 3);
@@ -74,14 +71,11 @@ int main(void) {
 	viewer.data().show_texture = true;
 	viewer.data().set_colors(Eigen::RowVector4d(1.0, 1.0, 1.0, 1.0));
 
-	*/
-
 	// Test Quad Mesh structure
 	
 	hlk::QuadMesh Q;
 
 	hlk::read_quad_mesh(igl::file_dialog_open(), Q);
-	
 
 	viewer.data().set_mesh(Q.V, Q.F_t);
 	
@@ -132,6 +126,19 @@ void main()
 	}
 
 	viewer.launch_rendering(true);
-	viewer.launch_shut();
+	viewer.launch_shut();*/
 	
+	/////////////////////////////////////////////////////
+	igl::opengl::glfw::Viewer viewer;
+    int rosy = 4;
+    std::string input_path = "./tmp_in.obj";
+    std::string output_path = "./tmp_out.obj";
+    std::string input_model = "";
+	RemeshingPlugin remeshing_plugin(rosy, input_path, output_path);
+	viewer.plugins.push_back((igl::opengl::glfw::ViewerPlugin *) &remeshing_plugin);
+	if (!input_model.empty()) {
+		remeshing_plugin.set_input_model(input_model);
+	}
+	viewer.launch();
+	/////////////////////////////////////////////////////
 }
