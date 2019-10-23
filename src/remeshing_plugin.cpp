@@ -141,6 +141,7 @@ void RemeshingPlugin::init(igl::opengl::glfw::Viewer* _viewer) {
                     if (ImGui::Button("Extract Quads", ImVec2((w - p) / 2.f, 0))) {
                         std::vector<std::vector<double>> Vs, TCs;
                         std::vector<std::vector<int>> Fs;
+                        quad_mesh = new QuadMesh;
                         extract_quad_mesh(V, F, V_uv, F_uv, *quad_mesh);
                         is_quad_meshed = true;
                         stylize_quad_mesh(directional::default_mesh_color());
