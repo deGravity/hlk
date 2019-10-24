@@ -142,9 +142,7 @@ void RemeshingPlugin::init(igl::opengl::glfw::Viewer* _viewer) {
                     if (ImGui::Button("Extract Quads", ImVec2((w - p) / 2.f, 0))) {
                         std::vector<std::vector<double>> Vs, TCs;
                         std::vector<std::vector<int>> Fs;
-                        if (quad_mesh != nullptr) { delete quad_mesh; }
-                        quad_mesh = new QuadMesh;
-                        extract_quad_mesh(V, F, V_uv, F_uv, *quad_mesh);
+                        extract_quad_mesh(V, F, V_uv, F_uv, quad_mesh);
                         is_quad_meshed = true;
                         stylize_quad_mesh(directional::default_mesh_color());
                         update_visualization();
@@ -154,7 +152,7 @@ void RemeshingPlugin::init(igl::opengl::glfw::Viewer* _viewer) {
                     if (ImGui::Button("Save Quads", ImVec2(w - p, 0))) {
                         std::string fname = igl::file_dialog_save();
                         if (fname.length() > 0) {
-                            igl::writeOBJ(fname, quad_mesh->V, quad_mesh->F_t);
+                            igl::writeOBJ(fname, quad_mesh.V, quad_mesh.F_t);
                         }
                     }
                 }
@@ -508,9 +506,6 @@ void RemeshingPlugin::clear() {
 	std::vector<std::unordered_set<int>>().swap(igl_v_faces);
 	std::vector<int>().swap(split_points);
 	std::vector<std::vector<double>>().swap(graph_adj);
-    if (quad_mesh != nullptr) {
-        delete quad_mesh;
-    }
     clear_loops();
     // reset values
     show_axis = false;
@@ -662,8 +657,8 @@ bool RemeshingPlugin::mouse_up(int button, int modifier) {
     if (viewing_mode == ViewingMode::QUAD_INTERACT && is_quad_meshed && mouse_key == 0) {
         int fid;
         Eigen::Vector3f bc;
-        Eigen::MatrixXd qV = quad_mesh->V;
-        Eigen::MatrixXi qF = quad_mesh->F_t;
+        Eigen::MatrixXd qV = quad_mesh.V;
+        Eigen::MatrixXi qF = quad_mesh.F_t;
         if (igl::unproject_onto_mesh(Eigen::Vector2f(x, y), viewer->core().view,
             viewer->core().proj, viewer->core().viewport, qV, qF, fid, bc)) {
 
@@ -672,13 +667,13 @@ bool RemeshingPlugin::mouse_up(int button, int modifier) {
 
             int curr_he = fid;
             while (true) {
-                int quad_face = quad_mesh->quad(curr_he);
-                for (const int he : quad_mesh->sides(quad_face)) {
+                int quad_face = quad_mesh.quad(curr_he);
+                for (const int he : quad_mesh.sides(quad_face)) {
                     interactive_colors.row(he) = Eigen::RowVector3d(0.8, 1., 0.6);
                 }
-                curr_he = quad_mesh->opposite_side(curr_he);
-                if (quad_mesh->flip_side(curr_he) < 0) break;
-                curr_he = quad_mesh->flip_side(curr_he);
+                curr_he = quad_mesh.opposite_side(curr_he);
+                if (quad_mesh.flip_side(curr_he) < 0) break;
+                curr_he = quad_mesh.flip_side(curr_he);
                 if (curr_he == fid) break;
             }
             stylize_quad_mesh(interactive_colors);
@@ -1732,8 +1727,8 @@ void RemeshingPlugin::stylize_tri_mesh(const Eigen::MatrixXd& colors) {
 }
 
 void RemeshingPlugin::stylize_quad_mesh(const Eigen::MatrixXd& colors) {
-    Eigen::MatrixX3d verts = quad_mesh->V;
-    Eigen::MatrixX3i faces = quad_mesh->F_t;
+    Eigen::MatrixX3d verts = quad_mesh.V;
+    Eigen::MatrixX3i faces = quad_mesh.F_t;
     Eigen::MatrixXd TC(3, 2);
     TC.row(0) = Eigen::Vector2d(0, 0);
     TC.row(1) = Eigen::Vector2d(1, 0);

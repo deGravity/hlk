@@ -44,9 +44,6 @@ public:
         cardinal = Cardinal::N;
         line_texture(texture_R, texture_G, texture_B);
     }
-    ~RemeshingPlugin() {
-        if (quad_mesh != nullptr) { delete quad_mesh; }
-    }
 	
     void init(igl::opengl::glfw::Viewer* _viewer);
     bool load(std::string filename);
@@ -192,7 +189,7 @@ private:
     double curlMax, curlMaxOrig;
 
     // quad mesh data
-    QuadMesh *quad_mesh = nullptr;
+    QuadMesh quad_mesh;
     // line textures
     Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> texture_R, texture_G, texture_B;
 

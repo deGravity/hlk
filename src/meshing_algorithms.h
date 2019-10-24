@@ -11,6 +11,9 @@ namespace hlk {
 
 class Meshing {
 public:
+    // LOOKHERE
+    static void polyvector_parametrize();
+
     static void frame_field_miq(
         const Eigen::MatrixXd& X1, /* deformed first representative */
         const Eigen::MatrixXd& X2, /* deformed second representative */
