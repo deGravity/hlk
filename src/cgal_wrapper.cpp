@@ -1,5 +1,7 @@
 #include "cgal_wrapper.h"
 
+#define min(a,b) a < b ? a : b
+
 namespace hlk {
 
 bool CGAL_2D_Intersection_Segment_Segment(Point_2 s_0_s, Point_2 s_0_e, Point_2 s_1_s, Point_2 s_1_e, Point_2& inter) {
