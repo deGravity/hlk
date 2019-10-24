@@ -1,6 +1,6 @@
-#include <igl\principal_curvature.h>
-#include <igl\boundary_loop.h>
-#include <igl\per_vertex_normals.h>
+#include <igl/principal_curvature.h>
+#include <igl/boundary_loop.h>
+#include <igl/per_vertex_normals.h>
 
 #include "remeshing_plugin.h"
 

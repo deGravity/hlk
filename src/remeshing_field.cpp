@@ -1,15 +1,15 @@
 #include <directional/representative_to_raw.h>
-#include <igl\AABB.h>
-#include <igl\barycenter.h>
-#include <igl\boundary_loop.h>
-#include <igl\copyleft\comiso\frame_field.h>
-#include <igl\copyleft\comiso\nrosy.h>
-#include <igl\frame_to_cross_field.h>
-#include <igl\frame_field_deformer.h>
-#include <igl\local_basis.h>
-#include <igl\rotate_vectors.h>
-#include <igl\vertex_triangle_adjacency.h>
-#include <igl\triangle_triangle_adjacency.h>
+#include <igl/AABB.h>
+#include <igl/barycenter.h>
+#include <igl/boundary_loop.h>
+#include <igl/copyleft/comiso/frame_field.h>
+#include <igl/copyleft/comiso/nrosy.h>
+#include <igl/frame_to_cross_field.h>
+#include <igl/frame_field_deformer.h>
+#include <igl/local_basis.h>
+#include <igl/rotate_vectors.h>
+#include <igl/vertex_triangle_adjacency.h>
+#include <igl/triangle_triangle_adjacency.h>
 
 #include "meshing_algorithms.h"
 #include "remeshing_plugin.h"

@@ -363,7 +363,8 @@ bool RemeshingPlugin::load(std::string filename) {
     Eigen::MatrixXd tempV;
     Eigen::MatrixXi tempF;
     igl::read_triangle_mesh(filename, tempV, tempF);
-    igl::remove_unreferenced(tempV, tempF, V, F, Eigen::VectorXi(), Eigen::VectorXi());
+    Eigen::VectorXi tmp1, tmp2; // Usused, needed for static igl on clang
+    igl::remove_unreferenced(tempV, tempF, V, F, tmp1, tmp2);
     if (V.rows() <= 3 || F.rows() <= 1) {
         std::cerr << "Fail to load file " << filename << "...\n";
         return false;
