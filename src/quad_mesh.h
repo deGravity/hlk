@@ -1,9 +1,19 @@
 #pragma once
 
-#include <Eigen/Core>
+#include <map>
+#include <unordered_set>
 #include <vector>
 
+#include <Eigen/Core>
+
 namespace hlk {
+
+	enum Cardinal {
+		N,
+		E,
+		S,
+		W
+	};
 
 	struct QuadMesh {
 		// Source-of-Truth Matrices
@@ -59,8 +69,9 @@ namespace hlk {
 		// is_irregular_vertex
 		std::vector<bool> is_boundary_side;
 		std::vector<bool> is_singularity;
-		std::vector<int> singular_vertices;
-		// edges or unique_edge_map
+        std::vector<int> singular_vertices;
+        std::vector<int> singular_quads;
+        // edges or unique_edge_map
 
 		// boundary information
 		std::vector<bool> is_border_vertex;
@@ -76,9 +87,9 @@ namespace hlk {
 		int side_u(int side); // src vertex of a side
 		int side_v(int side); // dst vertex of a side
 		int flip_side(int side); // Get the side opposite between quads, or -1 if a border
-		int opposite_side(int side); // Get the side opposite across a quad
 		int next_side(int side); // Get the next side (CCW) in a quad
 		int prev_side(int side); // Get the prev side (CW) in a quad
+		int opposite_side(int side); // Get the side opposite across a quad
 		int next_cross_vertex(int side); // Get the next side across vertices if possible
 		int prev_cross_vertex(int side); // Get the previous side across vertices if possible
 		std::vector<int> out_sides(int vertex); // Get edges adjacent to a vertex with outward orientation
@@ -89,6 +100,14 @@ namespace hlk {
 		std::vector<int> side_loop(int start_side); // trace sides until a singularity or border
 		std::vector<int> reverse_side_loop(int start_side); // trace backwards along sides until a singularity or border
 
+        // Helix Finding
+        bool is_course_loop(int curr_he, Cardinal c = Cardinal::N);
+        bool perp_direction_check(
+            int curr_he,
+            std::unordered_set<int>& ortho_visited,
+            const std::unordered_set<int>& visited,
+            const std::map<int, Cardinal>& face_directions);
+        bool helix_free(std::unordered_set<int>& helix, Cardinal c = Cardinal::N);
 	};
 
 }

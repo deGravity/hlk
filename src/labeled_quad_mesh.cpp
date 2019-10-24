@@ -155,7 +155,8 @@ namespace hlk {
 		// Per Face Slots
 		for (int i = 0; i < F_q.rows(); ++i) {
 			Eigen::MatrixXd corners;
-			igl::slice(V, F_q.row(i), 1, corners);
+			Eigen::VectorXi face = F_q.row(i);
+			igl::slice(V, face, 1, corners);
 			Eigen::VectorXi slot;
 			make_rect(corners, uv, 1, label_vertices, label_faces, label_uvs, slot);
 			slots.push_back(slot);

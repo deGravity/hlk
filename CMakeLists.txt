@@ -4,7 +4,7 @@ project(hlk)
 set(PROJECT_NAME hlk)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} 
-				      ${CMAKE_CURRENT_SOURCE_DIR}/cmake
+		                  ${CMAKE_CURRENT_SOURCE_DIR}/cmake
                       ${CMAKE_CURRENT_SOURCE_DIR}/ext/libQEx/cmake)
 
 # LibIGL options - may neet to use option instead of set
@@ -20,24 +20,17 @@ option(LIBIGL_WITH_CGAL "Use CGAL" ON)
 # lee-way when creating matrices (safest to use MatrixXd and MatrixXi
 # rather than explicitly declaring dimensions). Comment this out
 # in case of such problems
-
-# Currently disabled because igl::writeOBJ is not working
-#option(LIBIGL_USE_STATIC_LIBRARY "Use libigl as static library" ON)
+option(LIBIGL_USE_STATIC_LIBRARY "Use libigl as static library" ON)
 
 # Hack for libigl linking: https://github.com/libigl/libigl/issues/1229
 set(MSVC_RUNTIME "dynamic")
 
-find_package(CGAL REQUIRED COMPONENTS Core)
-find_package(glm REQUIRED)
 find_package(LIBIGL REQUIRED)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(Z3 REQUIRED CONFIG)
 
-
-#add_subdirectory(ext/libigl EXCLUDE_FROM_ALL)
 add_subdirectory(ext/libQEx EXCLUDE_FROM_ALL)
 target_compile_definitions(QEx PRIVATE _USE_MATH_DEFINES)
-
 
 # Just grab all C++ files
 file(GLOB SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp)
@@ -46,30 +39,23 @@ file(GLOB DEBUG_FILES ${PROJECT_SOURCE_DIR}/src/*.natvis)
 
 add_executable(${PROJECT_NAME} ${SRC_FILES} ${HEADER_FILES} ${DEBUG_FILES})
 
-
 target_include_directories(${PROJECT_NAME} PRIVATE ${Z3_CXX_INCLUDE_DIRS} ${QEX_INCLUDE_DIRS} ext/Directional/include)
 
 target_link_libraries(${PROJECT_NAME} 
 	Eigen3::Eigen 
 	CGAL::CGAL
-	#CGAL::CGAL_Core
+  igl::cgal
 	igl::core 
 	igl::opengl 
 	igl::opengl_glfw 
-	igl::png 
+	igl::png
 	igl::opengl_glfw_imgui 
 	igl::comiso
-	igl::cgal
-    ${Z3_LIBRARIES}
-	QEx
-    glm)
-
+  ${Z3_LIBRARIES}
+	QEx)
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC _USE_MATH_DEFINES)
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_14)
-
-# Make sure the cgal dll is in the right place
-#igl_copy_cgal_dll(${PROJECT_BINARY_DIR})
 
 # Copy Runtime Resources to Binary Directory
 file(GLOB RESOURCE_FILES ${PROJECT_SOURCE_DIR}/resources/*)
