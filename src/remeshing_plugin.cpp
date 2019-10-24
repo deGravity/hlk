@@ -19,6 +19,7 @@
 #include <igl/PI.h>
 #include <igl/project.h>
 #include <igl/read_triangle_mesh.h>
+#include <igl/remove_unreferenced.h>
 #include <igl/triangle_triangle_adjacency.h>
 #include <igl/unproject_onto_mesh.h>
 #include <igl/unproject_ray.h>
