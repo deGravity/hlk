@@ -65,6 +65,7 @@ endforeach(RESOURCE_FILE)
 
 # Copy shared libraries to binary directory on Windows
 if("${CMAKE_SYSTEM_NAME}" MATCHES "[Ww]indows")
+  set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
   igl_copy_imported_dll(CoMISo stitchgraph)
   foreach (z3_lib ${Z3_LIBRARIES})
     message(STATUS "Adding copy rule for ${z3_lib}")

@@ -86,7 +86,8 @@ namespace hlk {
 
 	const Eigen::VectorXi& LabeledQuadMesh::quad_center_slot(int quad)
 	{
-		return vertex_slots[n + quad];
+		return vertex_slots[quad];
+		//return vertex_slots[n + quad];
 	}
 
 	void LabeledQuadMesh::init()
@@ -118,25 +119,26 @@ namespace hlk {
 		Face
 		*/
 
-		Eigen::MatrixXd uv(2, 2), half_uv_1(2, 2), half_uv_2(2,2);
+		Eigen::MatrixXd uv(2, 2), bottom_half_uv(2, 2), top_half_uv(2,2);
 		uv <<
 			0, 0,
 			1, 1;
-		half_uv_1 <<
+		bottom_half_uv <<
 			0, 0,
-			0.5, 1;
-		half_uv_2 <<
-			0.5, 1,
+			1, 0.5;
+		top_half_uv <<
+			0, 0.5,
 			1, 1;
 
 		Eigen::MatrixXd VN;
 		igl::per_vertex_normals(V, F_t, VN);
 
+		/*
 		// Quad Vertex slots
 		for (int i = 0; i < n; ++i) {
 			Eigen::RowVector3d vpos = V.row(i);
 			Eigen::RowVector3d normal = VN.row(i);
-			Eigen::RowVector3d b(8.7, 7.345, 3.24);
+			Eigen::RowVector3d b(8.2, 7.345, 3.24);
 			b.normalize();
 			Eigen::RowVector3d x = normal.cross(b).normalized();
 			Eigen::RowVector3d y = normal.cross(x).normalized();
@@ -147,10 +149,12 @@ namespace hlk {
 				vpos - x * dual_edge_width / 2,
 				vpos - y * dual_edge_width / 2;
 			Eigen::VectorXi vertex_slot;
-			make_rect(vertex_corners, uv, 180, label_vertices, label_faces, label_uvs, vertex_slot);
+
+			make_rect(vertex_corners, uv, 18, label_vertices, label_faces, label_uvs, vertex_slot);
 			slots.push_back(vertex_slot);
 			vertex_slots.push_back(vertex_slot);
 		}
+		*/
 
 		// Per Face Slots
 		for (int i = 0; i < F_q.rows(); ++i) {
@@ -189,7 +193,6 @@ namespace hlk {
 			slots.push_back(center_slot);
 			vertex_slots.push_back(center_slot); /// Face centers are on tri-vertices
 
-
 			// Per Side Slots
 			for (int j = 0; j < 4; ++j) {
 				int side = 4 * i + j;
@@ -197,10 +200,10 @@ namespace hlk {
 				// Half-edges
 				Eigen::MatrixXd half_edge_corners(4,3);
 				half_edge_corners <<
-					corners.row((j + 1) % 4) + (corners.row((j + 2) % 4) - corners.row((j + 1) % 4)) * edge_width,
-					corners.row(j) + (corners.row((j + 3) % 4) - corners.row(j)) * edge_width,
 					corners.row(j),
-					corners.row((j + 1) % 4);
+					corners.row((j + 1) % 4),
+					corners.row((j + 1) % 4) + (corners.row((j + 2) % 4) - corners.row((j + 1) % 4))* edge_width,
+					corners.row(j) + (corners.row((j + 3) % 4) - corners.row(j))* edge_width;
 					
 
 				side_corners.push_back(half_edge_corners);
@@ -225,7 +228,7 @@ namespace hlk {
 					
 					
 
-				make_rect(dual_edge_corners, uv, 9+j, label_vertices, label_faces, label_uvs, dual_half_edge_slot);
+				make_rect(dual_edge_corners, uv, 10+j, label_vertices, label_faces, label_uvs, dual_half_edge_slot);
 				slots.push_back(dual_half_edge_slot);
 				dual_half_edge_slots.push_back(dual_half_edge_slot);
 			}
@@ -237,8 +240,18 @@ namespace hlk {
 			Eigen::MatrixXd corners1 = side_corners[edge_sides[0]];
 			Eigen::MatrixXd corners2 = side_corners[edge_sides[1]];
 			Eigen::VectorXi edge_slot;
-			make_rect(corners1, half_uv_1, 8, label_vertices, label_faces, label_uvs, edge_slot);
-			make_rect(corners2, half_uv_2, 8, label_vertices, label_faces, label_uvs, edge_slot);
+			Eigen::MatrixXd bottom_half(4,3);
+	
+			// One half of the combined edges needs to be rotated by 180 deg. to match orientations
+			// arbitrarly choose the bottom half since there is no prescribed ordering
+			bottom_half <<
+				corners1.row(2),
+				corners1.row(3),
+				corners1.row(0),
+				corners1.row(1);
+
+			make_rect(bottom_half, bottom_half_uv, 8, label_vertices, label_faces, label_uvs, edge_slot);
+			make_rect(corners2, top_half_uv, 8, label_vertices, label_faces, label_uvs, edge_slot);
 			slots.push_back(edge_slot);
 			edge_slots.push_back(edge_slot);
 		}

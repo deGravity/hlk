@@ -11,12 +11,28 @@
 #include "quad_mesh.h"
 #include "read_quad_mesh.h"
 #include "remeshing_plugin.h"
+#include "labeled_quad_mesh.h"
+#include "glyph.h"
 
 using namespace hlk;
 
-int main(void) {
-	/*
-	// Test Optimizer and Z3
+void main_meshing() {	
+	/////////////////////////////////////////////////////
+	igl::opengl::glfw::Viewer viewer;
+    int rosy = 4;
+    std::string input_path = "./tmp_in.obj";
+    std::string output_path = "./tmp_out.obj";
+    std::string input_model = "";
+	RemeshingPlugin remeshing_plugin(rosy, input_path, output_path);
+	viewer.plugins.push_back((igl::opengl::glfw::ViewerPlugin *) &remeshing_plugin);
+	if (!input_model.empty()) {
+		remeshing_plugin.set_input_model(input_model);
+	}
+	viewer.launch();
+	/////////////////////////////////////////////////////
+}
+
+void main_optimizer() {
 	hlk::Optimizer opt;
 
 	auto a = opt.get_bool_prop("a");
@@ -33,53 +49,102 @@ int main(void) {
 	}
 
 	std::cout << "a = " << a->val << " , b = " << b->val << " , c = " << c->val;
+}
 
-	// Test transparent overlays
+
+void main_debug_labeling() {
+	igl::opengl::glfw::Viewer viewer;
+	Eigen::MatrixXd V(8, 3), C(8, 4);
+	Eigen::MatrixXi F(4, 3);
+	V <<
+		1, 1, 1,
+		1, 1, -1,
+		1, -1, 1,
+		-1, 1, 1,
+
+		2, 2, 2,
+		2, 2, 2.5,
+		2, 2, 1.5,
+		2, 2.5, 2;
+	F <<
+		0, 2, 1,
+		0, 1, 3,
+		0, 3, 2,
+		4, 6, 7,
+	C <<
+		1.0, 0.0, 0.0, 1.0,
+		1.0, 0.0, 0.0, 1.0,
+		1.0, 0.0, 0.0, 1.0,
+		1.0, 0.0, 0.0, 1.0,
+
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0;
+
+	viewer.data().set_mesh(V, F);
+	viewer.data().set_colors(C);
+	viewer.launch();
+}
+
+void main_labeling() {
 	igl::opengl::glfw::Viewer viewer;
 
 	Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> R, G, B, A;
-	igl::png::readPNG("ceramic.png", R, G, B, A);
+	igl::png::readPNG("glyphs.png", R, G, B, A);
+	hlk::LabeledQuadMesh Q;
+	hlk::read_quad_mesh(igl::file_dialog_open(), Q);
+	Q.init();
 
-	Eigen::MatrixXd V;
-	Eigen::MatrixXi F;
-	V.resize(4, 3);
-	V <<
-		0, 0, 0,
-		0, 1, 0,
-		0, 1, 1,
-		0, 0, 1;
+	for (auto& slot : Q.slots) {
+		Q.set_glyph(slot, hlk::glyphs::NONE, hlk::color::INVISIBLE);
+	}
 
-	F.resize(2, 3);
-	F <<
-		0, 1, 2,
-		0, 2, 3;
+	for (auto& slot : Q.quad_slots) {
+		Q.set_glyph(slot, hlk::glyphs::SOLID_LINE, hlk::color::RED);
+	}
 
-	Eigen::MatrixXd TC(4, 2);
-	TC <<
-		0, 0,
-		1, 0,
-		1, 1,
-		0, 1;
+	for (auto& slot : Q.vertex_slots) {
+		Q.set_glyph(slot, hlk::glyphs::CIRCLE, hlk::color::BLUE);
+	}
 
-	Eigen::VectorXi VTC(4);
-	VTC << 0, 1, 2, 3;
+	for (auto& slot : Q.edge_slots) {
+		Q.set_glyph(slot, hlk::glyphs::SOLID_LINE, hlk::color::GREEN);
+	}
+	std::vector<int> loop = Q.dual_loop(0, 0);
+	for (int side : loop) {
+		Q.set_glyph(
+			Q.dual_half_edge_slots[side], // Where
+			hlk::glyphs::THIN_SOLID_LINE, // Which Texture
+			hlk::color::WHITE // What Color
+		);
+	}
 
-	viewer.data().set_mesh(V, F);
+	viewer.data().set_mesh(Q.LV, Q.LF);
 	viewer.data().set_texture(R, G, B, A);
-	viewer.data().set_uv(TC, VTC);
-	viewer.data().show_lines = false;
+	viewer.data().set_uv(Q.UV);
 	viewer.data().show_texture = true;
-	viewer.data().set_colors(Eigen::RowVector4d(1.0, 1.0, 1.0, 1.0));
+	viewer.data().show_lines = false;
+	viewer.data().set_colors(Q.C);
 
-	// Test Quad Mesh structure
-	
-	hlk::QuadMesh Q;
+	viewer.launch();
+
+
+}
+
+void main_metcap() {
+
+	igl::opengl::glfw::Viewer viewer;
+
+
+	Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> R, G, B, A;
+	igl::png::readPNG("jade.png", R, G, B, A);
+	hlk::LabeledQuadMesh Q;
 
 	hlk::read_quad_mesh(igl::file_dialog_open(), Q);
+	Q.init();
 
 	viewer.data().set_mesh(Q.V, Q.F_t);
-	
-	//viewer.launch();
 
 	// Test met-cap: https://www.alecjacobson.com/weblog/?p=4827
 	viewer.data().set_texture(R, G, B, A);
@@ -126,19 +191,11 @@ void main()
 	}
 
 	viewer.launch_rendering(true);
-	viewer.launch_shut();*/
-	
-	/////////////////////////////////////////////////////
-	igl::opengl::glfw::Viewer viewer;
-    int rosy = 4;
-    std::string input_path = "./tmp_in.obj";
-    std::string output_path = "./tmp_out.obj";
-    std::string input_model = "";
-	RemeshingPlugin remeshing_plugin(rosy, input_path, output_path);
-	viewer.plugins.push_back((igl::opengl::glfw::ViewerPlugin *) &remeshing_plugin);
-	if (!input_model.empty()) {
-		remeshing_plugin.set_input_model(input_model);
-	}
-	viewer.launch();
-	/////////////////////////////////////////////////////
+	viewer.launch_shut();
+
+}
+
+int main(void) {
+	main_labeling();
+	return 0;
 }
