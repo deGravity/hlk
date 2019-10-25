@@ -38,6 +38,7 @@ public:
         has_curl = false;
         is_quad_meshed = false;
         should_redraw = false;
+        use_raw_field = false;
         viewing_mode = ViewingMode::MESH_ONLY;
         drawing_mode = DrawingMode::WALE;
         miq_mode = MIQMode::CROSS;
@@ -123,6 +124,7 @@ private:
     bool has_integer_grid;
     bool is_quad_meshed;
     bool should_redraw;
+    bool use_raw_field;
 
     // numbers...
     float soft_constraint_strength;
@@ -187,6 +189,8 @@ private:
     Eigen::VectorXi singVertices, singIndices;
     Eigen::SparseMatrix<double> AE2F; // averaging curl to faces for visualization
     double curlMax, curlMaxOrig;
+    Eigen::VectorXi c_b, c_blevel;
+    Eigen::MatrixXd c_bc;
 
     // quad mesh data
     QuadMesh quad_mesh;
@@ -213,6 +217,14 @@ private:
     Eigen::MatrixXi F_uv;
     // Local basis
     Eigen::MatrixXd B1, B2, B3;
+
+    // polyvector field data
+    Eigen::MatrixXcd polyvector_field;
+    Eigen::VectorXi p_b;
+    Eigen::MatrixXd p_bc;
+    Eigen::MatrixXd VMeshCut;
+    Eigen::MatrixXi FMeshCut;
+    Eigen::MatrixXd cutUV;
 
     /////////////////// UI ///////////////////
     std::string in_path, out_path, input_model;

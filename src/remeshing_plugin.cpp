@@ -8,6 +8,7 @@
 #include <igl/copyleft/cgal/mesh_to_polyhedron.h>
 #include <igl/doublearea.h>
 #include <igl/edges.h>
+#include <igl/edge_topology.h>
 #include <igl/file_dialog_save.h>
 #include <igl/jet.h>
 #include <igl/local_basis.h>
@@ -112,17 +113,24 @@ void RemeshingPlugin::init(igl::opengl::glfw::Viewer* _viewer) {
                     // drawing mode options.
                     ImGui::Text("Click to select the MIQ mode.");
                     if (ImGui::RadioButton("Use Cross Field", miq_mode == MIQMode::CROSS)) {
-                        miq_mode = MIQMode::CROSS; interpolate_field();
+                        miq_mode = MIQMode::CROSS;
                     }
                     if (ImGui::RadioButton("Use Frame Field", miq_mode == MIQMode::FRAME)) {
-                        miq_mode = MIQMode::FRAME; interpolate_field();
+                        miq_mode = MIQMode::FRAME;
+                    }
+                    if (ImGui::RadioButton("Use Polyvector Field", miq_mode == MIQMode::POLYVECTOR)) {
+                        miq_mode = MIQMode::POLYVECTOR; 
                     }
                     if (ImGui::Button("Run MIQ", ImVec2((w - p) / 2.f, 0))) {
+                        // TODO: figure out the right order of things
+                        interpolate_field();
                         generate_integer_grid();
+                        update_visualization();
                     }
                     ImGui::SameLine(0, p);
                     if (ImGui::Button("Reduce Curl", ImVec2((w - p) / 2.f, 0))) {
                         if (!has_curl) { init_curl(); }
+                        // TODO: figure out why this reduction fails on the 6th iteration
                         reduce_curl();
                         if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD) 
                             update_visualization();
@@ -142,7 +150,12 @@ void RemeshingPlugin::init(igl::opengl::glfw::Viewer* _viewer) {
                     if (ImGui::Button("Extract Quads", ImVec2((w - p) / 2.f, 0))) {
                         std::vector<std::vector<double>> Vs, TCs;
                         std::vector<std::vector<int>> Fs;
-                        extract_quad_mesh(V, F, V_uv, F_uv, quad_mesh);
+                        if (miq_mode == MIQMode::POLYVECTOR) {
+                            // TODO: figure out a way to get the face UVs as well
+                            extract_quad_mesh(VMeshCut, FMeshCut, cutUV, Eigen::MatrixXi(), quad_mesh);
+                        } else {
+                            extract_quad_mesh(V, F, V_uv, F_uv, quad_mesh);
+                        }
                         is_quad_meshed = true;
                         stylize_quad_mesh(directional::default_mesh_color());
                         update_visualization();
@@ -152,7 +165,8 @@ void RemeshingPlugin::init(igl::opengl::glfw::Viewer* _viewer) {
                     if (ImGui::Button("Save Quads", ImVec2(w - p, 0))) {
                         std::string fname = igl::file_dialog_save();
                         if (fname.length() > 0) {
-                            igl::writeOBJ(fname, quad_mesh.V, quad_mesh.F_t);
+                            Eigen::MatrixXd V_q = quad_mesh.V.block(0, 0, quad_mesh.n, 4);
+                            igl::writeOBJ(fname, V_q, quad_mesh.F_q);
                         }
                     }
                 }
@@ -312,7 +326,7 @@ void RemeshingPlugin::init(igl::opengl::glfw::Viewer* _viewer) {
         load("/Users/Bluefish_/Desktop/01_SU19/stitchgraph/data/clothing_models/sweater.obj");
 #endif
 #ifdef WINDOWS_YUXUAN
-        load("C:\\Users\\ym2552\\Desktop\\stitchgraph\\data\\clothing_models\\sweater.obj");
+        load("C:\\Users\\ym2552\\Desktop\\stitchgraph\\data\\clothing_models\\jumper.obj");
 #endif
     } else {
         load(input_model);
@@ -322,6 +336,9 @@ void RemeshingPlugin::init(igl::opengl::glfw::Viewer* _viewer) {
 void RemeshingPlugin::setup_mesh() {
     // Compute face barycenters
     igl::barycenter(V, F, B);
+
+    // Compute edge topology
+    igl::edge_topology(V, F, EV, FE, EF);
 
     // Compute scale for visualizing fields
     global_scale = .5 * igl::avg_edge_length(V, F);
@@ -520,6 +537,7 @@ void RemeshingPlugin::clear() {
     has_curl = false;
     is_quad_meshed = false;
     should_redraw = false;
+    use_raw_field = false;
     viewing_mode = ViewingMode::MESH_ONLY;
     drawing_mode = DrawingMode::WALE;
     miq_mode = MIQMode::CROSS;
@@ -1717,10 +1735,18 @@ void RemeshingPlugin::set_mesh_overlays(const int mesh_id, const bool wireframe,
 
 void RemeshingPlugin::stylize_tri_mesh(const Eigen::MatrixXd& colors) {
     viewer->data().clear();
-    viewer->data().set_mesh(V, F);
+    if (miq_mode == MIQMode::POLYVECTOR) {
+        viewer->data().set_mesh(VMeshCut, FMeshCut);
+    } else {
+        viewer->data().set_mesh(V, F);
+    }
     if (has_integer_grid) {
         viewer->data().set_texture(texture_R, texture_B, texture_G);
-        viewer->data().set_uv(V_uv, F_uv);
+        if (miq_mode == MIQMode::POLYVECTOR) {
+            viewer->data().set_uv(cutUV);
+        } else {
+            viewer->data().set_uv(V_uv, F_uv);
+        }
     }
     viewer->data().show_texture = has_integer_grid;
     viewer->data().set_colors(colors);
@@ -1765,34 +1791,56 @@ void RemeshingPlugin::update_visualization() {
 
     case ViewingMode::MESH_FIELD:
     {
-        if (!has_curl) { init_curl(); }
+        if (miq_mode == MIQMode::POLYVECTOR) {
+            Meshing::init_polyvector_drawing(
+                V, F, rosy, EV, EF, FE, rawField, matching, effort, singVertices, singIndices);
+            Eigen::MatrixXd glyphColors = directional::default_glyph_color().replicate(F.rows(), rosy);
+            if (p_b.rows() != 0) {
+                glyphColors.row(p_b(p_b.rows() - 1)) = directional::selected_face_glyph_color().replicate(1, rosy);
+            }
 
-        // field mesh
-        directional::glyph_lines_raw(
-            V, F, combedField, directional::indexed_glyph_colors(combedField),
-            VField, FField, CField, 2.0);
-        viewer->data_list[3].clear();
-        viewer->data_list[3].set_mesh(VField, FField);
-        viewer->data_list[3].set_colors(CField);
-        set_mesh_overlays(3, false);
+            directional::glyph_lines_raw(V, F, rawField, glyphColors, VField, FField, CField);
+            viewer->data_list[3].clear();
+            viewer->data_list[3].set_mesh(VField, FField);
+            viewer->data_list[3].set_colors(CField);
+            set_mesh_overlays(3, false);
 
-        // singularity mesh
-        directional::singularity_spheres(
-            V, F, rosy, singVertices, singIndices,
-            VSings, FSings, CSings, 1.5);
-        viewer->data_list[4].clear();
-        viewer->data_list[4].set_mesh(VSings, FSings);
-        viewer->data_list[4].set_colors(CSings);
-        set_mesh_overlays(4, false);
+            directional::singularity_spheres(V, F, rosy, singVertices, singIndices, VSings, FSings, CSings);
+            viewer->data_list[4].clear();
+            viewer->data_list[4].set_mesh(VSings, FSings);
+            viewer->data_list[4].set_colors(CSings);
+            set_mesh_overlays(4, false);
 
-        // seam mesh
-        directional::seam_lines(
-            V, F, EV, combedMatching,
-            VSeams, FSeams, CSeams, 2.0);
-        viewer->data_list[5].clear();
-        viewer->data_list[5].set_mesh(VSeams, FSeams);
-        viewer->data_list[5].set_colors(CSeams);
-        set_mesh_overlays(5, false);
+        } else {
+            if (!has_curl) { init_curl(); }
+
+            // field mesh
+            directional::glyph_lines_raw(
+                V, F, combedField, directional::indexed_glyph_colors(combedField),
+                VField, FField, CField, 2.0);
+            viewer->data_list[3].clear();
+            viewer->data_list[3].set_mesh(VField, FField);
+            viewer->data_list[3].set_colors(CField);
+            set_mesh_overlays(3, false);
+
+            // singularity mesh
+            directional::singularity_spheres(
+                V, F, rosy, singVertices, singIndices,
+                VSings, FSings, CSings, 1.5);
+            viewer->data_list[4].clear();
+            viewer->data_list[4].set_mesh(VSings, FSings);
+            viewer->data_list[4].set_colors(CSings);
+            set_mesh_overlays(4, false);
+
+            // seam mesh
+            directional::seam_lines(
+                V, F, EV, combedMatching,
+                VSeams, FSeams, CSeams, 2.0);
+            viewer->data_list[5].clear();
+            viewer->data_list[5].set_mesh(VSeams, FSeams);
+            viewer->data_list[5].set_colors(CSeams);
+            set_mesh_overlays(5, false);
+        }
     }
 
     case ViewingMode::MESH_ONLY:

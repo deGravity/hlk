@@ -11,8 +11,15 @@ namespace hlk {
 
 class Meshing {
 public:
-    // LOOKHERE
-    static void polyvector_parametrize();
+    static void polyvector_parametrize(
+        const Eigen::MatrixXd& VMeshWhole, const Eigen::MatrixXi& FMeshWhole, const int N,
+        const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
+        const Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
+        Eigen::VectorXi& matching, Eigen::VectorXi& combedMatching,
+        Eigen::VectorXd& effort, Eigen::VectorXd& combedEffort,
+        Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices,
+        Eigen::MatrixXd& VMeshCut, Eigen::MatrixXi& FMeshCut,
+        Eigen::MatrixXd& cutUV, double lengthRatio = 0.1, bool isInteger = true);
 
     static void frame_field_miq(
         const Eigen::MatrixXd& X1, /* deformed first representative */
@@ -29,21 +36,29 @@ public:
         double gradient_size, double stiffness,
         Eigen::MatrixXd& UV, Eigen::MatrixXi& FUV);
 
+    static void init_polyvector_drawing(
+        const Eigen::MatrixXd& VMesh, const Eigen::MatrixXi& FMesh, const int N,
+        const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
+        const Eigen::MatrixXd& rawField,
+        Eigen::VectorXi& matching, Eigen::VectorXd& effort,
+        Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices);
+
     static void init_curl(
-        const Eigen::MatrixXd& VMesh, const Eigen::MatrixXi& FMesh, const int N, // nrosy's n
-        Eigen::MatrixXi& EV, Eigen::MatrixXi& EF, Eigen::MatrixXi& FE,
+        const Eigen::MatrixXd& VMesh, const Eigen::MatrixXi& FMesh, const int N,
+        const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
+        const Eigen::VectorXi& b, const Eigen::MatrixXd& bc, const Eigen::VectorXi& blevel,
+        const Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
         Eigen::VectorXi& matching, Eigen::VectorXi& combedMatching,
         Eigen::VectorXd& effort, Eigen::VectorXd& combedEffort,
-        Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
         Eigen::VectorXd& curl, Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices,
         Eigen::SparseMatrix<double>& AE2F, double& curlMax, double& curlMaxOrig);
 
     static void reduce_curl(
-        const Eigen::MatrixXd& VMesh, const Eigen::MatrixXi& FMesh, const int N, // nrosy's n
+        const Eigen::MatrixXd& VMesh, const Eigen::MatrixXi& FMesh, const int N,
         const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
+        Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
         Eigen::VectorXi& matching, Eigen::VectorXi& combedMatching,
         Eigen::VectorXd& effort, Eigen::VectorXd& combedEffort,
-        Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
         Eigen::VectorXd& curl, Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices,
         double& curlMax);
 };

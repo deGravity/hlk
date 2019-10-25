@@ -70,7 +70,8 @@ enum DrawingMode {
 
 enum MIQMode {
     CROSS,
-    FRAME
+    FRAME,
+    POLYVECTOR
 };
 
 double angle_between(Eigen::Vector3d v1, Eigen::Vector3d v2);

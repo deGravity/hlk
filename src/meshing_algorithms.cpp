@@ -1,6 +1,9 @@
 #include <directional/combing.h>
+#include <directional/cut_mesh_with_singularities.h>
 #include <directional/curl_matching.h>
 #include <directional/effort_to_indices.h>
+#include <directional/parameterize.h>
+#include <directional/principal_matching.h>
 #include <directional/polycurl_reduction.h>
 #include <igl/avg_edge_length.h>
 #include <igl/barycenter.h>
@@ -18,6 +21,30 @@
 #include "meshing_algorithms.h"
 
 namespace hlk {
+
+void Meshing::polyvector_parametrize(
+    const Eigen::MatrixXd& VMeshWhole, const Eigen::MatrixXi& FMeshWhole, const int N,
+    const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
+    const Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
+    Eigen::VectorXi& matching, Eigen::VectorXi& combedMatching,
+    Eigen::VectorXd& effort, Eigen::VectorXd& combedEffort,
+    Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices,
+    Eigen::MatrixXd& VMeshCut, Eigen::MatrixXi& FMeshCut,
+    Eigen::MatrixXd& cutUV, double lengthRatio, bool isInteger) {
+
+    // combing and cutting
+    directional::principal_matching(VMeshWhole, FMeshWhole, EV, EF, FE, rawField, matching, effort);
+    directional::effort_to_indices(VMeshWhole, FMeshWhole, EV, EF, effort, matching, N, singVertices, singIndices);
+    directional::ParameterizationData pd;
+    directional::cut_mesh_with_singularities(VMeshWhole, FMeshWhole, singVertices, pd.face2cut);
+    directional::combing(VMeshWhole, FMeshWhole, EV, EF, FE, pd.face2cut, rawField, matching, combedField, combedMatching);
+    // parametrizing
+    std::cout << "[meshing] Setting up parameterization\n";
+    directional::setup_parameterization(N, VMeshWhole, FMeshWhole, EV, EF, FE, combedMatching, singVertices, pd, VMeshCut, FMeshCut);
+    std::cout << "[meshing] Solving parameterization\n";
+    directional::parameterize(VMeshWhole, FMeshWhole, FE, combedField, lengthRatio, pd, VMeshCut, FMeshCut, isInteger, cutUV);
+    std::cout << "[meshing] Done!\n";
+}
 
 void Meshing::frame_field_miq(const Eigen::MatrixXd& X1, const Eigen::MatrixXd& X2,
     const Eigen::MatrixXd& V_deformed, const Eigen::MatrixXi& F,
@@ -113,21 +140,31 @@ void Meshing::cross_field_miq(const Eigen::MatrixXd& R,
         hard_edges);
 }
 
+void Meshing::init_polyvector_drawing(
+    const Eigen::MatrixXd& VMesh, const Eigen::MatrixXi& FMesh, const int N,
+    const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
+    const Eigen::MatrixXd& rawField,
+    Eigen::VectorXi& matching, Eigen::VectorXd& effort, 
+    Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices) {
+
+    directional::principal_matching(VMesh, FMesh, EV, EF, FE, rawField, matching, effort);
+    directional::effort_to_indices(VMesh, FMesh, EV, EF, effort, matching, N, singVertices, singIndices);
+}
+
 // Solver data (needed for precomputation)
 directional::PolyCurlReductionSolverData pcrdata;
 
 int iter = 0;
 
 void Meshing::init_curl(
-    const Eigen::MatrixXd& VMesh, const Eigen::MatrixXi& FMesh, const int N, // nrosy's n
-    Eigen::MatrixXi& EV, Eigen::MatrixXi& EF, Eigen::MatrixXi& FE,
+    const Eigen::MatrixXd& VMesh, const Eigen::MatrixXi& FMesh, const int N,
+    const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
+    const Eigen::VectorXi& b, const Eigen::MatrixXd& bc, const Eigen::VectorXi& blevel,
+    const Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
     Eigen::VectorXi& matching, Eigen::VectorXi& combedMatching,
     Eigen::VectorXd& effort, Eigen::VectorXd& combedEffort,
-    Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
     Eigen::VectorXd& curl, Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices,
     Eigen::SparseMatrix<double>& AE2F, double& curlMax, double& curlMaxOrig) {
-
-    igl::edge_topology(VMesh, FMesh, EV, FE, EF);
 
     directional::curl_matching(VMesh, FMesh, EV, EF, FE, rawField, matching, effort, curl);
     directional::effort_to_indices(VMesh, FMesh, EV, EF, effort, matching, N, singVertices, singIndices);
@@ -137,10 +174,6 @@ void Meshing::init_curl(
     curlMax = curlMaxOrig;
     std::cout << "curlMax original: " << curlMax << "\n";
 
-    // trivial constraints
-    Eigen::VectorXi b; b.resize(1); b << 0;
-    Eigen::MatrixXd bc; bc.resize(1, 6); bc << rawField.row(0).head(6);
-    Eigen::VectorXi blevel; blevel.resize(1); b << 1;
     directional::polycurl_reduction_precompute(VMesh, FMesh, b, bc, blevel, rawField, pcrdata);
     iter = 0;
 
@@ -158,11 +191,11 @@ void Meshing::init_curl(
 directional::polycurl_reduction_parameters params;
 
 void Meshing::reduce_curl(
-    const Eigen::MatrixXd& VMesh, const Eigen::MatrixXi& FMesh, const int N, // nrosy's n
+    const Eigen::MatrixXd& VMesh, const Eigen::MatrixXi& FMesh, const int N,
     const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
+    Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
     Eigen::VectorXi& matching, Eigen::VectorXi& combedMatching,
     Eigen::VectorXd& effort, Eigen::VectorXd& combedEffort,
-    Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
     Eigen::VectorXd& curl, Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices,
     double& curlMax) {
     
