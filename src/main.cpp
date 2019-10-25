@@ -161,16 +161,16 @@ void main_metcap() {
 
 
 	Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> R, G, B, A;
-	igl::png::readPNG("jade.png", R, G, B, A);
+	igl::png::readPNG("white.png", R, G, B, A);
 	hlk::LabeledQuadMesh Q;
 
 	hlk::read_quad_mesh(igl::file_dialog_open(), Q);
-	Q.init();
 
 	viewer.data().set_mesh(Q.V, Q.F_t);
 
 	// Test met-cap: https://www.alecjacobson.com/weblog/?p=4827
 	viewer.data().set_texture(R, G, B, A);
+	viewer.data().set_colors(Eigen::RowVector3d(0.0, 1.0, 0.0));
 	viewer.data().set_face_based(false);
 	viewer.data().show_lines = false;
 	viewer.data().show_texture = true;

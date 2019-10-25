@@ -1,37 +1,31 @@
 #pragma once
 
-#include <igl/png/texture_from_file.h>
 #include <igl/opengl/glfw/imgui/ImGuiMenu.h>
-#include <imgui/imgui.h>
+#include <igl/png/texture_from_file.h>
+
+#include <string>
+
+//#include "coarse_knit_mesh.h"
 
 namespace hlk {
 	class LabelingUI : public igl::opengl::glfw::imgui::ImGuiMenu {
 	public:
 
-		void init(igl::opengl::glfw::Viewer* _viewer) {
-			igl::opengl::glfw::imgui::ImGuiMenu::init(_viewer);
-		}
+		//void set_mesh(CoarseKnitMesh m);
 
-		void draw_viewer_menu() {
-			load_textures();
-			if (ImGui::ImageButton((void*)(intptr_t)eraser_tex, ImVec2(32, 32))) {
-				current_tool = ERASER;
-			}
-			if (ImGui::ImageButton((void*)(intptr_t)brush_tex, ImVec2(32, 32))) {
-				current_tool = TEXTURER;
-			}
-			if (ImGui::ImageButton((void*)(intptr_t)seamer_tex, ImVec2(32, 32))) {
-				current_tool = SEAMER;
-			}
-			if (ImGui::ImageButton((void*)(intptr_t)orienter_tex, ImVec2(32, 32))) {
-				current_tool = ORIENTER;
-			}
-			if (ImGui::ImageButton((void*)(intptr_t)measurer_tex, ImVec2(32, 32))) {
-				current_tool = MEASURER;
-			}
-		}
+		void load_mesh(std::string obj_file);
+
+		bool mouse_down(int button, int modifier);
+
+		bool mouse_up(int button, int modifier);
+
+		bool mouse_move(int mouse_x, int mouse_y);
+
+		void draw_viewer_menu();
 
 	private:
+
+		//CoarseKnitMesh M;
 
 		enum Tool {
 			ERASER, // Remove constraints
@@ -48,35 +42,33 @@ namespace hlk {
 			ERASE_CONSTRAINTS
 		};
 
-		enum OrientationMode {
-			COURSE,
-			WALE
-		};
-
 		// Modes and settings
 
-		Tool current_tool;
-		EraserMode eraser_mode;
-		OrientationMode orientation_direction;
+		Tool current_tool = ERASER;
+		EraserMode eraser_mode = ERASE_ORIENTATIONS;
+
+		std::string eraser_instructions = "CTRL-Click and drag to erase.";
+		std::string texturer_instructions = "CTRL-Click and drag to add texture.";
+		std::string seamer_instructions = "CTRL-Click and drag to join seams.";
+		std::string orienter_instructions = "CTRL-CLick and drag to set orientation. Left click for loop, right click for yarn.";
+		std::string measurer_instructions = "CTRL-Click and drag to add a constraint. Click an outgoing edge to add a constraint. Shift-Click to add separate constraints.";
+
+		std::string instructions = eraser_instructions;
+
+		bool is_dragging = false;
+		igl::opengl::glfw::Viewer::MouseButton dragging_button = igl::opengl::glfw::Viewer::MouseButton::Left;
+		
 
 		// Whether to re-run the solver on mouse-up or not
 		bool auto_solve;
-		
+
 
 		// Texture Handles for UI
 		bool textures_loaded = false;
 		GLuint eraser_tex, brush_tex, seamer_tex, orienter_tex, measurer_tex;
+		GLuint eraser_pressed, brush_pressed, seamer_pressed, orienter_pressed, measurer_pressed;
 
-		void load_textures() {
-			if (!textures_loaded) {
-				igl::png::texture_from_file("eraser.png", eraser_tex);
-				igl::png::texture_from_file("brush.png", brush_tex);
-				igl::png::texture_from_file("seamer.png", seamer_tex);
-				igl::png::texture_from_file("orienter.png", orienter_tex);
-				igl::png::texture_from_file("measurer.png", measurer_tex);
-				textures_loaded = true;
-			}
-		}
+		void load_textures();
 
 		/*
 		Icon Credits:
