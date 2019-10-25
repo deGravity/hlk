@@ -94,7 +94,6 @@ void main_labeling() {
 	igl::png::readPNG("glyphs.png", R, G, B, A);
 	hlk::LabeledQuadMesh Q;
 	hlk::read_quad_mesh(igl::file_dialog_open(), Q);
-	Q.init();
 
 	for (auto& slot : Q.slots) {
 		Q.set_glyph(slot, hlk::glyphs::NONE, hlk::color::INVISIBLE);
@@ -104,13 +103,26 @@ void main_labeling() {
 		Q.set_glyph(slot, hlk::glyphs::SOLID_LINE, hlk::color::RED);
 	}
 
-	for (auto& slot : Q.vertex_slots) {
-		Q.set_glyph(slot, hlk::glyphs::CIRCLE, hlk::color::BLUE);
+	for (auto& slot : Q.quadrant_slots) {
+		Q.set_glyph(slot, hlk::glyphs::GEAR, hlk::color::WHITE);
 	}
 
 	for (auto& slot : Q.edge_slots) {
 		Q.set_glyph(slot, hlk::glyphs::SOLID_LINE, hlk::color::GREEN);
 	}
+
+	for (auto& slot : Q.dual_half_edge_slots) {
+		Q.set_glyph(slot, hlk::glyphs::SOLID_ARROW, hlk::color::WHITE);
+	}
+
+	for (auto& slot : Q.half_edge_slots) {
+		Q.set_glyph(slot, hlk::glyphs::DASHED_LINE, hlk::color::BLACK);
+	}
+
+	for (auto& slot : Q.vertex_slots) {
+		Q.set_glyph(slot, hlk::glyphs::CIRCLE, hlk::color::BLUE);
+	}
+
 	std::vector<int> loop = Q.dual_loop(0, 0);
 	for (int side : loop) {
 		Q.set_glyph(

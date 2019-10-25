@@ -29,8 +29,8 @@ namespace hlk {
 		const Eigen::VectorXi& quadrant_slot(int quad, int quadrant); // Numbered by corner vertex
 		const Eigen::VectorXi& quad_center_slot(int quad);
 
-		void init();
-		void init(double edge_width, double dual_edge_width);
+		virtual void init();
+		virtual void init(double edge_width, double dual_edge_width);
 
 		void set_glyph(const Eigen::VectorXi& slot, const Eigen::MatrixXd& glyph, const Eigen::RowVector4d& color);
 		

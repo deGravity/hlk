@@ -79,7 +79,7 @@ namespace hlk {
 		Eigen::VectorXi boundary_sides; // indices
 		Eigen::VectorXi boundary_quads; // indices
 
-		void init();
+		virtual void init();
 
 		// Mesh Queries
 		int quad(int side); // Get the quad a side belongs to
