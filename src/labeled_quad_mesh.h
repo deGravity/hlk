@@ -14,6 +14,9 @@ namespace hlk {
 		Eigen::MatrixXd UV; // Actual Texture Coords
 		Eigen::MatrixXd C; // Label Colors
 
+		std::vector<Eigen::RowVector3d> on_mesh_vertices;
+		std::vector<int> vertex_layers;
+
 		std::vector<Eigen::VectorXi> slots;
 
 		std::vector<Eigen::VectorXi> vertex_slots;
@@ -34,6 +37,17 @@ namespace hlk {
 
 		void set_glyph(const Eigen::VectorXi& slot, const Eigen::MatrixXd& glyph, const Eigen::RowVector4d& color);
 		
+		void remap_to_surface(Eigen::MatrixXd& SV, Eigen::MatrixXi& SF, int subdivision_iters = 4);
+
+		void make_rect(
+			const Eigen::MatrixXd& corners,
+			const Eigen::MatrixXd& uvs,
+			int layer,
+			std::vector<Eigen::RowVector3d>& label_vertices,
+			std::vector<Eigen::RowVector3i>& label_faces,
+			std::vector<Eigen::RowVector2d>& label_uvs,
+			Eigen::VectorXi& slot);
+
 	};
 
 }

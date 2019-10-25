@@ -93,7 +93,15 @@ void main_labeling() {
 	Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> R, G, B, A;
 	igl::png::readPNG("glyphs.png", R, G, B, A);
 	hlk::LabeledQuadMesh Q;
-	hlk::read_quad_mesh(igl::file_dialog_open(), Q);
+	hlk::QuadMesh SQ;
+
+	std::string seamless_jumper = R"(C:\Users\Ben\research\knitting\stitchgraph\data\remeshed_examples\jumper_seamless\seamless_jumper_symmetric.obj)";
+	std::string subdivided_jumper = R"(C:\Users\Ben\research\knitting\stitchgraph\data\clothing_models\jumper_subdivided.obj)";
+	std::string jumper = R"(C:\Users\Ben\research\knitting\stitchgraph\data\clothing_models\jumper.obj)";
+
+	hlk::read_quad_mesh(seamless_jumper, Q);
+	hlk::read_quad_mesh(subdivided_jumper, SQ);
+	Q.remap_to_surface(SQ.V, SQ.F_t);
 
 	for (auto& slot : Q.slots) {
 		Q.set_glyph(slot, hlk::glyphs::NONE, hlk::color::INVISIBLE);
@@ -208,6 +216,6 @@ void main()
 }
 
 int main(void) {
-	main_labeling();
+	main_meshing();
 	return 0;
 }

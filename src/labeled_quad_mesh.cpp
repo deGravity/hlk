@@ -6,8 +6,13 @@
 #include <igl/local_basis.h>
 #include <igl/vertex_triangle_adjacency.h>
 #include <igl/edge_lengths.h>
-
+#include <igl/false_barycentric_subdivision.h>
+#include <igl/point_mesh_squared_distance.h>
+#include <igl/per_face_normals.h>
+#include <igl/cat.h>
 #include "glyph.h"
+
+#include <vector>
 
 namespace hlk {
 
@@ -29,7 +34,7 @@ namespace hlk {
 		}
 	}
 
-	void make_rect(
+	void LabeledQuadMesh::make_rect(
 		const Eigen::MatrixXd& corners,
 		const Eigen::MatrixXd& uvs,
 		int layer,
@@ -62,6 +67,8 @@ namespace hlk {
 		slot.conservativeResize(slot_i + 4);
 		for (int i = 0; i < 4; ++i) {
 			label_vertices.push_back(corners.row(i) + offset);
+			on_mesh_vertices.push_back(corners.row(i));
+			vertex_layers.push_back(layer);
 			label_uvs.push_back(uv.row(i));
 			slot[slot_i + i] = s + i;
 		}
@@ -334,6 +341,133 @@ namespace hlk {
 	void LabeledQuadMesh::set_glyph(const Eigen::VectorXi& slot, const Eigen::MatrixXd& glyph, const Eigen::RowVector4d& color)
 	{
 		hlk::set_glyph(LUV, slot, glyph, color, UV, C);
+	}
+
+	// TODO - Make this its own function that subdivides a list of vertex properties
+	// Will need to either re-implement false_barycentric_subdivision, or zero pad / 
+	// split all properties to be nx3 matrices
+	void refine_mesh(
+		const Eigen::MatrixXd& V, 
+		const Eigen::MatrixXi& F,
+		const Eigen::MatrixXd& UV,
+		const Eigen::MatrixXd& layers,
+		int iterations,
+		Eigen::MatrixXd& V_out,
+		Eigen::MatrixXi& F_out,
+		Eigen::MatrixXd& UV_out,
+		Eigen::MatrixXd& layers_out,
+		Eigen::MatrixXd& origin_verts) 
+	{
+
+		// Make a mapping of vertices to the slots that they belong to
+		origin_verts = Eigen::MatrixXd::Zero(V.rows(), 3);
+		for (int i = 0; i < V.rows(); ++i) {
+			origin_verts(i, 0) = i;
+		}
+
+		Eigen::MatrixXd V_tmp, UV_tmp, layers_tmp, origin_verts_tmp;
+		Eigen::MatrixXi F_tmp;
+
+		V_out = V;
+		F_out = F;
+		
+		// Pad out UV and layers to be nx3
+		UV_out = Eigen::MatrixXd::Zero(V.rows(), 3);
+		layers_out = Eigen::MatrixXd::Zero(V.rows(), 3);
+		UV_out.block(0, 0, V.rows(), 2) = UV;
+		layers_out.block(0, 0, V.rows(), 1) = layers;
+
+		for (int i = 0; i < iterations; ++i) {
+			igl::false_barycentric_subdivision(V_out, F_out, V_tmp, F_tmp);
+			igl::false_barycentric_subdivision(UV_out, F_out, UV_tmp, F_tmp);
+			igl::false_barycentric_subdivision(layers_out, F_out, layers_tmp, F_tmp);
+			igl::false_barycentric_subdivision(origin_verts, F_out, origin_verts_tmp, F_tmp);
+			V_out = V_tmp;
+			F_out = F_tmp;
+			UV_out = UV_tmp;
+			layers_out = layers_tmp;
+			origin_verts = origin_verts_tmp;
+		}
+	}
+
+	void LabeledQuadMesh::remap_to_surface(Eigen::MatrixXd& SV, Eigen::MatrixXi& SF, int subdivision_iters)
+	{
+		Eigen::MatrixXd original_vertices, original_layers, subdiv_verts, subdiv_uv, subdiv_layers, from_verts;
+		Eigen::MatrixXi subdiv_F;
+		original_vertices.resize(on_mesh_vertices.size(), 3);
+		original_layers.resize(on_mesh_vertices.size(), 1);
+		for (int i = 0; i < on_mesh_vertices.size(); ++i) {
+			original_vertices.row(i) = on_mesh_vertices[i];
+			original_layers(i, 0) = vertex_layers[i];
+		}
+
+		
+
+		refine_mesh(
+			original_vertices, 
+			LF, 
+			LUV, 
+			original_layers, 
+			subdivision_iters, 
+			subdiv_verts, 
+			subdiv_F, 
+			subdiv_uv, 
+			subdiv_layers,
+			from_verts);
+		
+		std::vector<std::vector<int>> vtx_to_subverts(on_mesh_vertices.size());
+		for (int i = 0; i < from_verts.rows(); ++i) {
+			int from = (int)from_verts(i, 0);
+			vtx_to_subverts[from].push_back(i);
+		}
+
+		Eigen::VectorXd dists;
+		Eigen::VectorXi indices;
+		Eigen::MatrixXd closest, FN;
+		// This function discards the barycentric coordinates :(
+		// We'll use the per-face normals to expand the shell
+		igl::point_mesh_squared_distance(subdiv_verts, SV, SF, dists, indices, closest);
+		igl::per_face_normals(SV, SF, FN);
+
+		LV = closest;
+		LF = subdiv_F;
+		LUV = subdiv_uv.block(0,0,subdiv_uv.rows(), 2);
+
+		UV = subdiv_uv;
+
+		C.resize(LV.rows(), 4);
+		for (int i = 0; i < LV.rows(); ++i) {
+			C.row(i) = Eigen::RowVector4d(0.0, 0.0, 0.0, 0.0);
+			LV.row(i) += subdiv_layers(i,0) * FN.row(indices[i]) * ((double)igl::FLOAT_EPS) * 5000;
+		}
+
+		std::vector<std::vector<Eigen::VectorXi>*> slot_sets;
+		slot_sets.push_back(&slots);
+		slot_sets.push_back(&vertex_slots);
+		slot_sets.push_back(&dual_half_edge_slots);
+		slot_sets.push_back(&half_edge_slots);
+		slot_sets.push_back(&edge_slots);
+		slot_sets.push_back(&quad_slots);
+		slot_sets.push_back(&quadrant_slots);
+
+		
+
+		// Update the slots
+		for (auto slot_set : slot_sets) {
+			for (int i = 0; i < slot_set->size(); ++i) {
+				std::vector<int> new_slot;
+				Eigen::VectorXi& old_slot = (*slot_set)[i];
+				for (int j = 0; j < old_slot.size(); ++j) {
+					for (int new_vert : vtx_to_subverts[old_slot[j]]) {
+						new_slot.push_back(new_vert);
+					}
+				}
+				old_slot.resize(new_slot.size());
+				for (int j = 0; j < new_slot.size(); ++j) {
+					old_slot[j] = new_slot[j];
+				}
+			}
+		}
 	}
 
 }
