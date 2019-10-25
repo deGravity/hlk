@@ -1,3 +1,6 @@
+#define IGL_VIEWER_VIEWER_QUIET 1
+// This does nothing during static compilation - will need to add it to the
+// CMAKE for it to stick
 #include <iostream>
 
 #include <igl/file_dialog_open.h>
@@ -13,6 +16,7 @@
 #include "remeshing_plugin.h"
 #include "labeled_quad_mesh.h"
 #include "glyph.h"
+#include "labeling_ui.h"
 
 using namespace hlk;
 
@@ -149,7 +153,6 @@ void main_labeling() {
 
 	viewer.launch();
 
-
 }
 
 void main_metcap() {
@@ -215,7 +218,14 @@ void main()
 
 }
 
+void main_labeler() {
+	hlk::LabelingUI labeling_ui;
+	igl::opengl::glfw::Viewer viewer;
+	viewer.plugins.push_back(&labeling_ui);
+	viewer.launch();
+}
+
 int main(void) {
-	main_meshing();
+	main_labeler();
 	return 0;
 }
