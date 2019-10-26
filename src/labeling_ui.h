@@ -2,10 +2,11 @@
 
 #include <igl/opengl/glfw/imgui/ImGuiMenu.h>
 #include <igl/png/texture_from_file.h>
+#include <igl/file_dialog_open.h>
 
 #include <string>
 
-//#include "coarse_knit_mesh.h"
+#include "coarse_knit_mesh.h"
 
 namespace hlk {
 	class LabelingUI : public igl::opengl::glfw::imgui::ImGuiMenu {
@@ -13,7 +14,7 @@ namespace hlk {
 
 		//void set_mesh(CoarseKnitMesh m);
 
-		void load_mesh(std::string obj_file);
+		bool load_quad_mesh_file();
 
 		bool mouse_down(int button, int modifier);
 
@@ -25,7 +26,7 @@ namespace hlk {
 
 	private:
 
-		//CoarseKnitMesh M;
+		CoarseKnitMesh M;
 
 		enum Tool {
 			ERASER, // Remove constraints
@@ -57,11 +58,17 @@ namespace hlk {
 
 		bool is_dragging = false;
 		igl::opengl::glfw::Viewer::MouseButton dragging_button = igl::opengl::glfw::Viewer::MouseButton::Left;
-		
+
 
 		// Whether to re-run the solver on mouse-up or not
 		bool auto_solve;
 
+		// Texture Names - TODO - We probably want a second data structure to hold a database of these
+		std::vector<char*> textures{ "stockinette", "ribbing" };
+		int current_texture = 0;
+
+		// Debug Tooltips On
+		bool show_debug_tooltip = false;
 
 		// Texture Handles for UI
 		bool textures_loaded = false;

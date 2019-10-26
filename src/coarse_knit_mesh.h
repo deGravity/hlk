@@ -36,16 +36,19 @@ namespace hlk {
 	// linking structure since the mesh class allows us to query all
 	// relevant neighbors
 
+	// Forward Declarations
+	struct CoarseKnitEdge; 
+	struct CoarseKnitMesh;
+	struct CoarseKnitQuad;
+	struct CoarseKnitSide;
 
 	struct CoarseKnitEdge {
-		CoarseKnitEdge(Optimizer& opt, double len, int i, CoarseKnitMesh* m);
+		CoarseKnitEdge(Optimizer& geo_opt, Optimizer& topo_opt, double len, int i, CoarseKnitMesh* m);
 		std::shared_ptr<BoolProp> is_seam;
-		z3::expr seam_count;
-		std::shared_ptr<CoarseKnitSide> a;
-		std::shared_ptr<CoarseKnitSide> b;
+		std::shared_ptr<z3::expr> seam_count;
 		int index;
 		CoarseKnitMesh* mesh;
-		void print_info(std::string line_prefix);
+		std::string info();
 
 		double length;
 		std::shared_ptr<IntProp> num_stitches;
@@ -59,16 +62,15 @@ namespace hlk {
 
 	struct CoarseKnitQuad {
 		
-		CoarseKnitQuad(Optimizer& opt, int i, CoarseKnitMesh* m);
+		CoarseKnitQuad(Optimizer& geo_opt, Optimizer& topo_opt, int i, CoarseKnitMesh* m);
 		std::shared_ptr<IntProp> time;
 		std::shared_ptr<z3::expr> orientation;
 		ShapingType shaping_distribution;
 		ShapingType short_row_distribution;
-		std::vector<std::shared_ptr<CoarseKnitEdge>> sides;
 		int index;
 		CoarseKnitMesh* mesh;
 		void setup_orientation();
-		void print_info(std::string line_prefix);
+		std::string info();
 		Eigen::Matrix<bool, -1, -1> texture;
 		Eigen::Vector3d texture_color;
 		Eigen::Vector2i texture_uv;
@@ -86,17 +88,14 @@ namespace hlk {
 	};
 
 	struct CoarseKnitSide {
-		CoarseKnitSide(Optimizer& opt, int i, CoarseKnitMesh* m);
+		CoarseKnitSide(Optimizer& geo_opt, Optimizer& topo_opt, int i, CoarseKnitMesh* m);
 		std::shared_ptr<BoolProp> is_loop;
 		std::shared_ptr<BoolProp> is_out;
 		std::shared_ptr<IntProp> time;
 		bool is_border;
-		std::shared_ptr<CoarseKnitEdge> edge;
-		std::shared_ptr<CoarseKnitSide> opposite;
-		std::shared_ptr<CoarseKnitQuad> face;
 		int index;
 		CoarseKnitMesh* mesh;
-		void print_info(std::string line_prefix);
+		std::string info();
 
 		std::shared_ptr<IntProp> num_stitches;
 
@@ -151,5 +150,9 @@ namespace hlk {
 		// Initialize Constraints
 		// Set Initial Textures
 		virtual void init();
+
+		hlk::Optimizer topology_optimizer;
+		hlk::Optimizer geometry_optimizer;
+
 	};
 }

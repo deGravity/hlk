@@ -3,7 +3,15 @@
 #include <imgui/imgui.h>
 
 namespace hlk {
-
+	bool LabelingUI::load_quad_mesh_file()
+	{
+		std::string filename = igl::file_dialog_open();
+		if (filename.size() > 0) {
+			// TODO load the file
+			return true;
+		}
+		return false;
+	}
 	bool LabelingUI::mouse_down(int button, int modifier) {
 		if (igl::opengl::glfw::imgui::ImGuiMenu::mouse_down(button, modifier)) return true;
 		
@@ -37,45 +45,55 @@ namespace hlk {
 
 	void LabelingUI::draw_viewer_menu() {
 		load_textures();
-		if (ImGui::ImageButton((void*)(intptr_t)(current_tool == ERASER ? eraser_pressed : eraser_tex), ImVec2(32, 32))) {
-			current_tool = ERASER;
-			instructions = eraser_instructions;
-		}
+		auto tooltip = [](std::string text) {
+			if (ImGui::IsItemHovered()) {
+				ImGui::BeginTooltip();
+				ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+				ImGui::TextUnformatted(text.c_str());
+				ImGui::PopTextWrapPos();
+				ImGui::EndTooltip();
+			}
+		};
+		auto mode_selector = [&](Tool t, GLuint pressed, GLuint unpressed, std::string tool_instructions, std::string name) {
+			if (ImGui::ImageButton((void*)(intptr_t)(current_tool == t ? pressed : unpressed), ImVec2(32, 32))) {
+				current_tool = t;
+				instructions = tool_instructions;
+			}
+			tooltip(name);
+		};
+
+		mode_selector(ERASER, eraser_pressed, eraser_tex, eraser_instructions, "Eraser Tool");
 		if (current_tool == ERASER) {
 			ImGui::RadioButton("Erase Orientations", (int*)&eraser_mode, ERASE_ORIENTATIONS);
 			ImGui::RadioButton("Erase Seams", (int*)&eraser_mode, ERASE_SEAMS);
 			ImGui::RadioButton("Erase Textures", (int*)&eraser_mode, ERASE_TEXTURES);
 			ImGui::RadioButton("Erase Constraints", (int*)&eraser_mode, ERASE_CONSTRAINTS);
 		}
-		if (ImGui::ImageButton((void*)(intptr_t)(current_tool == TEXTURER ? brush_pressed : brush_tex), ImVec2(32, 32))) {
-			current_tool = TEXTURER;
-			instructions = texturer_instructions;
-		}
+		mode_selector(TEXTURER, brush_pressed, brush_tex, texturer_instructions, "Texturing Tool");
 		if (current_tool == TEXTURER) {
-
+			ImGui::SameLine();
+			ImGui::PushItemWidth(100);
+			ImGui::Combo("", &current_texture, textures.data(), textures.size());
+			ImGui::PopItemWidth();
 		}
-		if (ImGui::ImageButton((void*)(intptr_t)(current_tool == SEAMER ? seamer_pressed : seamer_tex), ImVec2(32, 32))) {
-			current_tool = SEAMER;
-			instructions = seamer_instructions;
-		}
+		mode_selector(SEAMER, seamer_pressed, seamer_tex, seamer_instructions, "Seaming Tool");
 		if (current_tool == SEAMER) {
 
 		}
-		if (ImGui::ImageButton((void*)(intptr_t)(current_tool == ORIENTER ? orienter_pressed : orienter_tex), ImVec2(32, 32))) {
-			current_tool = ORIENTER;
-			instructions = orienter_instructions;
-		}
+		mode_selector(ORIENTER, orienter_pressed, orienter_tex, orienter_instructions, "Orienting Tool");
 		if (current_tool == ORIENTER) {
 
 		}
-		if (ImGui::ImageButton((void*)(intptr_t)(current_tool == MEASURER ? measurer_pressed : measurer_tex), ImVec2(32, 32))) {
-			current_tool = MEASURER;
-			instructions = measurer_instructions;
-		}
+		mode_selector(MEASURER, measurer_pressed, measurer_tex, measurer_instructions, "Constraints Tool");
 		if (current_tool == MEASURER) {
 
 		}
 		ImGui::Text(instructions.c_str());
+
+		if (ImGui::Button("Load Quad Mesh")) {
+			load_quad_mesh_file();
+		}
+	
 	}
 
 	// Cannot call this until _after_ a viewer window is open
