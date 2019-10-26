@@ -48,10 +48,10 @@ namespace hlk {
 		EraserMode eraser_mode = ERASE_ORIENTATIONS;
 
 		std::string eraser_instructions = "CTRL-Click and drag to erase.";
-		std::string texturer_instructions = "CTRL-Click and drag to add texture.";
-		std::string seamer_instructions = "CTRL-Click and drag to join seams.";
-		std::string orienter_instructions = "CTRL-CLick and drag to set orientation. Left click for loop, right click for yarn.";
-		std::string measurer_instructions = "CTRL-Click and drag to add a constraint. Click an outgoing edge to add a constraint. Shift-Click to add separate constraints.";
+		std::string texturer_instructions = "CTRL-Click and drag to add\ntexture.";
+		std::string seamer_instructions = "CTRL-Click and drag to join\nseams.";
+		std::string orienter_instructions = "CTRL-CLick and drag to set\norientation. Left click for loop,\nright click for yarn.";
+		std::string measurer_instructions = "CTRL-Click and drag to add a\nconstraint. Click an outgoing\nedge to add a constraint.\nShift-Click to add separate\nconstraints.";
 
 		std::string instructions = eraser_instructions;
 

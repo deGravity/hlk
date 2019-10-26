@@ -3,9 +3,9 @@ project(hlk)
 
 set(PROJECT_NAME hlk)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} 
-		                  ${CMAKE_CURRENT_SOURCE_DIR}/cmake
-                      ${CMAKE_CURRENT_SOURCE_DIR}/ext/libQEx/cmake)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake
+                      ${CMAKE_CURRENT_SOURCE_DIR}/ext/libQEx/cmake
+                      ${CMAKE_MODULE_PATH})
 
 # LibIGL options - may neet to use option instead of set
 option(LIBIGL_WITH_PNG "Use PNG" ON)
