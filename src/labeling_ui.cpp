@@ -1,13 +1,24 @@
 #include "labeling_ui.h"
 
 #include <imgui/imgui.h>
+#include <igl/png/readPNG.h>
+
+#include "read_quad_mesh.h"
 
 namespace hlk {
 	bool LabelingUI::load_quad_mesh_file()
 	{
 		std::string filename = igl::file_dialog_open();
 		if (filename.size() > 0) {
-			// TODO load the file
+			read_quad_mesh(filename, M);
+
+			viewer->data().set_mesh(M.LV, M.LF);
+			viewer->data().set_texture(R, G, B, A);
+			viewer->data().set_uv(M.UV);
+			viewer->data().show_texture = true;
+			viewer->data().show_lines = false;
+			viewer->data().set_colors(M.C);
+
 			return true;
 		}
 		return false;
@@ -99,6 +110,11 @@ namespace hlk {
 	// Cannot call this until _after_ a viewer window is open
 	void LabelingUI::load_textures() {
 		if (!textures_loaded) {
+			// TODO - This might come back to bite us later if we
+			// want to set textures before the viewer loads.
+			// Consider moving the glyphs loading to init or
+			// constructor
+			igl::png::readPNG("glyphs.png", R, G, B, A);
 			igl::png::texture_from_file("eraser.png", eraser_tex);
 			igl::png::texture_from_file("brush.png", brush_tex);
 			igl::png::texture_from_file("seamer.png", seamer_tex);

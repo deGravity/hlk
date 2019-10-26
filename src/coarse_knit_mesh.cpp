@@ -1,12 +1,31 @@
 #include "coarse_knit_mesh.h"
 
+#include "glyphs.h"
+#include "glyph.h"
+
 namespace hlk {
 
+	const char* nth_label(std::string label, int n) {
+		return (label + "_" + std::to_string(n)).c_str();
+	}
+
+	void CoarseKnitMesh::update_textures()
+	{
+		for (auto& edge : edges) {
+			edge.update_texture();
+		}
+		for (auto& side : sides) {
+			side.update_texture();
+		}
+		for (auto& quad : quads) {
+			quad.update_texture();
+		}
+	}
 
 	void CoarseKnitMesh::init()
 	{
 		LabeledQuadMesh::init();
-		
+
 		// Create Topological Entities
 		// TODO - If optimization is buggy, switch these back to smart pointers,
 		// the error is probably due to copy constructor shenanigans
@@ -27,17 +46,116 @@ namespace hlk {
 			edges.emplace_back(geometry_optimizer, topology_optimizer, i, this);
 		}
 
+		// Find singularity connecting edges and add them to seams
+		// TODO - We can probably split these at intersections
+		// is it worth doing?
+		for (int sv : singular_vertices) {
+			for (int side : out_sides(sv)) {
+				auto separatrix = side_loop(side);
+				if (is_singularity[side_v(separatrix.back())]) {
+					if (!is_boundary_side[side]) {
+						int sep_seam = edges[sides_to_edges[side]].seam;
+						if (sep_seam == -1) {
+							sep_seam = seams.size();
+							seams.emplace_back(geometry_optimizer.get_bool_prop(nth_label("seam", sep_seam)));
+						}
+						for (int seam_side : separatrix) {
+							edges[sides_to_edges[seam_side]].seam = sep_seam;
+						}
+					}
+				}
+			}
+		}
+
+		// Make Everything Invisible to start
+		for (auto& slot : slots) {
+			set_glyph(slot, glyphs::NONE, color::INVISIBLE);
+		}
+
+		// White Quad Background and border lines
+		// (Should really be displaying the underlying mesh for this)
+		for (auto& slot : quad_slots) {
+			set_glyph(slot, glyphs::SOLID_LINE, color::WHITE);
+		}
+
+		for (int i = 0; i < 4 * m; ++i) {
+			if (is_boundary_side[i]) {
+				set_glyph(half_edge_slots[i], glyphs::THIN_SOLID_LINE, color::GREY);
+			}
+		}
+
+		for (auto& slot : edge_slots) {
+			set_glyph(slot, glyphs::THIN_SOLID_LINE, color::GREY);
+		}
+
+		// TODO - Bug with the solver! It's probably due to not using shared pointers
+		// try changing this next.
+		//update_textures();
+		// Solve the SMT problem and update the textures
+		/*if (!optimize_geometry()) {
+			std::cout << "Unable to initialize" << std::endl;
+		}
+		*/
+
 	}
 
-	const char* nth_label(std::string label, int n) {
-		return (label + "_" + std::to_string(n)).c_str();
-	}
+	
 
-	CoarseKnitEdge::CoarseKnitEdge(Optimizer & geo_opt, Optimizer & topo_opt, double len, int i, CoarseKnitMesh * m)
+	CoarseKnitEdge::CoarseKnitEdge(Optimizer & geo_opt, Optimizer & topo_opt, int i, CoarseKnitMesh * m)
 	{
-		is_seam = geo_opt.get_bool_prop(nth_label("is_seam", i));
+		seam = -1;
+		//is_seam = geo_opt.get_bool_prop(nth_label("is_seam", i));
 		index = i;
 		mesh = m;
+	}
+	std::vector<z3::expr> CoarseKnitEdge::get_constraints()
+	{
+		std::vector<z3::expr> constraints;
+		int side_a_idx = mesh->edges_to_sides(index, 0);
+		int side_b_idx = mesh->edges_to_sides(index, 1);
+		auto& side_a = mesh->sides[side_a_idx];
+		auto& side_b = mesh->sides[side_b_idx];
+		auto& time_a = mesh->quads[side_a_idx / 4].time->var;
+		auto& time_b = mesh->quads[side_b_idx / 4].time->var;
+
+
+		auto edge_consistency = (side_a.is_loop == side_b.is_loop) && (side_a.is_out != side_b.is_out);
+		// TODO - Add more IntProp and BoolProp overloads to simplify time alignment
+		auto time_alignment = 
+			(side_a.is_loop && side_a.is_out && time_a < time_b) || 
+			(side_a.is_loop && !side_a.is_out && time_b < time_a) || 
+			(!side_a.is_loop && time_a == time_b);
+		if (seam >= 0) {
+			constraints.push_back(
+				mesh->seams[seam]->var || (edge_consistency && time_alignment));
+		}
+		else {
+			constraints.push_back(edge_consistency && time_alignment);
+		}
+
+		return constraints;
+	}
+	void CoarseKnitEdge::update_texture()
+	{
+		if (seam >= 0) {
+			if (mesh->seams[seam]->val) {
+				if (mesh->seams[seam]->is_fixed) {
+					mesh->set_glyph(mesh->edge_slots[index], glyphs::SOLID_LINE, color::BLUE);
+				}
+				else {
+					mesh->set_glyph(mesh->edge_slots[index], glyphs::DASHED_LINE, color::BLUE);
+				}
+			}
+			else {
+				if (mesh->seams[seam]->is_fixed) {
+					mesh->set_glyph(mesh->edge_slots[index], glyphs::SOLID_LINE, color::GREY);
+				}
+				else {
+					mesh->set_glyph(mesh->edge_slots[index], glyphs::DASHED_LINE, color::GREY);
+				}
+			}
+
+		}
 	}
 	CoarseKnitQuad::CoarseKnitQuad(Optimizer & geo_opt, Optimizer & topo_opt, int i, CoarseKnitMesh * m)
 	{
@@ -45,37 +163,99 @@ namespace hlk {
 		short_row_distribution = NONE;
 		index = i;
 		mesh = m;
-		// TODO - I think we're not using this anymore...
+
 		time = geo_opt.get_int_prop(nth_label("time", i));
-
-		// TODO - Handle textures more gracefully
-		texture.resize(1, 1);
-		texture(0, 0) = false;
-		texture_color = Eigen::Vector3d(1, 1, 1);
-
-		// Setup Handedness
-
-		auto& left = m->sides[m->nth_side(i, 3)];
-		auto& center = m->sides[m->nth_side(i, 0)];
-		auto& right = m->sides[m->nth_side(i, 1)];
-
-		auto& ll = left.is_loop;
-		auto& ld = left.is_out;
-		auto& cl = center.is_loop;
-		auto& cd = center.is_out;
-		auto& rl = right.is_loop;
-		auto& rd = right.is_out;
-
-		auto left_switches = cl != ll;
-		auto right_switches = cl != rl;
-		auto right_ccw = cl != (cd == rd);
-		auto left_cw = cl != (cd == ld);
-		auto is_ccw = (right_switches && right_ccw) || (left_switches && !left_cw);
-
-		handedness = std::make_shared<z3::expr>(is_ccw);
+	}
+	void CoarseKnitQuad::update_texture()
+	{
+		// TODO - Print Glyphs for inc/dec type
 	}
 	CoarseKnitSide::CoarseKnitSide(Optimizer & geo_opt, Optimizer & topo_opt, int i, CoarseKnitMesh * m)
 	{
 		is_loop = geo_opt.get_bool_prop(nth_label("is_loop", i));
+	}
+
+	std::vector<z3::expr> CoarseKnitSide::get_constraints()
+	{
+		std::vector<z3::expr> constraints;
+		int u = mesh->side_u(index);
+		bool is_border = mesh->is_border_vertex[u];
+		int valence = mesh->valence[u];
+		// For our purposes, valences of multiples of 4 (3 on borders)
+		// do not count as singularities, so calculate this explicitly
+		bool is_regular = (is_border && (valence % 3 == 0)) || (valence % 4 == 0);
+		if (is_regular) {
+			
+			int prev_idx = mesh->prev_side(index);
+			auto& prev_is_loop = mesh->sides[prev_idx].is_loop;
+			auto& prev_is_out = mesh->sides[prev_idx].is_out;
+
+			// Handedness order is loop_in -> yarn_out -> loop_out -> yarn_in
+			// The orientation (in/out) switches after loops and stays the
+			// same after yarns, while the direction (loop/yarn) always switches.
+			// If both conditions are true, then the corner has proper handedness
+			auto orientation_check = (prev_is_out == is_out) == prev_is_loop;
+			auto direction_check = prev_is_loop != is_loop;
+			constraints.push_back(orientation_check && direction_check);
+
+		}
+		else {
+			// TODO - Do we need to count the effective degree of each
+			// singular vertex?
+			// Are there extra constraints here (like we can at most skip one
+			// position in the ordering, or at most one in a row?)
+			// If the label is completely the same, then we have effectively added
+			// a vertex (the quad could be thought of as split)
+			// If the label is the same direction but opposite orientation, then
+			// we have effectively removed a vertex (merging quads).
+			// In reality, performing either of these operations would create
+			// T-Junctions in the mesh
+			// We may want to constrain that singular corners are either normal,
+			// or in one of these two cases. The other cases would reverse the
+			// handedness. This may not be necessary, however, since the rest
+			// of the mesh might enforce consistency. If we strip down to just
+			// a singularity graph, however, these extra constraints would definitely
+			// be warranted.
+			// There may also be a desired constraint on the types of edges at which
+			// we allow merging and splitting due to the T-Junctions that they
+			// will create.
+		}
+		return constraints;
+	}
+	void CoarseKnitSide::update_texture()
+	{
+		auto& arrow = is_loop->is_fixed ? glyphs::SOLID_ARROW : glyphs::DASHED_ARROW;
+		auto& line = is_loop->is_fixed ? glyphs::SOLID_LINE : glyphs::DASHED_LINE;
+		auto& s_color = is_loop->val ? color::ORANGE : color::GREEN;
+		auto& symbol = is_out->val ? line : arrow;
+		mesh->set_glyph(mesh->dual_half_edge_slots[index], symbol, s_color);
+	}
+	bool CoarseKnitMesh::optimize_geometry()
+	{
+		geometry_optimizer.push();
+
+		for (auto& edge : edges) {
+			for (auto constraint : edge.get_constraints()) {
+				geometry_optimizer.add_constraint(constraint);
+			}
+		}
+		for (auto& side : sides) {
+			for (auto constraint : side.get_constraints()) {
+				geometry_optimizer.add_constraint(constraint);
+			}
+		}
+
+		auto result = geometry_optimizer.solve();
+
+		if (result.has_result) {
+			geometry_optimizer.update_all_props(*result.result_model);
+			
+		}
+		else {
+			// TODO - Get Information from the UNSAT core
+		}
+
+		geometry_optimizer.pop();
+		return result.has_result;
 	}
 }

@@ -14,8 +14,8 @@ namespace hlk {
 	};
 
 	enum KnitOrientation {
-		IN,
-		OUT
+		KNIT_IN,
+		KNIT_OUT
 	};
 
 	enum ShapingType
@@ -27,15 +27,6 @@ namespace hlk {
 		DISTRIBUTED // Only Valid for Inc/Dec
 	};
 
-
-
-	// TODO - These definitions are mostly just copied from the old code
-	// a better detangling of the mesh structure from the dual-graph
-	// structure could be very useful.
-	// For instance, we don't really need to completely duplicate the
-	// linking structure since the mesh class allows us to query all
-	// relevant neighbors
-
 	// Forward Declarations
 	struct CoarseKnitEdge; 
 	struct CoarseKnitMesh;
@@ -43,77 +34,53 @@ namespace hlk {
 	struct CoarseKnitSide;
 
 	struct CoarseKnitEdge {
-		CoarseKnitEdge(Optimizer& geo_opt, Optimizer& topo_opt, double len, int i, CoarseKnitMesh* m);
-		std::shared_ptr<BoolProp> is_seam;
-		std::shared_ptr<z3::expr> seam_count;
+		// Data We Definitely Want
+		CoarseKnitEdge(Optimizer& geo_opt, Optimizer& topo_opt, int i, CoarseKnitMesh* m);
+		int seam;
 		int index;
 		CoarseKnitMesh* mesh;
-		std::string info();
 
-		double length;
-		std::shared_ptr<IntProp> num_stitches;
-		std::shared_ptr<z3::expr> size_error;
-
-		void save_labeling(std::ofstream& f);
-		void load_labeling(std::ifstream& f);
-		void save_sizing(std::ofstream& f);
-		void load_sizing(std::ifstream& f);
+		std::vector<z3::expr> get_constraints();
+		void update_texture();
 	};
 
 	struct CoarseKnitQuad {
 		
 		CoarseKnitQuad(Optimizer& geo_opt, Optimizer& topo_opt, int i, CoarseKnitMesh* m);
 		std::shared_ptr<IntProp> time;
-		std::shared_ptr<z3::expr> orientation;
-		ShapingType shaping_distribution;
-		ShapingType short_row_distribution;
 		int index;
 		CoarseKnitMesh* mesh;
-		void setup_orientation();
-		std::string info();
-		Eigen::Matrix<bool, -1, -1> texture;
-		Eigen::Vector3d texture_color;
-		Eigen::Vector2i texture_uv;
-		Eigen::MatrixXd texture_coords;
-		bool orientation_sol;
-		Eigen::Vector2i texture_size;
-		void InitTextureSize();
 
-		z3::expr is_normal();
+		ShapingType shaping_distribution;
+		ShapingType short_row_distribution;
 
-		bool is_splittable = false;
-
-		void save_labeling(std::ofstream& f);
-		void load_labeling(std::ifstream& f);
+		// There are no quad-specific geometry constraints
+		//std::vector<z3::expr> get_constraints();
+		void update_texture();
 	};
 
 	struct CoarseKnitSide {
 		CoarseKnitSide(Optimizer& geo_opt, Optimizer& topo_opt, int i, CoarseKnitMesh* m);
 		std::shared_ptr<BoolProp> is_loop;
 		std::shared_ptr<BoolProp> is_out;
-		std::shared_ptr<IntProp> time;
-		bool is_border;
 		int index;
 		CoarseKnitMesh* mesh;
-		std::string info();
 
-		std::shared_ptr<IntProp> num_stitches;
-
-		void save_labeling(std::ofstream& f);
-		void load_labeling(std::ifstream& f);
-		void save_sizing(std::ofstream& f);
-		void load_sizing(std::ifstream& f);
+		std::vector<z3::expr> get_constraints();
+		void update_texture();
 	};
 
 	struct CoarseKnitMesh : LabeledQuadMesh {
 		
-		std::vector<std::vector<int>> seams;
+		std::vector<std::shared_ptr<BoolProp>> seams;
 		std::vector<std::vector<int>> size_lines;
 		std::vector<std::vector<int>> symmetries;
 
 		std::vector<CoarseKnitEdge> edges;
 		std::vector<CoarseKnitQuad> quads;
 		std::vector<CoarseKnitSide> sides;
+
+		bool optimize_geometry();
 
 		// Copy shaping between quads
 		void copy_shaping(int origin_side, int dest_side);
@@ -144,6 +111,7 @@ namespace hlk {
 		void erase_textue(int side);
 		void erase_shaping(int side);
 
+		void update_textures();
 
 		// Construct Linked Structure
 		// Find base complex seams and initialize

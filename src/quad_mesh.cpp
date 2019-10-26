@@ -80,7 +80,7 @@ namespace hlk {
 		// Compute edges (pairs of flip-adjacent sides)
 		int num_edges = (4 * m - boundary_sides.size()) / 2;
 		e = num_edges;
-		sides_to_edges = std::vector<int>(4 * m);
+		sides_to_edges = std::vector<int>(4 * m, -1);
 		edges_to_sides.resize(num_edges, 2);
 
 		// Compute unique edge representatives for all sides

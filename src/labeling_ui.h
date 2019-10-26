@@ -77,6 +77,9 @@ namespace hlk {
 
 		void load_textures();
 
+		Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> R, G, B, A;
+
+
 		/*
 		Icon Credits:
 		<div>Icons made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/"             title="Flaticon">www.flaticon.com</a></div>

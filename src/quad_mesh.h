@@ -32,7 +32,7 @@ namespace hlk {
 		Eigen::MatrixXi F_t;
 
 		// Edges
-		std::vector<int> sides_to_edges;
+		std::vector<int> sides_to_edges; // -1 if it is a border
 		Eigen::MatrixXi edges_to_sides;
 
 		// Unique Sides - A single rep chosen for each side

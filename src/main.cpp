@@ -103,9 +103,9 @@ void main_labeling() {
 	std::string subdivided_jumper = R"(C:\Users\Ben\research\knitting\stitchgraph\data\clothing_models\jumper_subdivided.obj)";
 	std::string jumper = R"(C:\Users\Ben\research\knitting\stitchgraph\data\clothing_models\jumper.obj)";
 
-	hlk::read_quad_mesh(seamless_jumper, Q);
-	hlk::read_quad_mesh(subdivided_jumper, SQ);
-	Q.remap_to_surface(SQ.V, SQ.F_t);
+	hlk::read_quad_mesh(igl::file_dialog_open(), Q);
+	//hlk::read_quad_mesh(subdivided_jumper, SQ);
+	//Q.remap_to_surface(SQ.V, SQ.F_t);
 
 	for (auto& slot : Q.slots) {
 		Q.set_glyph(slot, hlk::glyphs::NONE, hlk::color::INVISIBLE);

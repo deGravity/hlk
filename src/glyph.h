@@ -42,7 +42,7 @@ namespace hlk {
 			return Eigen::RowVector4d(1.0, 0.0, 0.0, 1.0);
 		}();
 		static Eigen::RowVector4d GREEN = [] {
-			return Eigen::RowVector4d(0.0, 1.0, 0.0, 1.0);
+			return Eigen::RowVector4d(0.149, 1.0, 0.149, 1.0);
 		}();
 		static Eigen::RowVector4d BLUE = [] {
 			return Eigen::RowVector4d(0.0, 0.0, 1.0, 1.0);
@@ -55,6 +55,12 @@ namespace hlk {
 		}();
 		static Eigen::RowVector4d INVISIBLE = [] {
 			return Eigen::RowVector4d(0.0, 0.0, 0.0, 0.0);
+		}();
+		static Eigen::RowVector4d GREY = [] {
+			return Eigen::RowVector4d(0.5, 0.5, 0.5, 1.0);
+		}();
+		static Eigen::RowVector4d ORANGE = [] {
+			return Eigen::RowVector4d(1.0, 0.564, 0.0, 1.0);
 		}();
 	}
 }
