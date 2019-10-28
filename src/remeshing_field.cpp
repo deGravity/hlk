@@ -118,8 +118,8 @@ void RemeshingPlugin::interpolate_field() {
         std::vector<std::vector<Eigen::Vector3d>> wale_constraints;
         for (FaceVector& fv : face_vectors) {
             if (fv.assigned[0] || fv.assigned[1]) {
-                constrained_faces.push_back(fv.face_id);
                 // for polyvector field interpolation
+                constrained_faces.push_back(fv.face_id);
                 std::vector<Eigen::Vector3d> face_constraints;
                 if (fv.assigned[0] && fv.assigned[1]) {
                     face_constraints = { fv.frame[0], fv.frame[1], -fv.frame[0], -fv.frame[1] };
@@ -134,16 +134,16 @@ void RemeshingPlugin::interpolate_field() {
                 }
                 constraints.push_back(face_constraints);
                 // for curl reduction precomputation
-                std::vector<Eigen::Vector3d> wale_face_constraints;
                 if (fv.assigned[1]) {
                     wale_constrained_faces.push_back(fv.face_id);
+                    std::vector<Eigen::Vector3d> wale_face_constraints;
                     if (fv.assigned[0]) {
                         wale_face_constraints = { fv.frame[1], fv.frame[0] };
                     } else {
                         wale_face_constraints = { fv.frame[1] };
                     }
+                    wale_constraints.push_back(wale_face_constraints);
                 }
-                wale_constraints.push_back(wale_face_constraints);
             }
 
         }
@@ -170,152 +170,147 @@ void RemeshingPlugin::interpolate_field() {
         }
 
         directional::polyvector_field(V, F, p_b, p_bc, rosy, polyvector_field);
-        has_direction_field = true;
-        has_curl = false;
-        use_raw_field = false;
-        return;
-    } 
-
-    Eigen::VectorXd S;
-
-    if (miq_mode == MIQMode::CROSS) {
-        // Set up cross field constraints.
-        int hard_constraint_count = 0;
-        int soft_constraint_count = 0;
-        for (auto& face_vector : face_vectors) {
-            if (face_vector.assigned[1]) { // use WALE direction only.
-                if (face_vector.is_hard) {
-                    ++hard_constraint_count;
-                } else {
-                    ++soft_constraint_count;
-                }
-            }
-        }
-
-        Eigen::VectorXi hard_constraint_indices(hard_constraint_count);
-        Eigen::MatrixXd hard_constraints(hard_constraint_count, 3);
-        Eigen::VectorXi soft_constraint_indices(soft_constraint_count);
-        Eigen::VectorXd soft_constraint_weights(soft_constraint_count);
-        Eigen::MatrixXd soft_constraints(soft_constraint_count, 3);
-        c_b.resize(hard_constraint_count + soft_constraint_count); c_b.setZero();
-        c_bc.resize(hard_constraint_count + soft_constraint_count, 6); c_bc.setZero();
-        c_blevel.resize(hard_constraint_count + soft_constraint_count); c_blevel.setZero();
-
-        int idx_hard = 0;
-        int idx_soft = 0;
-        int idx = 0;
-        for (auto& face_vector : face_vectors) {
-            if (face_vector.assigned[1]) {
-                if (face_vector.is_hard) {
-                    hard_constraint_indices[idx_hard] = face_vector.face_id;
-                    hard_constraints.row(idx_hard) = face_vector.frame[1].normalized();
-                    ++idx_hard;
-                } else {
-                    soft_constraint_indices[idx_soft] = face_vector.face_id;
-                    soft_constraint_weights[idx_soft] = 1.0;
-                    soft_constraints.row(idx_soft) = face_vector.frame[1].normalized();
-                    ++idx_soft;
-                }
-                c_b(idx) = face_vector.face_id;
-                c_bc.block<1, 3>(idx, 0) = face_vector.frame[1];
-                c_blevel(idx) = 1;
-                if (face_vector.assigned[0]) {
-                    c_bc.block<1, 3>(idx, 3) = face_vector.frame[0];
-                    c_blevel(idx) = 2;
-                }
-                ++idx;
-            }
-        }
-
-        igl::copyleft::comiso::nrosy(
-            V, F,
-            hard_constraint_indices, hard_constraints,
-            soft_constraint_indices, soft_constraint_weights, soft_constraints,
-            rosy, soft_constraint_strength, direction_field, S);
-
-        // Get all 4 direction vectors
-        igl::local_basis(V, F, B1, B2, B3);
-
+        directional::polyvector_to_raw(V, F, polyvector_field, rosy, rawField);
     } else {
-        // Set up frame field constraints. (SOFT ONLY!!)
-        std::vector<int> soft_constrained_faces;
-        std::vector<Eigen::MatrixXd> c1, c2;
-        for (FaceVector& fv : face_vectors) {
-            if (fv.assigned[0] && fv.assigned[1]) {
-                soft_constrained_faces.push_back(fv.face_id);
-                c1.push_back(fv.frame[0]);
-                c2.push_back(fv.frame[1]);
+        Eigen::VectorXd S;
+
+        if (miq_mode == MIQMode::CROSS) {
+            // Set up cross field constraints.
+            int hard_constraint_count = 0;
+            int soft_constraint_count = 0;
+            for (auto& face_vector : face_vectors) {
+                if (face_vector.assigned[1]) { // use WALE direction only.
+                    if (face_vector.is_hard) {
+                        ++hard_constraint_count;
+                    } else {
+                        ++soft_constraint_count;
+                    }
+                }
             }
+
+            Eigen::VectorXi hard_constraint_indices(hard_constraint_count);
+            Eigen::MatrixXd hard_constraints(hard_constraint_count, 3);
+            Eigen::VectorXi soft_constraint_indices(soft_constraint_count);
+            Eigen::VectorXd soft_constraint_weights(soft_constraint_count);
+            Eigen::MatrixXd soft_constraints(soft_constraint_count, 3);
+            c_b.resize(hard_constraint_count + soft_constraint_count); c_b.setZero();
+            c_bc.resize(hard_constraint_count + soft_constraint_count, 6); c_bc.setZero();
+            c_blevel.resize(hard_constraint_count + soft_constraint_count); c_blevel.setZero();
+
+            int idx_hard = 0;
+            int idx_soft = 0;
+            int idx = 0;
+            for (auto& face_vector : face_vectors) {
+                if (face_vector.assigned[1]) {
+                    if (face_vector.is_hard) {
+                        hard_constraint_indices[idx_hard] = face_vector.face_id;
+                        hard_constraints.row(idx_hard) = face_vector.frame[1].normalized();
+                        ++idx_hard;
+                    } else {
+                        soft_constraint_indices[idx_soft] = face_vector.face_id;
+                        soft_constraint_weights[idx_soft] = 1.0;
+                        soft_constraints.row(idx_soft) = face_vector.frame[1].normalized();
+                        ++idx_soft;
+                    }
+                    c_b(idx) = face_vector.face_id;
+                    c_bc.block<1, 3>(idx, 0) = face_vector.frame[1];
+                    c_blevel(idx) = 1;
+                    if (face_vector.assigned[0]) {
+                        c_bc.block<1, 3>(idx, 3) = face_vector.frame[0];
+                        c_blevel(idx) = 2;
+                    }
+                    ++idx;
+                }
+            }
+
+            igl::copyleft::comiso::nrosy(
+                V, F,
+                hard_constraint_indices, hard_constraints,
+                soft_constraint_indices, soft_constraint_weights, soft_constraints,
+                rosy, soft_constraint_strength, direction_field, S);
+
+        } else {
+            // Set up frame field constraints. (SOFT ONLY!!)
+            std::vector<int> soft_constrained_faces;
+            std::vector<Eigen::MatrixXd> c1, c2;
+            for (FaceVector& fv : face_vectors) {
+                if (fv.assigned[0] && fv.assigned[1]) {
+                    soft_constrained_faces.push_back(fv.face_id);
+                    c1.push_back(fv.frame[0]);
+                    c2.push_back(fv.frame[1]);
+                }
+            }
+            b.resize(soft_constrained_faces.size()); b.setZero();
+            bc1.resize(c1.size(), 3); bc1.setZero();
+            bc2.resize(c2.size(), 3); bc2.setZero();
+            for (int i = 0; i < soft_constrained_faces.size(); ++i) { b(i) = soft_constrained_faces[i]; }
+            for (int i = 0; i < c1.size(); ++i) { bc1.row(i) = c1[i]; }
+            for (int i = 0; i < c2.size(); ++i) { bc2.row(i) = c2[i]; }
+
+            // Interpolate the frame field.
+            igl::copyleft::comiso::frame_field(V, F, b, bc1, bc2, FF1, FF2);
+
+            // Deform the mesh to transform the frame field in a cross field
+            igl::frame_field_deformer(V, F, FF1, FF2, V_deformed, FF1_deformed, FF2_deformed);
+
+            // Compute face barycenters deformed mesh
+            igl::barycenter(V_deformed, F, B_deformed);
+
+            // Find the closest cross field to the deformed frame field
+            igl::frame_to_cross_field(V_deformed, F, FF1_deformed, FF2_deformed, X1_deformed);
+
+            // Find a smooth cross field that interpolates the deformed constraints
+            Eigen::MatrixXd bc_x(b.size(), 3);
+            for (unsigned i = 0; i < b.size(); ++i)
+                bc_x.row(i) = X1_deformed.row(b(i));
+
+            igl::copyleft::comiso::nrosy(
+                V,
+                F,
+                b,
+                bc_x,
+                Eigen::VectorXi(),
+                Eigen::VectorXd(),
+                Eigen::MatrixXd(),
+                rosy,
+                soft_constraint_strength,
+                X1_deformed,
+                S);
+            direction_field = X1_deformed;
+
+            // The other representative of the cross field is simply rotated by 90 degrees
+            igl::local_basis(V_deformed, F, B1, B2, B3);
+            X2_deformed =
+                igl::rotate_vectors(X1_deformed, Eigen::VectorXd::Constant(1, igl::PI / 2), B1, B2);
         }
-        b.resize(soft_constrained_faces.size()); b.setZero();
-        bc1.resize(c1.size(), 3); bc1.setZero();
-        bc2.resize(c2.size(), 3); bc2.setZero();
-        for (int i = 0; i < soft_constrained_faces.size(); ++i) { b(i) = soft_constrained_faces[i]; }
-        for (int i = 0; i < c1.size(); ++i) { bc1.row(i) = c1[i]; }
-        for (int i = 0; i < c2.size(); ++i) { bc2.row(i) = c2[i]; }
 
-        // Interpolate the frame field.
-        igl::copyleft::comiso::frame_field(V, F, b, bc1, bc2, FF1, FF2);
+        int s_count = 0;
+        for (int i = 0; i < S.rows(); ++i) {
+            s_count += S(i) > 0.01 ? 1 : 0;
+        }
+        std::cout << "Singularity Count = " << s_count << "\n";
 
-        // Deform the mesh to transform the frame field in a cross field
-        igl::frame_field_deformer(V, F, FF1, FF2, V_deformed, FF1_deformed, FF2_deformed);
+        if (symmetrize_nrosy) {
+            bool axes[3];
+            axes[0] = symmetry_mode_yz;
+            axes[1] = symmetry_mode_xz;
+            axes[2] = symmetry_mode_xy;
+            symmetrizer.symmetrize(direction_field, axes);
+        }
 
-        // Compute face barycenters deformed mesh
-        igl::barycenter(V_deformed, F, B_deformed);
-
-        // Find the closest cross field to the deformed frame field
-        igl::frame_to_cross_field(V_deformed, F, FF1_deformed, FF2_deformed, X1_deformed);
-
-        // Find a smooth cross field that interpolates the deformed constraints
-        Eigen::MatrixXd bc_x(b.size(), 3);
-        for (unsigned i = 0; i < b.size(); ++i)
-            bc_x.row(i) = X1_deformed.row(b(i));
-
-        igl::copyleft::comiso::nrosy(
-            V,
-            F,
-            b,
-            bc_x,
-            Eigen::VectorXi(),
-            Eigen::VectorXd(),
-            Eigen::MatrixXd(),
-            rosy,
-            soft_constraint_strength,
-            X1_deformed,
-            S);
-        direction_field = X1_deformed;
-
-        // The other representative of the cross field is simply rotated by 90 degrees
-        igl::local_basis(V_deformed, F, B1, B2, B3);
-        X2_deformed =
-            igl::rotate_vectors(X1_deformed, Eigen::VectorXd::Constant(1, igl::PI / 2), B1, B2);
+        // Populate face vectors.
+        const Eigen::MatrixXd& PD1 = direction_field;
+        for (int i = 0; i < F.rows(); ++i) {
+            double x = PD1.row(i) * B1.row(i).transpose();
+            double y = PD1.row(i) * B2.row(i).transpose();
+            double angle = atan2(y, x);
+            face_vectors[i].frame[1] = cos(angle) * B1.row(i) + sin(angle) * B2.row(i);
+            face_vectors[i].base_vector = cos(angle + igl::PI / 2.0) * B1.row(i) + sin(angle + igl::PI / 2.0) * B2.row(i);
+        }
     }
 
-	int s_count = 0;
-	for (int i = 0; i < S.rows(); ++i) {
-		s_count += S(i) > 0.01 ? 1 : 0;
-	}
-	std::cout << "Singularity Count = " << s_count << "\n";
-
-	if (symmetrize_nrosy) {
-		bool axes[3];
-		axes[0] = symmetry_mode_yz;
-		axes[1] = symmetry_mode_xz;
-		axes[2] = symmetry_mode_xy;
-		symmetrizer.symmetrize(direction_field, axes);
-	}
-
-	// Populate face vectors.
-	const Eigen::MatrixXd& PD1 = direction_field;
-	for (int i = 0; i < F.rows(); ++i) {
-		double x = PD1.row(i) * B1.row(i).transpose();
-		double y = PD1.row(i) * B2.row(i).transpose();
-		double angle = atan2(y, x);
-		face_vectors[i].frame[1] = cos(angle) * B1.row(i) + sin(angle) * B2.row(i);
-		face_vectors[i].base_vector = cos(angle + igl::PI / 2.0) * B1.row(i) + sin(angle + igl::PI / 2.0) * B2.row(i);
-	}
-
     has_direction_field = true;
+    has_integer_grid = false;
     has_curl = false;
 }
 
@@ -381,17 +376,15 @@ void RemeshingPlugin::generate_integer_grid() {
             F_uv);
 
     } else { // miq_mode == MIQMode::POLYVECTOR
-        if (!use_raw_field) {
-            directional::polyvector_to_raw(V, F, polyvector_field, rosy, rawField);
-        }
         Meshing::polyvector_parametrize(
             V, F, rosy, EV, EF, FE,
             rawField, combedField,
             matching, combedMatching,
             effort, combedEffort,
             singVertices, singIndices,
-            VMeshCut, FMeshCut, 
-            cutUV, 1. / gradient_size);
+            VMeshCut, FMeshCut, cutUV, 
+            1. / gradient_size, 
+            isInteger);
     }
     
     has_integer_grid = true;
@@ -427,11 +420,7 @@ void RemeshingPlugin::reduce_curl() {
         effort, combedEffort,
         curl, singVertices, singIndices,
         curlMax);
-    if (miq_mode != MIQMode::POLYVECTOR) {
-        direction_field = rawField.block(0, 0, F.rows(), 3);
-    } else {
-        use_raw_field = true;
-    }
+    direction_field = rawField.block(0, 0, F.rows(), 3);
 }
 
 void RemeshingPlugin::quad_helix_finding() {

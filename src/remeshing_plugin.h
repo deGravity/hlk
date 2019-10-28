@@ -38,7 +38,7 @@ public:
         has_curl = false;
         is_quad_meshed = false;
         should_redraw = false;
-        use_raw_field = false;
+        isInteger = true;
         viewing_mode = ViewingMode::MESH_ONLY;
         drawing_mode = DrawingMode::WALE;
         miq_mode = MIQMode::CROSS;
@@ -124,7 +124,7 @@ private:
     bool has_integer_grid;
     bool is_quad_meshed;
     bool should_redraw;
-    bool use_raw_field;
+    bool isInteger;
 
     // numbers...
     float soft_constraint_strength;

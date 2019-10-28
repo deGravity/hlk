@@ -30,7 +30,7 @@ void Meshing::polyvector_parametrize(
     Eigen::VectorXd& effort, Eigen::VectorXd& combedEffort,
     Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices,
     Eigen::MatrixXd& VMeshCut, Eigen::MatrixXi& FMeshCut,
-    Eigen::MatrixXd& cutUV, double lengthRatio, bool isInteger) {
+    Eigen::MatrixXd& cutUV, double gradientSize, bool isInteger) {
 
     // combing and cutting
     directional::principal_matching(VMeshWhole, FMeshWhole, EV, EF, FE, rawField, matching, effort);
@@ -42,7 +42,7 @@ void Meshing::polyvector_parametrize(
     std::cout << "[meshing] Setting up parameterization\n";
     directional::setup_parameterization(N, VMeshWhole, FMeshWhole, EV, EF, FE, combedMatching, singVertices, pd, VMeshCut, FMeshCut);
     std::cout << "[meshing] Solving parameterization\n";
-    directional::parameterize(VMeshWhole, FMeshWhole, FE, combedField, lengthRatio, pd, VMeshCut, FMeshCut, isInteger, cutUV);
+    directional::parameterize(VMeshWhole, FMeshWhole, FE, combedField, gradientSize, pd, VMeshCut, FMeshCut, isInteger, cutUV);
     std::cout << "[meshing] Done!\n";
 }
 

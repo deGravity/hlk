@@ -102,35 +102,32 @@ void RemeshingPlugin::init(igl::opengl::glfw::Viewer* _viewer) {
                 ImGui::Checkbox("Show Axis", &show_axis);
                 ImGui::Checkbox("Symmetrize N-RoSy", &symmetrize_nrosy);
                 // Add threshold values.
-                ImGui::DragFloat("Click Threshold", &click_threshold, 0.05f, 0.01f, 0.5f);
+                // ImGui::DragFloat("Click Threshold", &click_threshold, 0.05f, 0.01f, 0.5f);
                 ImGui::DragFloat("Soft Weight", &soft_constraint_strength, 0.0f, 0.0f, 1.0f);
-                ImGui::DragFloat("Stiffness", &stiffness, 0.1f, 0.0f, 10.0f);
-                ImGui::DragFloat("Gradient Size", &gradient_size, 1.0f, 0.0f, 100.0f);
+                // ImGui::DragFloat("Stiffness", &stiffness, 0.1f, 0.0f, 10.0f);
+                ImGui::DragFloat("Gradient Size", &gradient_size, 1.0f, 0.0f, 150.0f);
                 ImGui::PopItemWidth();
                 ImGui::Text("===Field Operations===");
                 // Direction field controls
                 if (has_direction_field) {
                     // drawing mode options.
-                    ImGui::Text("Click to select the MIQ mode.");
-                    if (ImGui::RadioButton("Use Cross Field", miq_mode == MIQMode::CROSS)) {
-                        miq_mode = MIQMode::CROSS;
+                    ImGui::Text("Click to select the type of field.");
+                    if (ImGui::Button("Interpolate Cross Field", ImVec2(w - p, 0))) {
+                        miq_mode = MIQMode::CROSS; interpolate_field();
                     }
-                    if (ImGui::RadioButton("Use Frame Field", miq_mode == MIQMode::FRAME)) {
-                        miq_mode = MIQMode::FRAME;
+                    if (ImGui::Button("Interpolate Frame Field", ImVec2(w - p, 0))) {
+                        miq_mode = MIQMode::FRAME; interpolate_field();
                     }
-                    if (ImGui::RadioButton("Use Polyvector Field", miq_mode == MIQMode::POLYVECTOR)) {
-                        miq_mode = MIQMode::POLYVECTOR; 
+                    if (ImGui::Button("Interpolate Polyvector Field", ImVec2(w - p, 0))) {
+                        miq_mode = MIQMode::POLYVECTOR; interpolate_field();
                     }
                     if (ImGui::Button("Run MIQ", ImVec2((w - p) / 2.f, 0))) {
-                        // TODO: figure out the right order of things
-                        interpolate_field();
                         generate_integer_grid();
                         update_visualization();
                     }
                     ImGui::SameLine(0, p);
                     if (ImGui::Button("Reduce Curl", ImVec2((w - p) / 2.f, 0))) {
                         if (!has_curl) { init_curl(); }
-                        // TODO: figure out why this reduction fails on the 6th iteration
                         reduce_curl();
                         if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD) 
                             update_visualization();
@@ -144,28 +141,29 @@ void RemeshingPlugin::init(igl::opengl::glfw::Viewer* _viewer) {
                         }
                     }
                 }
-                // Quads controls
-                if (has_integer_grid) {
-                    ImGui::Text("===Quad Operations===");
-                    if (ImGui::Button("Extract Quads", ImVec2((w - p) / 2.f, 0))) {
+                // Quad controls
+                ImGui::Text("===Quad Operations===");
+                ImGui::Checkbox("[parameterize.h] isInteger", &isInteger);
+                if (ImGui::Button("Extract Quads", ImVec2((w - p) / 2.f, 0))) {
+                    if (has_integer_grid) {
                         std::vector<std::vector<double>> Vs, TCs;
                         std::vector<std::vector<int>> Fs;
                         if (miq_mode == MIQMode::POLYVECTOR) {
-                            // TODO: figure out a way to get the face UVs as well
-                            extract_quad_mesh(VMeshCut, FMeshCut, cutUV, Eigen::MatrixXi(), quad_mesh);
+                            extract_quad_mesh(VMeshCut, FMeshCut, cutUV, FMeshCut, quad_mesh);
                         } else {
                             extract_quad_mesh(V, F, V_uv, F_uv, quad_mesh);
                         }
                         is_quad_meshed = true;
-                        stylize_quad_mesh(directional::default_mesh_color());
+                        viewing_mode = ViewingMode::QUAD_ONLY;
                         update_visualization();
                     }
                 }
-                if (is_quad_meshed) {
-                    if (ImGui::Button("Save Quads", ImVec2(w - p, 0))) {
+                ImGui::SameLine(0, p);
+                if (ImGui::Button("Save Quads", ImVec2((w - p) / 2.f, 0))) {
+                    if (is_quad_meshed) {
                         std::string fname = igl::file_dialog_save();
                         if (fname.length() > 0) {
-                            Eigen::MatrixXd V_q = quad_mesh.V.block(0, 0, quad_mesh.n, 4);
+                            Eigen::MatrixXd V_q = quad_mesh.V.block(0, 0, quad_mesh.n, 3);
                             igl::writeOBJ(fname, V_q, quad_mesh.F_q);
                         }
                     }
@@ -336,6 +334,9 @@ void RemeshingPlugin::init(igl::opengl::glfw::Viewer* _viewer) {
 void RemeshingPlugin::setup_mesh() {
     // Compute face barycenters
     igl::barycenter(V, F, B);
+
+    // Compute local basis
+    igl::local_basis(V, F, B1, B2, B3);
 
     // Compute edge topology
     igl::edge_topology(V, F, EV, FE, EF);
@@ -537,7 +538,7 @@ void RemeshingPlugin::clear() {
     has_curl = false;
     is_quad_meshed = false;
     should_redraw = false;
-    use_raw_field = false;
+    isInteger = true;
     viewing_mode = ViewingMode::MESH_ONLY;
     drawing_mode = DrawingMode::WALE;
     miq_mode = MIQMode::CROSS;
@@ -892,6 +893,8 @@ void RemeshingPlugin::assign_vector(int face_id, Eigen::Vector3d n) {
 }
 
 void RemeshingPlugin::assign_vector() {
+    if (feature_face_ids.empty()) return;
+
 	// compute cutting edges
 	std::vector<std::vector<int>> cutting_faces(F.rows(), std::vector<int>());
 	std::vector<int> cutting_0_edges;
@@ -1694,10 +1697,6 @@ void RemeshingPlugin::update_drawing() {
 }
 
 void RemeshingPlugin::draw_direction_field() {
-    // Get all 4 direction vectors
-    Eigen::MatrixXd B1, B2, B3;
-    igl::local_basis(V, F, B1, B2, B3);
-
     // Plot N-Rosy Mesh
     const Eigen::MatrixXd& PD1 = direction_field;
     Eigen::MatrixXd Y(F.rows() * rosy, 3);
@@ -1735,18 +1734,16 @@ void RemeshingPlugin::set_mesh_overlays(const int mesh_id, const bool wireframe,
 
 void RemeshingPlugin::stylize_tri_mesh(const Eigen::MatrixXd& colors) {
     viewer->data().clear();
-    if (miq_mode == MIQMode::POLYVECTOR) {
-        viewer->data().set_mesh(VMeshCut, FMeshCut);
-    } else {
-        viewer->data().set_mesh(V, F);
-    }
+    viewer->data().set_mesh(V, F);
     if (has_integer_grid) {
-        viewer->data().set_texture(texture_R, texture_B, texture_G);
         if (miq_mode == MIQMode::POLYVECTOR) {
-            viewer->data().set_uv(cutUV);
+            viewer->data().clear();
+            viewer->data().set_mesh(VMeshCut, FMeshCut);
+            viewer->data().set_uv(cutUV, FMeshCut);
         } else {
             viewer->data().set_uv(V_uv, F_uv);
         }
+        viewer->data().set_texture(texture_R, texture_B, texture_G);
     }
     viewer->data().show_texture = has_integer_grid;
     viewer->data().set_colors(colors);
