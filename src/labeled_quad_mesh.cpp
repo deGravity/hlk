@@ -76,7 +76,6 @@ namespace hlk {
 	const Eigen::VectorXi& LabeledQuadMesh::half_edge_slot(int quad, int quad_side)
 	{
 		return half_edge_slots[4 * quad + quad_side];
-		// TODO: insert return statement here
 	}
 
 	const Eigen::VectorXi& LabeledQuadMesh::quadrant_slot(int quad, int quadrant)

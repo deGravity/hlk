@@ -116,6 +116,10 @@ void RemeshingMenu::draw_viewer_menu() {
             ImGui::DragFloat("Gradient Size", &gradient_size, 1.0f, 0.0f, 150.0f);
             ImGui::PopItemWidth();
             ImGui::Text("===Field Operations===");
+            if (ImGui::Button("Initialize field from principal curvatures", ImVec2(w - p, 0))) {
+                init_curvature_field();
+                viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
+            }
             // Direction field controls
             if (has_direction_field) {
                 // drawing mode options.
@@ -124,10 +128,10 @@ void RemeshingMenu::draw_viewer_menu() {
                     miq_mode = MIQMode::CROSS; interpolate_field();
                     viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
                 }
-                if (ImGui::Button("Interpolate Frame Field", ImVec2(w - p, 0))) {
-                    miq_mode = MIQMode::FRAME; interpolate_field();
-                    viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
-                }
+                //if (ImGui::Button("Interpolate Frame Field", ImVec2(w - p, 0))) {
+                //    miq_mode = MIQMode::FRAME; interpolate_field();
+                //    viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
+                //}
                 if (ImGui::Button("Interpolate Polyvector Field", ImVec2(w - p, 0))) {
                     miq_mode = MIQMode::POLYVECTOR; interpolate_field(); 
                     viewing_mode = ViewingMode::MESH_FIELD; update_visualization();
@@ -158,7 +162,9 @@ void RemeshingMenu::draw_viewer_menu() {
             }
             // Quad controls
             ImGui::Text("===Quad Operations===");
-            ImGui::Checkbox("[parameterize.h] isInteger", &isInteger);
+            if (miq_mode == MIQMode::POLYVECTOR) {
+                ImGui::Checkbox("[parameterize.h] isInteger", &isInteger);
+            }
             if (ImGui::Button("Extract Quads", ImVec2((w - p) / 2.f, 0))) {
                 if (has_integer_grid) {
                     std::vector<std::vector<double>> Vs, TCs;
@@ -936,12 +942,17 @@ void RemeshingMenu::assign_vector() {
 			int index_1 = cutting_faces[i][1];
 			assign_vector(i, cutting_points[index_1] - cutting_points[index_0]);
 		}
-		if (cutting_faces[i].size() == 1){
-			int index = cutting_faces[i][0];
-			if (loop_feature_face_ids.front() == i) assign_vector(i, cutting_points[index]-feature_points.front());
-			if (loop_feature_face_ids.back() == i) assign_vector(i, feature_points.back()-cutting_points[index]);
-		}
 	}
+
+    if (!loop_feature_face_ids.empty()) {
+        for (int i = 0; i < cutting_faces.size(); i++) {
+            if (cutting_faces[i].size() == 1) {
+                int index = cutting_faces[i][0];
+                if (loop_feature_face_ids.front() == i) assign_vector(i, cutting_points[index] - feature_points.front());
+                if (loop_feature_face_ids.back() == i) assign_vector(i, feature_points.back() - cutting_points[index]);
+            }
+        }
+    }
 
 	std::vector<std::vector<int>>().swap(cutting_faces);
 }
@@ -1684,7 +1695,7 @@ void RemeshingMenu::update_drawing() {
 
 void RemeshingMenu::draw_direction_field() {
     // Plot N-Rosy Mesh
-    const Eigen::MatrixXd& PD1 = direction_field;
+    const Eigen::MatrixXd& PD1 = direction_field[1]; // draw only the wale field
     Eigen::MatrixXd Y(F.rows() * rosy, 3);
     for (int i = 0; i < F.rows(); ++i) {
         double x = PD1.row(i) * B1.row(i).transpose();

@@ -108,7 +108,10 @@ private:
 
     // field - impl in remeshing_field.cpp
     void reset_field();
+    void init_curvature_field();
     void setup_boundary();
+    void update_vectors_from_field(int direction = 1);
+    void interpolate_cross_field(Eigen::VectorXd& S, int direction = 1); // default wale interpolation
     void interpolate_field();
     void generate_integer_grid();
     void init_curl();
@@ -184,12 +187,14 @@ private:
     std::vector<std::unordered_set<int>> igl_v_faces;
     std::vector<std::vector<double>> graph_adj;
 
+    Eigen::MatrixXd direction_field[2];
+
     // curl reduction data
     Eigen::MatrixXi FField, FSings, FSeams;
     Eigen::MatrixXi EV, EF, FE;
     Eigen::MatrixXd VField, VSings, VSeams;
     Eigen::MatrixXd CField, CSings, CSeams;
-    Eigen::MatrixXd direction_field, rawField, combedField;
+    Eigen::MatrixXd rawField, combedField;
     Eigen::VectorXi matching, combedMatching;
     Eigen::VectorXd effort, combedEffort;
     Eigen::VectorXd curl; // norm of curl per edge

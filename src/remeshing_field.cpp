@@ -10,6 +10,7 @@
 #include <igl/frame_to_cross_field.h>
 #include <igl/frame_field_deformer.h>
 #include <igl/local_basis.h>
+#include <igl/principal_curvature.h>
 #include <igl/rotate_vectors.h>
 #include <igl/vertex_triangle_adjacency.h>
 #include <igl/triangle_triangle_adjacency.h>
@@ -35,6 +36,28 @@ void RemeshingMenu::reset_field() {
     }
     setup_boundary();
     interpolate_field();
+}
+
+void RemeshingMenu::init_curvature_field() {
+    Eigen::MatrixXd PD1, PD2; // unit directions per vertex
+    Eigen::VectorXd PV1, PV2; // magnitude
+    igl::principal_curvature(V, F, PD1, PD2, PV1, PV2);
+
+    Eigen::MatrixXd FD1, FD2; // directions per face
+    FD1.resize(F.rows(), 3); FD1.setZero();
+    FD2.resize(F.rows(), 3); FD2.setZero();
+    for (int i = 0; i < F.rows(); ++i)
+        for (int j = 0; j < 3; ++j) {
+            FD1.row(i) += PV1(F(i, j)) * PD1.row(F(i, j));
+            FD2.row(i) += PV2(F(i, j)) * PD2.row(F(i, j));
+        }
+    FD1.array() /= 3;
+    FD2.array() /= 3;
+    direction_field[0] = FD1;
+    direction_field[1] = FD2;
+
+    update_vectors_from_field(0);
+    update_vectors_from_field(1);
 }
 
 void RemeshingMenu::setup_boundary() {
@@ -109,8 +132,94 @@ void RemeshingMenu::setup_boundary() {
 	}
 }
 
+void RemeshingMenu::interpolate_cross_field(Eigen::VectorXd& S, int direction) {
+    // Set up cross field constraints.
+    int hard_constraint_count = 0;
+    int soft_constraint_count = 0;
+    for (auto& face_vector : face_vectors) {
+        if (face_vector.assigned[direction]) {
+            if (face_vector.is_hard) {
+                ++hard_constraint_count;
+            } else {
+                ++soft_constraint_count;
+            }
+        }
+    }
+
+    Eigen::VectorXi hard_constraint_indices(hard_constraint_count);
+    Eigen::MatrixXd hard_constraints(hard_constraint_count, 3);
+    Eigen::VectorXi soft_constraint_indices(soft_constraint_count);
+    Eigen::VectorXd soft_constraint_weights(soft_constraint_count);
+    Eigen::MatrixXd soft_constraints(soft_constraint_count, 3);
+    c_b.resize(hard_constraint_count + soft_constraint_count); c_b.setZero();
+    c_bc.resize(hard_constraint_count + soft_constraint_count, 6); c_bc.setZero();
+    c_blevel.resize(hard_constraint_count + soft_constraint_count); c_blevel.setZero();
+
+    int idx_hard = 0;
+    int idx_soft = 0;
+    int idx = 0;
+    for (auto& face_vector : face_vectors) {
+        if (face_vector.assigned[direction]) {
+            if (face_vector.is_hard) {
+                hard_constraint_indices[idx_hard] = face_vector.face_id;
+                hard_constraints.row(idx_hard) = face_vector.frame[direction].normalized();
+                ++idx_hard;
+            } else {
+                soft_constraint_indices[idx_soft] = face_vector.face_id;
+                soft_constraint_weights[idx_soft] = 1.0;
+                soft_constraints.row(idx_soft) = face_vector.frame[direction].normalized();
+                ++idx_soft;
+            }
+            c_b(idx) = face_vector.face_id;
+            c_bc.block<1, 3>(idx, 0) = face_vector.frame[direction];
+            c_blevel(idx) = 1;
+            if (face_vector.assigned[1-direction]) {
+                c_bc.block<1, 3>(idx, 3) = face_vector.frame[1-direction];
+                c_blevel(idx) = 2;
+            }
+            ++idx;
+        }
+    }
+
+    igl::copyleft::comiso::nrosy(
+        V, F,
+        hard_constraint_indices, hard_constraints,
+        soft_constraint_indices, soft_constraint_weights, soft_constraints,
+        rosy, soft_constraint_strength, direction_field[direction], S);
+}
+
+void RemeshingMenu::update_vectors_from_field(int direction) {
+    if (symmetrize_nrosy) {
+        bool axes[3];
+        axes[0] = symmetry_mode_yz;
+        axes[1] = symmetry_mode_xz;
+        axes[2] = symmetry_mode_xy;
+        symmetrizer.symmetrize(direction_field[direction], axes);
+    }
+
+    // Populate face vectors.
+    const Eigen::MatrixXd& PD1 = direction_field[direction];
+    for (int i = 0; i < F.rows(); ++i) {
+        double x = PD1.row(i) * B1.row(i).transpose();
+        double y = PD1.row(i) * B2.row(i).transpose();
+        double angle = atan2(y, x);
+        face_vectors[i].frame[direction] = cos(angle) * B1.row(i) + sin(angle) * B2.row(i);
+        if (direction == 1) {
+            face_vectors[i].base_vector = cos(angle + igl::PI / 2.0) * B1.row(i) + sin(angle + igl::PI / 2.0) * B2.row(i);
+        }
+    }
+}
+
 void RemeshingMenu::interpolate_field() {
+    Eigen::VectorXd S;
+
     if (miq_mode == MIQMode::POLYVECTOR) {
+        // Interpolate both directions separately first.
+        interpolate_cross_field(S, 0);
+        update_vectors_from_field(0);
+        interpolate_cross_field(S, 1);
+        update_vectors_from_field(1);
+
         // Set up constraints.
         std::vector<int> constrained_faces;
         std::vector<int> wale_constrained_faces;
@@ -174,62 +283,9 @@ void RemeshingMenu::interpolate_field() {
         viewing_mode = ViewingMode::MESH_FIELD;
 
     } else {
-        Eigen::VectorXd S;
 
         if (miq_mode == MIQMode::CROSS) {
-            // Set up cross field constraints.
-            int hard_constraint_count = 0;
-            int soft_constraint_count = 0;
-            for (auto& face_vector : face_vectors) {
-                if (face_vector.assigned[1]) { // use WALE direction only.
-                    if (face_vector.is_hard) {
-                        ++hard_constraint_count;
-                    } else {
-                        ++soft_constraint_count;
-                    }
-                }
-            }
-
-            Eigen::VectorXi hard_constraint_indices(hard_constraint_count);
-            Eigen::MatrixXd hard_constraints(hard_constraint_count, 3);
-            Eigen::VectorXi soft_constraint_indices(soft_constraint_count);
-            Eigen::VectorXd soft_constraint_weights(soft_constraint_count);
-            Eigen::MatrixXd soft_constraints(soft_constraint_count, 3);
-            c_b.resize(hard_constraint_count + soft_constraint_count); c_b.setZero();
-            c_bc.resize(hard_constraint_count + soft_constraint_count, 6); c_bc.setZero();
-            c_blevel.resize(hard_constraint_count + soft_constraint_count); c_blevel.setZero();
-
-            int idx_hard = 0;
-            int idx_soft = 0;
-            int idx = 0;
-            for (auto& face_vector : face_vectors) {
-                if (face_vector.assigned[1]) {
-                    if (face_vector.is_hard) {
-                        hard_constraint_indices[idx_hard] = face_vector.face_id;
-                        hard_constraints.row(idx_hard) = face_vector.frame[1].normalized();
-                        ++idx_hard;
-                    } else {
-                        soft_constraint_indices[idx_soft] = face_vector.face_id;
-                        soft_constraint_weights[idx_soft] = 1.0;
-                        soft_constraints.row(idx_soft) = face_vector.frame[1].normalized();
-                        ++idx_soft;
-                    }
-                    c_b(idx) = face_vector.face_id;
-                    c_bc.block<1, 3>(idx, 0) = face_vector.frame[1];
-                    c_blevel(idx) = 1;
-                    if (face_vector.assigned[0]) {
-                        c_bc.block<1, 3>(idx, 3) = face_vector.frame[0];
-                        c_blevel(idx) = 2;
-                    }
-                    ++idx;
-                }
-            }
-
-            igl::copyleft::comiso::nrosy(
-                V, F,
-                hard_constraint_indices, hard_constraints,
-                soft_constraint_indices, soft_constraint_weights, soft_constraints,
-                rosy, soft_constraint_strength, direction_field, S);
+            interpolate_cross_field(S);
 
         } else {
             // Set up frame field constraints. (SOFT ONLY!!)
@@ -278,7 +334,7 @@ void RemeshingMenu::interpolate_field() {
                 soft_constraint_strength,
                 X1_deformed,
                 S);
-            direction_field = X1_deformed;
+            direction_field[1] = X1_deformed;
 
             // The other representative of the cross field is simply rotated by 90 degrees
             igl::local_basis(V_deformed, F, B1, B2, B3);
@@ -286,31 +342,13 @@ void RemeshingMenu::interpolate_field() {
                 igl::rotate_vectors(X1_deformed, Eigen::VectorXd::Constant(1, igl::PI / 2), B1, B2);
         }
 
-        directional::representative_to_raw(V, F, direction_field, rosy, rawField);
+        directional::representative_to_raw(V, F, direction_field[1], rosy, rawField);
 
         int s_count = 0;
         for (int i = 0; i < S.rows(); ++i) {
             s_count += S(i) > 0.01 ? 1 : 0;
         }
         std::cout << "Singularity Count = " << s_count << "\n";
-
-        if (symmetrize_nrosy) {
-            bool axes[3];
-            axes[0] = symmetry_mode_yz;
-            axes[1] = symmetry_mode_xz;
-            axes[2] = symmetry_mode_xy;
-            symmetrizer.symmetrize(direction_field, axes);
-        }
-
-        // Populate face vectors.
-        const Eigen::MatrixXd& PD1 = direction_field;
-        for (int i = 0; i < F.rows(); ++i) {
-            double x = PD1.row(i) * B1.row(i).transpose();
-            double y = PD1.row(i) * B2.row(i).transpose();
-            double angle = atan2(y, x);
-            face_vectors[i].frame[1] = cos(angle) * B1.row(i) + sin(angle) * B2.row(i);
-            face_vectors[i].base_vector = cos(angle + igl::PI / 2.0) * B1.row(i) + sin(angle + igl::PI / 2.0) * B2.row(i);
-        }
 
         viewing_mode = ViewingMode::MESH_ONLY;
     }
@@ -362,7 +400,7 @@ void RemeshingMenu::generate_integer_grid() {
             }
         }
 
-        Meshing::cross_field_miq(direction_field,
+        Meshing::cross_field_miq(direction_field[1],
             V,
             F,
             vertices_to_round,
@@ -383,7 +421,6 @@ void RemeshingMenu::generate_integer_grid() {
             F_uv);
 
     } else { // miq_mode == MIQMode::POLYVECTOR
-        //directional::polyvector_to_raw(V, F, polyvector_field, rosy, rawField);
         Meshing::polyvector_parametrize(
             V, F, rosy, EV, EF, FE,
             rawField, combedField,
@@ -419,7 +456,7 @@ void RemeshingMenu::reduce_curl() {
         curl, singVertices, singIndices,
         curlMax);
     if (miq_mode == MIQMode::CROSS) {
-        direction_field = rawField.block(0, 0, F.rows(), 3);
+        direction_field[1] = rawField.block(0, 0, F.rows(), 3);
     }
 }
 
