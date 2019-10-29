@@ -91,6 +91,8 @@ namespace hlk {
 		// TODO - Bug with the solver! It's probably due to not using shared pointers
 		// try changing this next.
 		update_textures();
+
+		std::cout << "Mesh Loaded, Optimizing Topology" << std::endl;
 		// Solve the SMT problem and update the textures
 		if (!optimize_geometry()) {
 			std::cout << "Unable to initialize" << std::endl;
@@ -103,7 +105,6 @@ namespace hlk {
 	CoarseKnitEdge::CoarseKnitEdge(Optimizer & geo_opt, Optimizer & topo_opt, int i, CoarseKnitMesh * m)
 	{
 		seam = -1;
-		//is_seam = geo_opt.get_bool_prop(nth_label("is_seam", i));
 		index = i;
 		mesh = m;
 	}
@@ -249,8 +250,24 @@ namespace hlk {
 	}
 	bool CoarseKnitMesh::optimize_geometry()
 	{
-		geometry_optimizer.push();		
+		geometry_optimizer.push();
 
+		std::vector<z3::expr> seam_costs;
+		int i = 0;
+		std::cout << "Num possible seams = " << seams.size();
+		for (auto& seam : seams) {
+			std::string cost_name = "seam_cost_" + std::to_string(i);
+			z3::expr s_cost = geometry_optimizer.context.int_const(cost_name.c_str());
+			seam_costs.push_back(s_cost);
+			geometry_optimizer.add_constraint((seam->var && s_cost == 1) || (!seam->var && s_cost == 0));
+			++i;
+		}
+
+		z3::expr cost = seam_costs[0];
+		for (int i = 1; i < seam_costs.size(); ++i) {
+			cost = cost + seam_costs[i];
+		}
+		
 		for (auto& edge : edges) {
 			for (auto constraint : edge.get_constraints()) {
 				geometry_optimizer.add_constraint(constraint.first, constraint.second);
@@ -262,7 +279,7 @@ namespace hlk {
 			}
 		}
 
-		auto result = geometry_optimizer.solve();
+		auto result = geometry_optimizer.minimize_inc(cost);
 
 		if (result.has_result) {
 			geometry_optimizer.update_all_props(*result.result_model);

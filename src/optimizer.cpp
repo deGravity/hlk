@@ -113,6 +113,9 @@ namespace hlk {
         if (is_sat) {
             result.set_model(solver.get_model());
 		}
+		else {
+			result.set_unsat_core(solver.unsat_core());
+		}
         solver.pop();
         return result;
     }
