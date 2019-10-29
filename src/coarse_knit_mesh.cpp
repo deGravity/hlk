@@ -74,9 +74,11 @@ namespace hlk {
 
 		// White Quad Background and border lines
 		// (Should really be displaying the underlying mesh for this)
+		/*
 		for (auto& slot : quad_slots) {
 			set_glyph(slot, glyphs::SOLID_LINE, color::WHITE);
 		}
+		*/
 
 		for (int i = 0; i < 4 * m; ++i) {
 			if (is_boundary_side[i]) {
@@ -279,7 +281,8 @@ namespace hlk {
 			}
 		}
 
-		auto result = geometry_optimizer.minimize_inc(cost);
+		//auto result = geometry_optimizer.minimize_inc(cost);
+		auto result = geometry_optimizer.minimize(cost, 15);
 
 		if (result.has_result) {
 			geometry_optimizer.update_all_props(*result.result_model);
@@ -287,6 +290,7 @@ namespace hlk {
 		}
 		else {
 			// TODO - Get Information from the UNSAT core
+			std::cout << result.unsat_core << std::endl;
 		}
 
 		geometry_optimizer.pop();
@@ -303,5 +307,79 @@ namespace hlk {
 	void CoarseKnitMesh::set_texture(int side, int texture)
 	{
 		quads[side / 4].texture_id = texture;
+	}
+	void CoarseKnitMesh::seam_off(int side)
+	{
+		int edge_id = sides_to_edges[side];
+		if (edge_id >= 0) {
+			int seam_id = edges[edge_id].seam;
+			if (seam_id >= 0) {
+				seams[seam_id]->set(false);
+			}
+		}
+	}
+	void CoarseKnitMesh::seam_on(int side)
+	{
+		int edge_id = sides_to_edges[side];
+		if (edge_id >= 0) {
+			int seam_id = edges[edge_id].seam;
+			if (seam_id >= 0) {
+				seams[seam_id]->set(true);
+			}
+		}
+	}
+	void CoarseKnitMesh::toggle_seam(int side)
+	{
+		int edge_id = sides_to_edges[side];
+		if (edge_id >= 0) {
+			int seam_id = edges[edge_id].seam;
+			if (seam_id >= 0) {
+				seams[seam_id]->set(!seams[seam_id]->val);
+			}
+		}
+	}
+	void CoarseKnitMesh::toggle_orientation(int side)
+	{
+		sides[side].is_out->set(!sides[side].is_out->val);
+		sides[side].is_loop->is_fixed = true;
+	}
+	void CoarseKnitMesh::toggle_direction(int side)
+	{
+		sides[side].is_loop->set(!sides[side].is_loop->val);
+		sides[side].is_out->is_fixed = true;
+	}
+	void CoarseKnitMesh::paint_direction(int side_out, int side_in, KnitDirection dir)
+	{
+		sides[side_out].is_out->set(true);
+		sides[side_in].is_out->set(false);
+		bool is_loop = dir == LOOP;
+		sides[side_out].is_loop->set(is_loop);
+		sides[side_in].is_loop->set(is_loop);
+		sides[side_in].update_texture();
+		sides[side_out].update_texture();
+	}
+	void CoarseKnitMesh::erase_seam(int side)
+	{
+		int edge_id = sides_to_edges[side];
+		if (edge_id >= 0) {
+			int seam_id = edges[edge_id].seam;
+			if (seam_id >= 0) {
+				seams[seam_id]->set(false, false);
+			}
+		}
+	}
+	void CoarseKnitMesh::erase_orientation(int side)
+	{
+		sides[side].is_loop->is_fixed = false;
+		sides[side].is_out->is_fixed = false;
+	}
+	void CoarseKnitMesh::erase_textue(int side)
+	{
+		quads[side / 4].texture_id = -1;
+	}
+	void CoarseKnitMesh::erase_shaping(int side)
+	{
+		quads[side / 4].shaping_distribution = NONE;
+		quads[side / 4].short_row_distribution = NONE;
 	}
 }

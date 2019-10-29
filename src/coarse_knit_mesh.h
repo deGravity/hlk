@@ -91,10 +91,10 @@ namespace hlk {
 		void seam_off(int side);
 		void seam_on(int side);
 		void toggle_seam(int side);
-		void join_seam(int side_a, int side_b);
+		//void join_seam(int side_a, int side_b);
 
 		// Split any seams in the seam list that cross this vertex
-		void split_seams(int vertex);
+		//void split_seams(int vertex);
 
 		// Direction = Loop / Yarn
 		// Orientation = In / Out
