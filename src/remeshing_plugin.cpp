@@ -122,20 +122,27 @@ void RemeshingMenu::draw_viewer_menu() {
                 ImGui::Text("Click to select the type of field.");
                 if (ImGui::Button("Interpolate Cross Field", ImVec2(w - p, 0))) {
                     miq_mode = MIQMode::CROSS; interpolate_field();
+                    viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
                 }
                 if (ImGui::Button("Interpolate Frame Field", ImVec2(w - p, 0))) {
                     miq_mode = MIQMode::FRAME; interpolate_field();
+                    viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
                 }
                 if (ImGui::Button("Interpolate Polyvector Field", ImVec2(w - p, 0))) {
-                    miq_mode = MIQMode::POLYVECTOR; interpolate_field();
+                    miq_mode = MIQMode::POLYVECTOR; interpolate_field(); 
+                    viewing_mode = ViewingMode::MESH_FIELD; update_visualization();
                 }
-                if (ImGui::Button("Run MIQ", ImVec2((w - p) / 2.f, 0))) {
+                if (ImGui::Button("Run MIQ parametrization", ImVec2(w - p, 0))) {
                     generate_integer_grid();
-                    update_visualization();
+                    viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
+                }
+                if (ImGui::Button("Init Curl", ImVec2((w - p) / 2.f, 0))) {
+                    init_curl();
+                    if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD)
+                        update_visualization();
                 }
                 ImGui::SameLine(0, p);
                 if (ImGui::Button("Reduce Curl", ImVec2((w - p) / 2.f, 0))) {
-                    if (!has_curl) { init_curl(); }
                     reduce_curl();
                     if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD)
                         update_visualization();
@@ -180,20 +187,6 @@ void RemeshingMenu::draw_viewer_menu() {
                 if (ImGui::Button("Helix Finding", ImVec2(w - p, 0))) {
                     quad_helix_finding();
                 }
-                /*if (ImGui::RadioButton("North", cardinal == Cardinal::N)) {
-                    cardinal = Cardinal::N;
-                }
-                ImGui::SameLine(0, p);
-                if (ImGui::RadioButton("East", cardinal == Cardinal::E)) {
-                    cardinal = Cardinal::E;
-                }
-                if (ImGui::RadioButton("South", cardinal == Cardinal::S)) {
-                    cardinal = Cardinal::S;
-                }
-                ImGui::SameLine(0, p);
-                if (ImGui::RadioButton("West", cardinal == Cardinal::W)) {
-                    cardinal = Cardinal::W;
-                }*/
             }
         }
     }
@@ -247,7 +240,8 @@ void RemeshingMenu::draw_viewer_menu() {
                 viewing_mode = ViewingMode::QUAD_ONLY; update_visualization();
             }
             if (ImGui::RadioButton("Interact with Quads", viewing_mode == ViewingMode::QUAD_INTERACT)) {
-                viewing_mode = ViewingMode::QUAD_ONLY; update_visualization(); viewing_mode = ViewingMode::QUAD_INTERACT;
+                viewing_mode = ViewingMode::QUAD_ONLY; update_visualization(); 
+                viewing_mode = ViewingMode::QUAD_INTERACT;
             }
         }
     }
@@ -505,8 +499,9 @@ bool RemeshingMenu::save(std::string filename) {
 void RemeshingMenu::clear() {
 	// feature points
 	std::vector<Eigen::Vector3d>().swap(feature_points);
-	std::vector<int>().swap(feature_face_ids);
-	std::vector<bool>().swap(points_vectors);
+    std::vector<int>().swap(feature_face_ids);
+    std::vector<int>().swap(loop_feature_face_ids);
+    std::vector<bool>().swap(points_vectors);
 	// directional faces
 	std::vector<FaceVector>().swap(face_vectors);
 	std::vector<SplitEdge>().swap(split_edges);
@@ -574,7 +569,7 @@ bool RemeshingMenu::mouse_move(int mouse_x, int mouse_y) {
 						(V.row(F(fid, 0)) * bc(0) + V.row(F(fid, 1)) * bc(1) + V.row(F(fid, 2)) * bc(2)).transpose();
 					Eigen::Vector3d normal = face_vectors[fid].normal;
 					feature_points.emplace_back(intersection);
-					feature_face_ids.emplace_back(fid);
+					loop_feature_face_ids.emplace_back(fid);
 					if (feature_points.size() >= 2) {
 						Eigen::Vector3d src = feature_points[0] + normal * mesh_size * 0.001;
 						Eigen::Vector3d dst = feature_points[feature_points.size() - 1] + normal * mesh_size * 0.001;
@@ -598,11 +593,11 @@ bool RemeshingMenu::mouse_move(int mouse_x, int mouse_y) {
 					return true;
 				}
 			} else { // discard stroke data
-				if (!feature_points.empty() || !feature_face_ids.empty()) {
+				if (!feature_points.empty() || !loop_feature_face_ids.empty()) {
 					should_redraw = true;
                 }
 				feature_points.clear();
-				feature_face_ids.clear();
+                loop_feature_face_ids.clear();
 				if (should_redraw) {
                     update_visualization();
 					should_redraw = false;
@@ -674,7 +669,7 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
     double x = viewer->current_mouse_x;
     double y = viewer->core().viewport(3) - viewer->current_mouse_y;
 
-    if (viewing_mode == ViewingMode::QUAD_INTERACT && is_quad_meshed && mouse_key == 0) {
+    if (viewing_mode == ViewingMode::QUAD_INTERACT && is_quad_meshed && button == 0) {
         int fid;
         Eigen::Vector3f bc;
         Eigen::MatrixXd qV = quad_mesh.V;
@@ -709,16 +704,8 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
 
     if ((button == 2 || button == 1) && alt_on && !shift_on && !ctrl_on) { // loop
 		if (feature_points.size() > 2) {
-			auto n = face_vectors[feature_face_ids[0]].normal;
+			auto n = face_vectors[loop_feature_face_ids[0]].normal;
             Eigen::Vector3d a = feature_points.back() - feature_points.front();
-
-			if (false) {
-				double angle_0 = angle_between(a, face_vectors[feature_face_ids[0]].frame[1]);
-				double angle_1 = angle_between(a, face_vectors[feature_face_ids[0]].base_vector);
-				if (angle_0 > M_PI / 2.0) angle_0 = M_PI - angle_0;
-				if (angle_1 > M_PI / 2.0) angle_1 = M_PI - angle_1;
-				a = angle_0 > angle_1 ? face_vectors[feature_face_ids[0]].base_vector : face_vectors[feature_face_ids[0]].frame[1];
-			}
 
 			if (button==2) {
 				auto plane_n = a.cross(n).normalized();
@@ -744,7 +731,7 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
             std::vector<int> cutting_1_edges;
             std::vector<Eigen::Vector3d> cutting_points;
 			CGAL_Mesh_Cutting(feature_points, mesh_edge_size * click_threshold,
-				igl_tree, cutting_0_edges, cutting_1_edges, cutting_points, cutting_faces);
+				igl_tree, feature_face_ids, cutting_0_edges, cutting_1_edges, cutting_points, cutting_faces);
 
             if (!cutting_0_edges.empty()) {
                 for (int fid = 0; fid < cutting_faces.size(); fid++) {
@@ -865,6 +852,7 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
     shift_on = false;
     feature_points.clear();
     feature_face_ids.clear();
+    loop_feature_face_ids.clear();
 
     // clear geodesic data
     if (existing_edge_label) {
@@ -893,15 +881,13 @@ void RemeshingMenu::assign_vector(int face_id, Eigen::Vector3d n) {
 }
 
 void RemeshingMenu::assign_vector() {
-    if (feature_face_ids.empty()) return;
-
 	// compute cutting edges
 	std::vector<std::vector<int>> cutting_faces(F.rows(), std::vector<int>());
 	std::vector<int> cutting_0_edges;
 	std::vector<int> cutting_1_edges;
 	std::vector<Eigen::Vector3d> cutting_points;
 	CGAL_Mesh_Cutting(feature_points, mesh_edge_size * click_threshold,
-		igl_tree, cutting_0_edges, cutting_1_edges, cutting_points, cutting_faces);
+		igl_tree, feature_face_ids, cutting_0_edges, cutting_1_edges, cutting_points, cutting_faces);
 
     // feature
     if (feature_face_ids[0] == feature_face_ids[feature_face_ids.size() - 1]) {
@@ -951,9 +937,9 @@ void RemeshingMenu::assign_vector() {
 			assign_vector(i, cutting_points[index_1] - cutting_points[index_0]);
 		}
 		if (cutting_faces[i].size() == 1){
-			int index= cutting_faces[i][0];
-			if (feature_face_ids.front() == i)assign_vector(i, cutting_points[index]- feature_points.front());
-			if (feature_face_ids.back() == i)assign_vector(i, feature_points.back()-cutting_points[index]);
+			int index = cutting_faces[i][0];
+			if (loop_feature_face_ids.front() == i) assign_vector(i, cutting_points[index]-feature_points.front());
+			if (loop_feature_face_ids.back() == i) assign_vector(i, feature_points.back()-cutting_points[index]);
 		}
 	}
 
@@ -1165,7 +1151,7 @@ void RemeshingMenu::split_mesh() {
 	std::vector<int> cutting_1_edges;
 	std::vector<Eigen::Vector3d> cutting_points;
 	CGAL_Mesh_Cutting(feature_points, mesh_edge_size * click_threshold,
-		igl_tree, cutting_0_edges, cutting_1_edges, cutting_points, cutting_faces);
+		igl_tree, feature_face_ids, cutting_0_edges, cutting_1_edges, cutting_points, cutting_faces);
 
     // remesh
     std::vector<Eigen::Vector3d> new_points;
@@ -1788,54 +1774,34 @@ void RemeshingMenu::update_visualization() {
 
     case ViewingMode::MESH_FIELD:
     {
-        if (miq_mode == MIQMode::POLYVECTOR) {
-            Meshing::init_polyvector_drawing(
-                V, F, rosy, EV, EF, FE, rawField, combedField, matching, effort, singVertices, singIndices);
+        if (!has_curl) { init_curl(); }
 
-            directional::glyph_lines_raw(
-                V, F, combedField, directional::indexed_glyph_colors(combedField),
-                VField, FField, CField, 2.0);
-            viewer->data_list[3].clear();
-            viewer->data_list[3].set_mesh(VField, FField);
-            viewer->data_list[3].set_colors(CField);
-            set_mesh_overlays(3, false);
+        // field mesh
+        directional::glyph_lines_raw(
+            V, F, combedField, directional::indexed_glyph_colors(combedField),
+            VField, FField, CField, 2.0);
+        viewer->data_list[3].clear();
+        viewer->data_list[3].set_mesh(VField, FField);
+        viewer->data_list[3].set_colors(CField);
+        set_mesh_overlays(3, false);
 
-            directional::singularity_spheres(V, F, rosy, singVertices, singIndices, VSings, FSings, CSings);
-            viewer->data_list[4].clear();
-            viewer->data_list[4].set_mesh(VSings, FSings);
-            viewer->data_list[4].set_colors(CSings);
-            set_mesh_overlays(4, false);
+        // singularity mesh
+        directional::singularity_spheres(
+            V, F, rosy, singVertices, singIndices,
+            VSings, FSings, CSings, 1.5);
+        viewer->data_list[4].clear();
+        viewer->data_list[4].set_mesh(VSings, FSings);
+        viewer->data_list[4].set_colors(CSings);
+        set_mesh_overlays(4, false);
 
-        } else {
-            if (!has_curl) { init_curl(); }
-
-            // field mesh
-            directional::glyph_lines_raw(
-                V, F, combedField, directional::indexed_glyph_colors(combedField),
-                VField, FField, CField, 2.0);
-            viewer->data_list[3].clear();
-            viewer->data_list[3].set_mesh(VField, FField);
-            viewer->data_list[3].set_colors(CField);
-            set_mesh_overlays(3, false);
-
-            // singularity mesh
-            directional::singularity_spheres(
-                V, F, rosy, singVertices, singIndices,
-                VSings, FSings, CSings, 1.5);
-            viewer->data_list[4].clear();
-            viewer->data_list[4].set_mesh(VSings, FSings);
-            viewer->data_list[4].set_colors(CSings);
-            set_mesh_overlays(4, false);
-
-            // seam mesh
-            directional::seam_lines(
-                V, F, EV, combedMatching,
-                VSeams, FSeams, CSeams, 2.0);
-            viewer->data_list[5].clear();
-            viewer->data_list[5].set_mesh(VSeams, FSeams);
-            viewer->data_list[5].set_colors(CSeams);
-            set_mesh_overlays(5, false);
-        }
+        // seam mesh
+        directional::seam_lines(
+            V, F, EV, combedMatching,
+            VSeams, FSeams, CSeams, 2.0);
+        viewer->data_list[5].clear();
+        viewer->data_list[5].set_mesh(VSeams, FSeams);
+        viewer->data_list[5].set_colors(CSeams);
+        set_mesh_overlays(5, false);
     }
 
     case ViewingMode::MESH_ONLY:

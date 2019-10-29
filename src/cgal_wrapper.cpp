@@ -292,7 +292,7 @@ std::vector<Eigen::Vector3d> CGAL_Mesh_Projection(
 
 void CGAL_Mesh_Cutting(
     const std::vector<Eigen::Vector3d>& features, const double insert_threshold,
-    const Tree& tree,
+    const Tree& tree, std::vector<int>& face_ids,
     std::vector<int>& igl_cutting_0_edges, std::vector<int>& igl_cutting_1_edges, 
     std::vector<Eigen::Vector3d>& igl_cutting_points,
     std::vector<std::vector<int>>& cutting_faces) {
@@ -321,7 +321,7 @@ void CGAL_Mesh_Cutting(
         Poly_point_3 query(new_features[i].x(), new_features[i].y(), new_features[i].z());
         Point_and_primitive_id pp = tree.closest_point_and_primitive(query);
         project_faces.push_back(pp.second);
-        //face_ids.push_back(pp.second->id());
+        face_ids.push_back(pp.second->id());
     }
 
     // searching for all of the cutting points on edges

@@ -64,7 +64,7 @@ bool detect_edge_point(const Point_and_primitive_id& pp, Halfedge_handle& handle
 
 void CGAL_Mesh_Cutting(
     const std::vector<Eigen::Vector3d>& features, const double insert_threshold, 
-    const Tree& tree,
+    const Tree& tree, std::vector<int>& face_ids,
     std::vector<int>& igl_cutting_0_edges, std::vector<int>& igl_cutting_1_edges,
     std::vector<Eigen::Vector3d>& igl_cutting_points,
     std::vector<std::vector<int>>& cutting_faces);

@@ -117,7 +117,7 @@ void RemeshingMenu::interpolate_field() {
         std::vector<std::vector<Eigen::Vector3d>> constraints;
         std::vector<std::vector<Eigen::Vector3d>> wale_constraints;
         for (FaceVector& fv : face_vectors) {
-            /*if (fv.assigned[0] || fv.assigned[1]) {
+            if (fv.assigned[0] || fv.assigned[1]) {
                 // for polyvector field interpolation
                 constrained_faces.push_back(fv.face_id);
                 std::vector<Eigen::Vector3d> face_constraints;
@@ -133,25 +133,6 @@ void RemeshingMenu::interpolate_field() {
                     }
                 }
                 constraints.push_back(face_constraints);
-                // for curl reduction precomputation
-                if (fv.assigned[1]) {
-                    wale_constrained_faces.push_back(fv.face_id);
-                    std::vector<Eigen::Vector3d> wale_face_constraints;
-                    if (fv.assigned[0]) {
-                        wale_face_constraints = { fv.frame[1], fv.frame[0] };
-                    } else {
-                        wale_face_constraints = { fv.frame[1] };
-                    }
-                    wale_constraints.push_back(wale_face_constraints);
-                }
-            }*/
-            if (fv.assigned[0] || fv.assigned[1]) {
-                // for polyvector field interpolation
-                if (fv.assigned[0] && fv.assigned[1]) {
-                    constrained_faces.push_back(fv.face_id);
-                    std::vector<Eigen::Vector3d> face_constraints = { fv.frame[1], fv.frame[0], -fv.frame[1], -fv.frame[0] }; // was flipped 0/1
-                    constraints.push_back(face_constraints);
-                }
                 // for curl reduction precomputation
                 if (fv.assigned[1]) {
                     wale_constrained_faces.push_back(fv.face_id);
@@ -189,6 +170,8 @@ void RemeshingMenu::interpolate_field() {
 
         directional::polyvector_field(V, F, p_b, p_bc, rosy, polyvector_field);
         directional::polyvector_to_raw(V, F, polyvector_field, rosy, rawField);
+
+        viewing_mode = ViewingMode::MESH_FIELD;
 
     } else {
         Eigen::VectorXd S;
@@ -328,12 +311,13 @@ void RemeshingMenu::interpolate_field() {
             face_vectors[i].frame[1] = cos(angle) * B1.row(i) + sin(angle) * B2.row(i);
             face_vectors[i].base_vector = cos(angle + igl::PI / 2.0) * B1.row(i) + sin(angle + igl::PI / 2.0) * B2.row(i);
         }
+
+        viewing_mode = ViewingMode::MESH_ONLY;
     }
 
     has_direction_field = true;
     has_integer_grid = false;
     has_curl = false;
-    viewing_mode = ViewingMode::MESH_ONLY;
     update_visualization();
 }
 
@@ -399,7 +383,7 @@ void RemeshingMenu::generate_integer_grid() {
             F_uv);
 
     } else { // miq_mode == MIQMode::POLYVECTOR
-        directional::polyvector_to_raw(V, F, polyvector_field, rosy, rawField);
+        //directional::polyvector_to_raw(V, F, polyvector_field, rosy, rawField);
         Meshing::polyvector_parametrize(
             V, F, rosy, EV, EF, FE,
             rawField, combedField,

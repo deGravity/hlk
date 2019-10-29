@@ -140,18 +140,6 @@ void Meshing::cross_field_miq(const Eigen::MatrixXd& R,
         hard_edges);
 }
 
-void Meshing::init_polyvector_drawing(
-    const Eigen::MatrixXd& VMesh, const Eigen::MatrixXi& FMesh, const int N,
-    const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
-    const Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
-    Eigen::VectorXi& matching, Eigen::VectorXd& effort, 
-    Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices) {
-
-    directional::principal_matching(VMesh, FMesh, EV, EF, FE, rawField, matching, effort);
-    directional::effort_to_indices(VMesh, FMesh, EV, EF, effort, matching, N, singVertices, singIndices);
-    directional::combing(VMesh, FMesh, EV, EF, FE, rawField, matching, combedField);
-}
-
 // Solver data (needed for precomputation)
 directional::PolyCurlReductionSolverData pcrdata;
 

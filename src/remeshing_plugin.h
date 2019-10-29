@@ -176,6 +176,7 @@ private:
 	int loop_start_index = -1;
 	int loop_end_index = -1;
 	std::vector<Eigen::Vector3d> loop_path;
+    std::vector<int> loop_feature_face_ids;
 
     // geometry data
     Polyhedron_3 igl_polyhedron;
