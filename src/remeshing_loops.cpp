@@ -6,7 +6,7 @@
 
 namespace hlk {
 
-void RemeshingPlugin::clear_loops() {
+void RemeshingMenu::clear_loops() {
     loop_gi_nodes.clear();
     loop_gi_edges.clear();
     loop_g_iedges.clear();
@@ -22,7 +22,7 @@ void RemeshingPlugin::clear_loops() {
     loop_path.clear();
 }
 
-void RemeshingPlugin::update_loop_graph() {
+void RemeshingMenu::update_loop_graph() {
 	auto build_underlying_edges = [&]() {
 		int v_nb = viewer->data().V.rows();
 
@@ -198,7 +198,7 @@ void RemeshingPlugin::update_loop_graph() {
 #endif
 }
 
-void RemeshingPlugin::symmetry_elastic_loop(std::vector<int> axes, const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n) {
+void RemeshingMenu::symmetry_elastic_loop(std::vector<int> axes, const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n) {
 	Eigen::Vector3d sym_plane_p = plane_p;
 	Eigen::Vector3d sym_plane_n = sym_plane_p+plane_n;
 	for (int axis : axes) {
@@ -211,7 +211,7 @@ void RemeshingPlugin::symmetry_elastic_loop(std::vector<int> axes, const Eigen::
 	if (!is_almost_zero((sym_plane_p - plane_p).norm())) compute_elastic_loop_min_geodesic(sym_plane_p, sym_plane_n);
 }
 
-void RemeshingPlugin::symmetry_elastic_loop(const Eigen::Vector3d & plane_p, const Eigen::Vector3d & plane_n) {
+void RemeshingMenu::symmetry_elastic_loop(const Eigen::Vector3d & plane_p, const Eigen::Vector3d & plane_n) {
 	//x
 	if (symmetry_mode_yz && !symmetry_mode_xz && !symmetry_mode_xy) {
 		symmetry_elastic_loop({ 0 }, plane_p, plane_n);
@@ -272,7 +272,7 @@ void RemeshingPlugin::symmetry_elastic_loop(const Eigen::Vector3d & plane_p, con
 	}
 }
 
-void RemeshingPlugin::compute_elastic_loop(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_v) {
+void RemeshingMenu::compute_elastic_loop(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_v) {
 	
 	std::cerr << "plane_p: " << plane_p[0] << "," << plane_p[1] << "," << plane_p[2] << std::endl;
 	std::cerr << "plane_v: " << plane_v[0] << "," << plane_v[1] << "," << plane_v[2] << std::endl;
@@ -348,7 +348,7 @@ void RemeshingPlugin::compute_elastic_loop(const Eigen::Vector3d& plane_p, const
 	should_redraw = true;
 }
 
-void RemeshingPlugin::compute_elastic_loop_min_geodesic(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n) {
+void RemeshingMenu::compute_elastic_loop_min_geodesic(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n) {
 	std::cerr << "plane_p: " << plane_p[0] << "," << plane_p[1] << "," << plane_p[2] << std::endl;
 	std::cerr << "plane_n: " << plane_n[0] << "," << plane_n[1] << "," << plane_n[2] << std::endl;
 
@@ -416,7 +416,7 @@ void RemeshingPlugin::compute_elastic_loop_min_geodesic(const Eigen::Vector3d& p
 	loop_update_polylines.emplace_back(loop_update_polyline);
 }
 
-void RemeshingPlugin::compute_elastic_loop_field_align(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n) {
+void RemeshingMenu::compute_elastic_loop_field_align(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n) {
 
 	std::cerr << "plane_p: " << plane_p[0] << "," << plane_p[1] << "," << plane_p[2] << std::endl;
 	std::cerr << "plane_n: " << plane_n[0] << "," << plane_n[1] << "," << plane_n[2] << std::endl;

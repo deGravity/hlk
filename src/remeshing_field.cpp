@@ -19,7 +19,7 @@
 
 namespace hlk {
 
-void RemeshingPlugin::reset_field() {
+void RemeshingMenu::reset_field() {
     face_vectors.clear();
     for (int i = 0; i < F.rows(); i++) {
         FaceVector fv;
@@ -37,7 +37,7 @@ void RemeshingPlugin::reset_field() {
     interpolate_field();
 }
 
-void RemeshingPlugin::setup_boundary() {
+void RemeshingMenu::setup_boundary() {
 	std::vector<std::vector<int>> indices;
 	igl::boundary_loop(F, indices);
 
@@ -109,7 +109,7 @@ void RemeshingPlugin::setup_boundary() {
 	}
 }
 
-void RemeshingPlugin::interpolate_field() {
+void RemeshingMenu::interpolate_field() {
     if (miq_mode == MIQMode::POLYVECTOR) {
         // Set up constraints.
         std::vector<int> constrained_faces;
@@ -117,7 +117,7 @@ void RemeshingPlugin::interpolate_field() {
         std::vector<std::vector<Eigen::Vector3d>> constraints;
         std::vector<std::vector<Eigen::Vector3d>> wale_constraints;
         for (FaceVector& fv : face_vectors) {
-            if (fv.assigned[0] || fv.assigned[1]) {
+            /*if (fv.assigned[0] || fv.assigned[1]) {
                 // for polyvector field interpolation
                 constrained_faces.push_back(fv.face_id);
                 std::vector<Eigen::Vector3d> face_constraints;
@@ -144,8 +144,26 @@ void RemeshingPlugin::interpolate_field() {
                     }
                     wale_constraints.push_back(wale_face_constraints);
                 }
+            }*/
+            if (fv.assigned[0] || fv.assigned[1]) {
+                // for polyvector field interpolation
+                if (fv.assigned[0] && fv.assigned[1]) {
+                    constrained_faces.push_back(fv.face_id);
+                    std::vector<Eigen::Vector3d> face_constraints = { fv.frame[1], fv.frame[0], -fv.frame[1], -fv.frame[0] }; // was flipped 0/1
+                    constraints.push_back(face_constraints);
+                }
+                // for curl reduction precomputation
+                if (fv.assigned[1]) {
+                    wale_constrained_faces.push_back(fv.face_id);
+                    std::vector<Eigen::Vector3d> wale_face_constraints;
+                    if (fv.assigned[0]) {
+                        wale_face_constraints = { fv.frame[1], fv.frame[0] };
+                    } else {
+                        wale_face_constraints = { fv.frame[1] };
+                    }
+                    wale_constraints.push_back(wale_face_constraints);
+                }
             }
-
         }
 
         p_b.resize(constrained_faces.size()); p_b.setZero();
@@ -171,6 +189,7 @@ void RemeshingPlugin::interpolate_field() {
 
         directional::polyvector_field(V, F, p_b, p_bc, rosy, polyvector_field);
         directional::polyvector_to_raw(V, F, polyvector_field, rosy, rawField);
+
     } else {
         Eigen::VectorXd S;
 
@@ -284,6 +303,8 @@ void RemeshingPlugin::interpolate_field() {
                 igl::rotate_vectors(X1_deformed, Eigen::VectorXd::Constant(1, igl::PI / 2), B1, B2);
         }
 
+        directional::representative_to_raw(V, F, direction_field, rosy, rawField);
+
         int s_count = 0;
         for (int i = 0; i < S.rows(); ++i) {
             s_count += S(i) > 0.01 ? 1 : 0;
@@ -312,9 +333,11 @@ void RemeshingPlugin::interpolate_field() {
     has_direction_field = true;
     has_integer_grid = false;
     has_curl = false;
+    viewing_mode = ViewingMode::MESH_ONLY;
+    update_visualization();
 }
 
-void RemeshingPlugin::generate_integer_grid() {
+void RemeshingMenu::generate_integer_grid() {
 
     if (miq_mode == MIQMode::CROSS) {
         std::vector<std::vector<int>> boundary_loops;
@@ -376,6 +399,7 @@ void RemeshingPlugin::generate_integer_grid() {
             F_uv);
 
     } else { // miq_mode == MIQMode::POLYVECTOR
+        directional::polyvector_to_raw(V, F, polyvector_field, rosy, rawField);
         Meshing::polyvector_parametrize(
             V, F, rosy, EV, EF, FE,
             rawField, combedField,
@@ -390,12 +414,7 @@ void RemeshingPlugin::generate_integer_grid() {
     has_integer_grid = true;
 }
 
-void RemeshingPlugin::init_curl() {
-    if (miq_mode == MIQMode::POLYVECTOR) {
-        directional::polyvector_to_raw(V, F, polyvector_field, rosy, rawField);
-    } else {
-        directional::representative_to_raw(V, F, direction_field, rosy, rawField);
-    }
+void RemeshingMenu::init_curl() {
     Meshing::init_curl(
         V, F, rosy, EV, EF, FE,
         c_b, c_bc, c_blevel,
@@ -407,12 +426,7 @@ void RemeshingPlugin::init_curl() {
     has_curl = true;
 }
 
-void RemeshingPlugin::reduce_curl() {
-    if (miq_mode == MIQMode::POLYVECTOR) {
-        directional::polyvector_to_raw(V, F, polyvector_field, rosy, rawField);
-    } else {
-        directional::representative_to_raw(V, F, direction_field, rosy, rawField);
-    }
+void RemeshingMenu::reduce_curl() {
     Meshing::reduce_curl(
         V, F, rosy, EV, EF, FE,
         rawField, combedField,
@@ -420,10 +434,12 @@ void RemeshingPlugin::reduce_curl() {
         effort, combedEffort,
         curl, singVertices, singIndices,
         curlMax);
-    direction_field = rawField.block(0, 0, F.rows(), 3);
+    if (miq_mode == MIQMode::CROSS) {
+        direction_field = rawField.block(0, 0, F.rows(), 3);
+    }
 }
 
-void RemeshingPlugin::quad_helix_finding() {
+void RemeshingMenu::quad_helix_finding() {
     if (!is_quad_meshed) { return; }
     std::unordered_set<int> longest_helix;
     if (!quad_mesh.helix_free(longest_helix, cardinal)) {

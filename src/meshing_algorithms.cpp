@@ -143,12 +143,13 @@ void Meshing::cross_field_miq(const Eigen::MatrixXd& R,
 void Meshing::init_polyvector_drawing(
     const Eigen::MatrixXd& VMesh, const Eigen::MatrixXi& FMesh, const int N,
     const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
-    const Eigen::MatrixXd& rawField,
+    const Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
     Eigen::VectorXi& matching, Eigen::VectorXd& effort, 
     Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices) {
 
     directional::principal_matching(VMesh, FMesh, EV, EF, FE, rawField, matching, effort);
     directional::effort_to_indices(VMesh, FMesh, EV, EF, effort, matching, N, singVertices, singIndices);
+    directional::combing(VMesh, FMesh, EV, EF, FE, rawField, matching, combedField);
 }
 
 // Solver data (needed for precomputation)
@@ -199,19 +200,39 @@ void Meshing::reduce_curl(
     Eigen::VectorXd& curl, Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices,
     double& curlMax) {
     
+    Eigen::MatrixXd rawFieldNew, combedFieldNew;
+    Eigen::VectorXi matchingNew, combedMatchingNew;
+    Eigen::VectorXd effortNew, combedEffortNew;
+    Eigen::VectorXd curlNew;
+    Eigen::VectorXi singVerticesNew, singIndicesNew;
+    rawFieldNew = rawField;
+
     // do a batch of iterations
     std::cout << "--Improving Curl--\n";
     std::cout << "**** Batch " << iter << " ****\n";
-    directional::polycurl_reduction_solve(pcrdata, params, rawField, iter == 0);
+    directional::polycurl_reduction_solve(pcrdata, params, rawFieldNew, iter == 0);
     ++iter;
     params.wSmooth *= params.redFactor_wsmooth;
 
-    directional::curl_matching(VMesh, FMesh, EV, EF, FE, rawField, matching, effort, curl);
-    directional::effort_to_indices(VMesh, FMesh, EV, EF, effort, matching, N, singVertices, singIndices);
-    directional::combing(VMesh, FMesh, EV, EF, FE, rawField, matching, combedField);
-    directional::curl_matching(VMesh, FMesh, EV, EF, FE, combedField, combedMatching, combedEffort, curl);
-    curlMax = curl.maxCoeff();
-    std::cout << "curlMax optimized: " << curlMax << "\n";
+    directional::curl_matching(VMesh, FMesh, EV, EF, FE, rawFieldNew, matchingNew, effortNew, curlNew);
+    directional::effort_to_indices(VMesh, FMesh, EV, EF, effortNew, matchingNew, N, singVerticesNew, singIndicesNew);
+    directional::combing(VMesh, FMesh, EV, EF, FE, rawFieldNew, matchingNew, combedFieldNew);
+    directional::curl_matching(VMesh, FMesh, EV, EF, FE, combedFieldNew, combedMatchingNew, combedEffortNew, curlNew);
+    double curlMaxNew = curlNew.maxCoeff();
+    if (curlMaxNew < curlMax) {
+        std::cout << "curlMax optimized: " << curlMaxNew << "\n";
+        rawField = rawFieldNew;
+        combedField = combedFieldNew;
+        matching = matchingNew;
+        combedMatching = combedMatchingNew;
+        effort = effortNew;
+        combedEffort = combedEffortNew;
+        curl = curlNew;
+        singVertices = singVerticesNew;
+        singIndices = singIndicesNew;
+    } else {
+        std::cout << "curlMax failed to improve.\n";
+    }
 }
 
 }

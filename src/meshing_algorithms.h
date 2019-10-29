@@ -39,7 +39,7 @@ public:
     static void init_polyvector_drawing(
         const Eigen::MatrixXd& VMesh, const Eigen::MatrixXi& FMesh, const int N,
         const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
-        const Eigen::MatrixXd& rawField,
+        const Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
         Eigen::VectorXi& matching, Eigen::VectorXd& effort,
         Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices);
 

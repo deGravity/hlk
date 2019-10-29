@@ -134,11 +134,11 @@ void main()
     std::string input_path = "./tmp_in.obj";
     std::string output_path = "./tmp_out.obj";
     std::string input_model = "";
-	RemeshingPlugin remeshing_plugin(rosy, input_path, output_path);
-	viewer.plugins.push_back((igl::opengl::glfw::ViewerPlugin *) &remeshing_plugin);
+	RemeshingMenu remeshing_menu(rosy, input_path, output_path);
 	if (!input_model.empty()) {
-		remeshing_plugin.set_input_model(input_model);
+		remeshing_menu.set_input_model(input_model);
 	}
-	viewer.launch();
+    viewer.plugins.push_back(&remeshing_menu);
+    viewer.launch();
 	/////////////////////////////////////////////////////
 }
