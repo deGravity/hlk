@@ -2,10 +2,11 @@
 
 #include <igl/readOBJ.h>
 #include <igl/remove_unreferenced.h>
+#include <igl/planarize_quad_mesh.h>
 
 namespace hlk {
 
-	void read_quad_mesh(const std::string& obj_file, QuadMesh& Q) {
+	void read_quad_mesh(const std::string& obj_file, QuadMesh& Q, bool planarize) {
 
 		std::vector<std::vector<double>> Vq, TCq, TC_DUMMY, Nq;
 		std::vector<std::vector<int>> Fq, FTCq, FNq;
@@ -39,6 +40,12 @@ namespace hlk {
 
 		// Copy vertex and face list to QuadMesh while removing unused vertices
 		igl::remove_unreferenced(V, F, Q.V, Q.F_q, Eigen::VectorXi(), Eigen::VectorXi());
+
+		if (planarize) {
+			Eigen::MatrixXd VP;
+			igl::planarize_quad_mesh(Q.V, Q.F_q, 15, 0.005, VP);
+			Q.V = VP;
+		}
 
 		Q.init();
 	}

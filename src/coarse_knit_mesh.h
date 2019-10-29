@@ -54,6 +54,8 @@ namespace hlk {
 		ShapingType shaping_distribution;
 		ShapingType short_row_distribution;
 
+		int texture_id = -1;
+
 		// There are no quad-specific geometry constraints
 		//std::vector<z3::expr> get_constraints();
 		void update_texture();

@@ -292,4 +292,16 @@ namespace hlk {
 		geometry_optimizer.pop();
 		return result.has_result;
 	}
+	void CoarseKnitMesh::copy_shaping(int origin_side, int dest_side)
+	{
+		auto& origin_quad = quads[origin_side / 4];
+		auto& dest_quad = quads[dest_side / 4];
+
+		dest_quad.shaping_distribution = origin_quad.shaping_distribution;
+		dest_quad.short_row_distribution = origin_quad.short_row_distribution;
+	}
+	void CoarseKnitMesh::set_texture(int side, int texture)
+	{
+		quads[side / 4].texture_id = texture;
+	}
 }

@@ -10,7 +10,7 @@ namespace hlk {
 	{
 		std::string filename = igl::file_dialog_open();
 		if (filename.size() > 0) {
-			read_quad_mesh(filename, M);
+			read_quad_mesh(filename, M, true);
 
 			viewer->data().set_mesh(M.LV, M.LF);
 			viewer->data().set_texture(R, G, B, A);

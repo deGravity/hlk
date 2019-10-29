@@ -5,8 +5,9 @@ import numpy as np
 import os
 
 def process_texture(name):
-    png_file = f'{name}.png'
-    key_file = f'{name}.txt'
+    png_file = f'../resources/{name}.png'
+    key_file = f'../resources/{name}.txt'
+    out_file = f'../src/{name}.h'
     
     if not os.path.exists(png_file):
         print(f'No such texture: {png_file}')
@@ -15,7 +16,7 @@ def process_texture(name):
 
     (h,w,d) = im.shape
 
-    with open(f'{name}.h', 'w') as f:
+    with open(out_file, 'w') as f:
         write_header(f, name)
 
         if os.path.exists(key_file):
