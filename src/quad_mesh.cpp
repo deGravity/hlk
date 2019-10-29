@@ -278,6 +278,8 @@ namespace hlk {
                 }
             }
         }
+
+        return false;
     }
 
     bool QuadMesh::helix_free(std::unordered_set<int>& helix, Cardinal c) {

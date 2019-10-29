@@ -8,6 +8,7 @@
 #include <igl/copyleft/cgal/mesh_to_polyhedron.h>
 #include <igl/doublearea.h>
 #include <igl/edges.h>
+#include <igl/edge_topology.h>
 #include <igl/file_dialog_save.h>
 #include <igl/jet.h>
 #include <igl/local_basis.h>
@@ -32,278 +33,14 @@
 
 namespace hlk {
 
-void RemeshingPlugin::init(igl::opengl::glfw::Viewer* _viewer) {
-    ViewerPlugin::init(_viewer);
-    viewer->plugins.push_back(&menu);
-    viewer->core().set_rotation_type(igl::opengl::ViewerCore::RotationType::ROTATION_TYPE_TRACKBALL);
-    viewer->core().background_color = Eigen::Vector4f(0.792f, 0.792f, 0.878f, 1.000f);
-    viewer->data().line_width = 0.1f;
-    viewer->data().point_size = 0.5f;
+void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
+    igl::opengl::glfw::imgui::ImGuiMenu::init(_viewer);
 
-    geodesic_label = false;
-    existing_edge_label = false;
-    existing_point_label = true;
-    multi_points_drawing = true;
-
-#ifdef HAISEN
-	viewer->core().camera_zoom = 2.03;
-#endif
-
-    menu.callback_draw_viewer_menu = [&]() {
-        float w = ImGui::GetContentRegionAvailWidth();
-        float p = ImGui::GetStyle().FramePadding.x;
-        if (ImGui::CollapsingHeader("Mesh", ImGuiTreeNodeFlags_DefaultOpen)) {
-            if (ImGui::Button("Load##Mesh", ImVec2((w - p) / 2.f, 0))) {
-                viewer->open_dialog_load_mesh();
-            }
-            ImGui::SameLine(0, p);
-            if (ImGui::Button("Save##Mesh", ImVec2((w - p) / 2.f, 0))) {
-                viewer->open_dialog_save_mesh();
-            }
-            if (ImGui::Button("Clear Loops##Mesh", ImVec2((w - p) / 2.f, 0))) {
-                clear_loops();
-                update_visualization();
-            }
-            ImGui::SameLine(0, p);
-            if (ImGui::Button("Reset Field##Mesh", ImVec2((w - p) / 2.f, 0))) {
-                reset_field();
-                update_visualization();
-            }
-            if (ImGui::Button("Subdivide Mesh", ImVec2(w - p, 0))) {
-                apply_subdivision();
-            }
-        }
-
-        if (ImGui::CollapsingHeader("Remeshing", ImGuiTreeNodeFlags_DefaultOpen)) {
-            if (model_loaded()) {
-                // Expose symmetry variables.
-                ImGui::PushItemWidth(80 * menu.menu_scaling());
-                if (symmetrizer.has_vertex_symmetry(2)) {
-                    ImGui::Checkbox("XY Symmetry", &symmetry_mode_xy);
-                } else {
-                    symmetry_mode_xy = false;
-                }
-                if (symmetrizer.has_vertex_symmetry(1)) {
-                    ImGui::Checkbox("XZ Symmetry", &symmetry_mode_xz);
-                } else {
-                    symmetry_mode_xz = false;
-                }
-                if (symmetrizer.has_vertex_symmetry(0)) {
-                    ImGui::Checkbox("YZ Symmetry", &symmetry_mode_yz);
-                } else {
-                    symmetry_mode_yz = false;
-                }
-#ifdef HAISEN
-                symmetry_mode_xy = false;
-                symmetry_mode_xz = false;
-                symmetry_mode_yz = false;
-#endif
-                ImGui::Checkbox("Show Axis", &show_axis);
-                ImGui::Checkbox("Symmetrize N-RoSy", &symmetrize_nrosy);
-                // Add threshold values.
-                ImGui::DragFloat("Click Threshold", &click_threshold, 0.05f, 0.01f, 0.5f);
-                ImGui::DragFloat("Soft Weight", &soft_constraint_strength, 0.0f, 0.0f, 1.0f);
-                ImGui::DragFloat("Stiffness", &stiffness, 0.1f, 0.0f, 10.0f);
-                ImGui::DragFloat("Gradient Size", &gradient_size, 1.0f, 0.0f, 100.0f);
-                ImGui::PopItemWidth();
-                ImGui::Text("===Field Operations===");
-                // Direction field controls
-                if (has_direction_field) {
-                    // drawing mode options.
-                    ImGui::Text("Click to select the MIQ mode.");
-                    if (ImGui::RadioButton("Use Cross Field", miq_mode == MIQMode::CROSS)) {
-                        miq_mode = MIQMode::CROSS; interpolate_field();
-                    }
-                    if (ImGui::RadioButton("Use Frame Field", miq_mode == MIQMode::FRAME)) {
-                        miq_mode = MIQMode::FRAME; interpolate_field();
-                    }
-                    if (ImGui::Button("Run MIQ", ImVec2((w - p) / 2.f, 0))) {
-                        generate_integer_grid();
-                    }
-                    ImGui::SameLine(0, p);
-                    if (ImGui::Button("Reduce Curl", ImVec2((w - p) / 2.f, 0))) {
-                        if (!has_curl) { init_curl(); }
-                        reduce_curl();
-                        if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD) 
-                            update_visualization();
-                    }
-                    if (miq_mode == MIQMode::FRAME) {
-                        if (ImGui::Button("Save Deformed Mesh", ImVec2(w - p, 0))) {
-                            std::string fname = igl::file_dialog_save();
-                            if (fname.length() > 0) {
-                                igl::writeOBJ(fname, V_deformed, F);
-                            }
-                        }
-                    }
-                }
-                // Quads controls
-                if (has_integer_grid) {
-                    ImGui::Text("===Quad Operations===");
-                    if (ImGui::Button("Extract Quads", ImVec2((w - p) / 2.f, 0))) {
-                        std::vector<std::vector<double>> Vs, TCs;
-                        std::vector<std::vector<int>> Fs;
-                        if (quad_mesh != nullptr) { delete quad_mesh; }
-                        quad_mesh = new QuadMesh;
-                        extract_quad_mesh(V, F, V_uv, F_uv, *quad_mesh);
-                        is_quad_meshed = true;
-                        stylize_quad_mesh(directional::default_mesh_color());
-                        update_visualization();
-                    }
-                }
-                if (is_quad_meshed) {
-                    if (ImGui::Button("Save Quads", ImVec2(w - p, 0))) {
-                        std::string fname = igl::file_dialog_save();
-                        if (fname.length() > 0) {
-                            igl::writeOBJ(fname, quad_mesh->V, quad_mesh->F_t);
-                        }
-                    }
-                }
-                if (viewing_mode == ViewingMode::QUAD_INTERACT) {
-                    if (ImGui::Button("Helix Finding", ImVec2(w - p, 0))) {
-                        quad_helix_finding();
-                    }
-                    if (ImGui::RadioButton("North", cardinal == Cardinal::N)) {
-                        cardinal = Cardinal::N;
-                    }
-                    ImGui::SameLine(0, p);
-                    if (ImGui::RadioButton("East", cardinal == Cardinal::E)) {
-                        cardinal = Cardinal::E;
-                    }
-                    if (ImGui::RadioButton("South", cardinal == Cardinal::S)) {
-                        cardinal = Cardinal::S;
-                    }
-                    ImGui::SameLine(0, p);
-                    if (ImGui::RadioButton("West", cardinal == Cardinal::W)) {
-                        cardinal = Cardinal::W;
-                    }
-                }
-            }
-        }
-
-        // Visualization Options
-        if (ImGui::CollapsingHeader("Visualization Options", ImGuiTreeNodeFlags_DefaultOpen)) {
-            // drawing mode options.
-            ImGui::Text("Click to select the drawing mode.");
-            if (ImGui::RadioButton("Course", drawing_mode == DrawingMode::COURSE)) {
-                drawing_mode = DrawingMode::COURSE;
-            }
-            ImGui::SameLine(0, p);
-            if (ImGui::RadioButton("Wale", drawing_mode == DrawingMode::WALE)) {
-                drawing_mode = DrawingMode::WALE;
-            }
-            // viewing mode options.
-            ImGui::Text("Click to select the viewing mode.");
-            if (ImGui::RadioButton("Mesh Only", viewing_mode == ViewingMode::MESH_ONLY)) {
-                viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
-            }
-            if (miq_mode == MIQMode::FRAME) {
-                if (ImGui::RadioButton("Frame Field", viewing_mode == ViewingMode::FRAME_FIELD)) {
-                    viewing_mode = ViewingMode::FRAME_FIELD; update_visualization();
-                }
-                if (ImGui::RadioButton("Deformed Frame Field", viewing_mode == ViewingMode::DEFORMED_FRAME_FIELD)) {
-                    viewing_mode = ViewingMode::DEFORMED_FRAME_FIELD; update_visualization();
-                }
-                if (ImGui::RadioButton("Deformed Cross Field", viewing_mode == ViewingMode::DEFORMED_CROSS_FIELD)) {
-                    viewing_mode = ViewingMode::DEFORMED_CROSS_FIELD; update_visualization();
-                }
-                if (has_integer_grid) {
-                    if (ImGui::RadioButton("Deformed Quad", viewing_mode == ViewingMode::DEFORMED_QUAD)) {
-                        viewing_mode = ViewingMode::DEFORMED_QUAD; update_visualization();
-                    }
-                }
-            } else {
-                if (ImGui::RadioButton("Mesh+Field", viewing_mode == ViewingMode::MESH_FIELD)) {
-                    viewing_mode = ViewingMode::MESH_FIELD; update_visualization();
-                }
-                ImGui::SameLine(0, p);
-                if (ImGui::RadioButton("Mesh+Curl", viewing_mode == ViewingMode::MESH_CURL)) {
-                    viewing_mode = ViewingMode::MESH_CURL; update_visualization();
-                }
-            }
-            if (is_quad_meshed) {
-                if (ImGui::RadioButton("Mesh+Quad", viewing_mode == ViewingMode::MESH_QUAD)) {
-                    viewing_mode = ViewingMode::MESH_QUAD; update_visualization();
-                }
-                ImGui::SameLine(0, p);
-                if (ImGui::RadioButton("Quad Only", viewing_mode == ViewingMode::QUAD_ONLY)) {
-                    viewing_mode = ViewingMode::QUAD_ONLY; update_visualization();
-                }
-                if (ImGui::RadioButton("Interact with Quads", viewing_mode == ViewingMode::QUAD_INTERACT)) {
-                    viewing_mode = ViewingMode::QUAD_ONLY; update_visualization(); viewing_mode = ViewingMode::QUAD_INTERACT;
-                }
-            }
-        }
-
-        // Viewing options
-        if (ImGui::CollapsingHeader("Viewing Options", ImGuiTreeNodeFlags_OpenOnArrow)) {
-            if (ImGui::Button("Center object", ImVec2(-1, 0))) {
-                viewer->core().align_camera_center(V, F);
-            }
-            if (ImGui::Button("Snap canonical view", ImVec2(-1, 0))) {
-                viewer->snap_to_canonical_quaternion();
-            }
-            // Zoom
-            ImGui::PushItemWidth(80 * menu.menu_scaling());
-            ImGui::DragFloat("Zoom", &(viewer->core().camera_zoom), 0.05f, 0.1f, 20.0f);
-            // Select rotation type
-            int rotation_type = static_cast<int>(viewer->core().rotation_type);
-            static Eigen::Quaternionf trackball_angle = Eigen::Quaternionf::Identity();
-            static bool orthographic = true;
-            if (ImGui::Combo("Camera Type", &rotation_type, "Trackball\0Two Axes\0002D Mode\0\0")) {
-                using RT = igl::opengl::ViewerCore::RotationType;
-                auto new_type = static_cast<RT>(rotation_type);
-                if (new_type != viewer->core().rotation_type) {
-                    if (new_type == RT::ROTATION_TYPE_NO_ROTATION) {
-                        trackball_angle = viewer->core().trackball_angle;
-                        orthographic = viewer->core().orthographic;
-                        viewer->core().trackball_angle = Eigen::Quaternionf::Identity();
-                        viewer->core().orthographic = true;
-                    } else if (viewer->core().rotation_type == RT::ROTATION_TYPE_NO_ROTATION) {
-                        viewer->core().trackball_angle = trackball_angle;
-                        viewer->core().orthographic = orthographic;
-                    }
-                    viewer->core().set_rotation_type(new_type);
-                }
-            }
-            // Orthographic view
-            ImGui::Checkbox("Orthographic view", &(viewer->core().orthographic));
-            ImGui::PopItemWidth();
-        }
-
-        // Helper for setting viewport specific mesh options
-        auto make_checkbox = [&](const char* label, unsigned int& option) {
-            return ImGui::Checkbox(label,
-                [&]() { return viewer->core().is_set(option); },
-                [&](bool value) { return viewer->core().set(option, value); });
-        };
-        // Draw options
-        if (ImGui::CollapsingHeader("Draw Options", ImGuiTreeNodeFlags_OpenOnArrow)) {
-            if (ImGui::Checkbox("Face-based", &(viewer->data().face_based))) {
-                viewer->data().dirty = igl::opengl::MeshGL::DIRTY_ALL;
-            }
-            ImGui::Checkbox("Show Stitches", &show_stitches);
-            make_checkbox("Show texture", viewer->data().show_texture);
-            if (ImGui::Checkbox("Invert normals", &(viewer->data().invert_normals))) {
-                viewer->data().dirty |= igl::opengl::MeshGL::DIRTY_NORMAL;
-            }
-            ImGui::ColorEdit4("Background", viewer->core().background_color.data(),
-                ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_PickerHueWheel);
-            ImGui::ColorEdit4("Line color", viewer->data().line_color.data(),
-                ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_PickerHueWheel);
-            ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.3f);
-            ImGui::DragFloat("Shininess", &(viewer->data().shininess), 0.05f, 0.0f, 100.0f);
-            ImGui::PopItemWidth();
-        }
-        // Overlays
-        if (ImGui::CollapsingHeader("Overlays", ImGuiTreeNodeFlags_OpenOnArrow)) {
-            make_checkbox("Wireframe", viewer->data().show_lines);
-            make_checkbox("Fill", viewer->data().show_faces);
-            make_checkbox("Show overlay", viewer->data().show_overlay);
-            make_checkbox("Show overlay depth", viewer->data().show_overlay_depth);
-            ImGui::Checkbox("Show vertex labels", &(viewer->data().show_vertid));
-            ImGui::Checkbox("Show faces labels", &(viewer->data().show_faceid));
-        }
-    };
+    _viewer->core().set_rotation_type(igl::opengl::ViewerCore::RotationType::ROTATION_TYPE_TRACKBALL);
+    _viewer->core().background_color = Eigen::Vector4f(0.792f, 0.792f, 0.878f, 1.000f);
+    _viewer->data().line_width = 0.1f;
+    _viewer->data().point_size = 0.5f;
+    _viewer->core().camera_zoom = 2.f;
 
     if (input_model.empty()) {
 #ifdef HAISEN
@@ -314,16 +51,287 @@ void RemeshingPlugin::init(igl::opengl::glfw::Viewer* _viewer) {
         load("/Users/Bluefish_/Desktop/01_SU19/stitchgraph/data/clothing_models/sweater.obj");
 #endif
 #ifdef WINDOWS_YUXUAN
-        load("C:\\Users\\ym2552\\Desktop\\stitchgraph\\data\\clothing_models\\sweater.obj");
+        load("C:\\Users\\ym2552\\Desktop\\stitchgraph\\data\\clothing_models\\jumper.obj");
 #endif
     } else {
         load(input_model);
     }
 }
 
-void RemeshingPlugin::setup_mesh() {
+void RemeshingMenu::draw_viewer_menu() {
+    float w = ImGui::GetContentRegionAvailWidth();
+    float p = ImGui::GetStyle().FramePadding.x;
+    if (ImGui::CollapsingHeader("Mesh", ImGuiTreeNodeFlags_DefaultOpen)) {
+        if (ImGui::Button("Load##Mesh", ImVec2((w - p) / 2.f, 0))) {
+            viewer->open_dialog_load_mesh();
+        }
+        ImGui::SameLine(0, p);
+        if (ImGui::Button("Save##Mesh", ImVec2((w - p) / 2.f, 0))) {
+            viewer->open_dialog_save_mesh();
+        }
+        if (ImGui::Button("Clear Loops##Mesh", ImVec2((w - p) / 2.f, 0))) {
+            clear_loops();
+            update_visualization();
+        }
+        ImGui::SameLine(0, p);
+        if (ImGui::Button("Reset Field##Mesh", ImVec2((w - p) / 2.f, 0))) {
+            reset_field();
+            update_visualization();
+        }
+        if (ImGui::Button("Subdivide Mesh", ImVec2(w - p, 0))) {
+            apply_subdivision();
+        }
+    }
+
+    if (ImGui::CollapsingHeader("Remeshing", ImGuiTreeNodeFlags_DefaultOpen)) {
+        if (model_loaded()) {
+            // Expose symmetry variables.
+            ImGui::PushItemWidth(80 * menu_scaling());
+            if (symmetrizer.has_vertex_symmetry(2)) {
+                ImGui::Checkbox("XY Symmetry", &symmetry_mode_xy);
+            } else {
+                symmetry_mode_xy = false;
+            }
+            if (symmetrizer.has_vertex_symmetry(1)) {
+                ImGui::Checkbox("XZ Symmetry", &symmetry_mode_xz);
+            } else {
+                symmetry_mode_xz = false;
+            }
+            if (symmetrizer.has_vertex_symmetry(0)) {
+                ImGui::Checkbox("YZ Symmetry", &symmetry_mode_yz);
+            } else {
+                symmetry_mode_yz = false;
+            }
+#ifdef HAISEN
+            symmetry_mode_xy = false;
+            symmetry_mode_xz = false;
+            symmetry_mode_yz = false;
+#endif
+            ImGui::Checkbox("Show Axis", &show_axis);
+            ImGui::Checkbox("Symmetrize N-RoSy", &symmetrize_nrosy);
+            // Add threshold values.
+            // ImGui::DragFloat("Click Threshold", &click_threshold, 0.05f, 0.01f, 0.5f);
+            ImGui::DragFloat("Soft Weight", &soft_constraint_strength, 0.0f, 0.0f, 1.0f);
+            // ImGui::DragFloat("Stiffness", &stiffness, 0.1f, 0.0f, 10.0f);
+            ImGui::DragFloat("Gradient Size", &gradient_size, 1.0f, 0.0f, 150.0f);
+            ImGui::PopItemWidth();
+            ImGui::Text("===Field Operations===");
+            if (ImGui::Button("Initialize field from principal curvatures", ImVec2(w - p, 0))) {
+                init_curvature_field();
+                viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
+            }
+            // Direction field controls
+            if (has_direction_field) {
+                // drawing mode options.
+                ImGui::Text("Click to select the type of field.");
+                if (ImGui::Button("Interpolate Cross Field", ImVec2(w - p, 0))) {
+                    miq_mode = MIQMode::CROSS; interpolate_field();
+                    viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
+                }
+                //if (ImGui::Button("Interpolate Frame Field", ImVec2(w - p, 0))) {
+                //    miq_mode = MIQMode::FRAME; interpolate_field();
+                //    viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
+                //}
+                if (ImGui::Button("Interpolate Polyvector Field", ImVec2(w - p, 0))) {
+                    miq_mode = MIQMode::POLYVECTOR; interpolate_field(); 
+                    viewing_mode = ViewingMode::MESH_FIELD; update_visualization();
+                }
+                if (ImGui::Button("Run MIQ parametrization", ImVec2(w - p, 0))) {
+                    generate_integer_grid();
+                    viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
+                }
+                if (ImGui::Button("Init Curl", ImVec2((w - p) / 2.f, 0))) {
+                    init_curl();
+                    if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD)
+                        update_visualization();
+                }
+                ImGui::SameLine(0, p);
+                if (ImGui::Button("Reduce Curl", ImVec2((w - p) / 2.f, 0))) {
+                    reduce_curl();
+                    if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD)
+                        update_visualization();
+                }
+                if (miq_mode == MIQMode::FRAME) {
+                    if (ImGui::Button("Save Deformed Mesh", ImVec2(w - p, 0))) {
+                        std::string fname = igl::file_dialog_save();
+                        if (fname.length() > 0) {
+                            igl::writeOBJ(fname, V_deformed, F);
+                        }
+                    }
+                }
+            }
+            // Quad controls
+            ImGui::Text("===Quad Operations===");
+            if (miq_mode == MIQMode::POLYVECTOR) {
+                ImGui::Checkbox("[parameterize.h] isInteger", &isInteger);
+            }
+            if (ImGui::Button("Extract Quads", ImVec2((w - p) / 2.f, 0))) {
+                if (has_integer_grid) {
+                    std::vector<std::vector<double>> Vs, TCs;
+                    std::vector<std::vector<int>> Fs;
+                    if (miq_mode == MIQMode::POLYVECTOR) {
+                        extract_quad_mesh(VMeshCut, FMeshCut, cutUV, FMeshCut, quad_mesh);
+                    } else {
+                        extract_quad_mesh(V, F, V_uv, F_uv, quad_mesh);
+                    }
+                    is_quad_meshed = true;
+                    viewing_mode = ViewingMode::QUAD_ONLY;
+                    update_visualization();
+                }
+            }
+            ImGui::SameLine(0, p);
+            if (ImGui::Button("Save Quads", ImVec2((w - p) / 2.f, 0))) {
+                if (is_quad_meshed) {
+                    std::string fname = igl::file_dialog_save();
+                    if (fname.length() > 0) {
+                        Eigen::MatrixXd V_q = quad_mesh.V.block(0, 0, quad_mesh.n, 3);
+                        igl::writeOBJ(fname, V_q, quad_mesh.F_q);
+                    }
+                }
+            }
+            if (viewing_mode == ViewingMode::QUAD_INTERACT) {
+                if (ImGui::Button("Helix Finding", ImVec2(w - p, 0))) {
+                    quad_helix_finding();
+                }
+            }
+        }
+    }
+
+    // Visualization Options
+    if (ImGui::CollapsingHeader("Visualization Options", ImGuiTreeNodeFlags_DefaultOpen)) {
+        // drawing mode options.
+        ImGui::Text("Click to select the drawing mode.");
+        if (ImGui::RadioButton("Course", drawing_mode == DrawingMode::COURSE)) {
+            drawing_mode = DrawingMode::COURSE;
+        }
+        ImGui::SameLine(0, p);
+        if (ImGui::RadioButton("Wale", drawing_mode == DrawingMode::WALE)) {
+            drawing_mode = DrawingMode::WALE;
+        }
+        // viewing mode options.
+        ImGui::Text("Click to select the viewing mode.");
+        if (ImGui::RadioButton("Mesh Only", viewing_mode == ViewingMode::MESH_ONLY)) {
+            viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
+        }
+        if (miq_mode == MIQMode::FRAME) {
+            if (ImGui::RadioButton("Frame Field", viewing_mode == ViewingMode::FRAME_FIELD)) {
+                viewing_mode = ViewingMode::FRAME_FIELD; update_visualization();
+            }
+            if (ImGui::RadioButton("Deformed Frame Field", viewing_mode == ViewingMode::DEFORMED_FRAME_FIELD)) {
+                viewing_mode = ViewingMode::DEFORMED_FRAME_FIELD; update_visualization();
+            }
+            if (ImGui::RadioButton("Deformed Cross Field", viewing_mode == ViewingMode::DEFORMED_CROSS_FIELD)) {
+                viewing_mode = ViewingMode::DEFORMED_CROSS_FIELD; update_visualization();
+            }
+            if (has_integer_grid) {
+                if (ImGui::RadioButton("Deformed Quad", viewing_mode == ViewingMode::DEFORMED_QUAD)) {
+                    viewing_mode = ViewingMode::DEFORMED_QUAD; update_visualization();
+                }
+            }
+        } else {
+            if (ImGui::RadioButton("Mesh+Field", viewing_mode == ViewingMode::MESH_FIELD)) {
+                viewing_mode = ViewingMode::MESH_FIELD; update_visualization();
+            }
+            ImGui::SameLine(0, p);
+            if (ImGui::RadioButton("Mesh+Curl", viewing_mode == ViewingMode::MESH_CURL)) {
+                viewing_mode = ViewingMode::MESH_CURL; update_visualization();
+            }
+        }
+        if (is_quad_meshed) {
+            if (ImGui::RadioButton("Mesh+Quad", viewing_mode == ViewingMode::MESH_QUAD)) {
+                viewing_mode = ViewingMode::MESH_QUAD; update_visualization();
+            }
+            ImGui::SameLine(0, p);
+            if (ImGui::RadioButton("Quad Only", viewing_mode == ViewingMode::QUAD_ONLY)) {
+                viewing_mode = ViewingMode::QUAD_ONLY; update_visualization();
+            }
+            if (ImGui::RadioButton("Interact with Quads", viewing_mode == ViewingMode::QUAD_INTERACT)) {
+                viewing_mode = ViewingMode::QUAD_ONLY; update_visualization(); 
+                viewing_mode = ViewingMode::QUAD_INTERACT;
+            }
+        }
+    }
+
+    // Viewing options
+    if (ImGui::CollapsingHeader("Viewing Options", ImGuiTreeNodeFlags_OpenOnArrow)) {
+        if (ImGui::Button("Center object", ImVec2(-1, 0))) {
+            viewer->core().align_camera_center(V, F);
+        }
+        if (ImGui::Button("Snap canonical view", ImVec2(-1, 0))) {
+            viewer->snap_to_canonical_quaternion();
+        }
+        // Zoom
+        ImGui::PushItemWidth(80 * menu_scaling());
+        ImGui::DragFloat("Zoom", &(viewer->core().camera_zoom), 0.05f, 0.1f, 20.0f);
+        // Select rotation type
+        int rotation_type = static_cast<int>(viewer->core().rotation_type);
+        static Eigen::Quaternionf trackball_angle = Eigen::Quaternionf::Identity();
+        static bool orthographic = true;
+        if (ImGui::Combo("Camera Type", &rotation_type, "Trackball\0Two Axes\0002D Mode\0\0")) {
+            using RT = igl::opengl::ViewerCore::RotationType;
+            auto new_type = static_cast<RT>(rotation_type);
+            if (new_type != viewer->core().rotation_type) {
+                if (new_type == RT::ROTATION_TYPE_NO_ROTATION) {
+                    trackball_angle = viewer->core().trackball_angle;
+                    orthographic = viewer->core().orthographic;
+                    viewer->core().trackball_angle = Eigen::Quaternionf::Identity();
+                    viewer->core().orthographic = true;
+                } else if (viewer->core().rotation_type == RT::ROTATION_TYPE_NO_ROTATION) {
+                    viewer->core().trackball_angle = trackball_angle;
+                    viewer->core().orthographic = orthographic;
+                }
+                viewer->core().set_rotation_type(new_type);
+            }
+        }
+        // Orthographic view
+        ImGui::Checkbox("Orthographic view", &(viewer->core().orthographic));
+        ImGui::PopItemWidth();
+    }
+
+    // Helper for setting viewport specific mesh options
+    auto make_checkbox = [&](const char* label, unsigned int& option) {
+        return ImGui::Checkbox(label,
+            [&]() { return viewer->core().is_set(option); },
+            [&](bool value) { return viewer->core().set(option, value); });
+    };
+    // Draw options
+    if (ImGui::CollapsingHeader("Draw Options", ImGuiTreeNodeFlags_OpenOnArrow)) {
+        if (ImGui::Checkbox("Face-based", &(viewer->data().face_based))) {
+            viewer->data().dirty = igl::opengl::MeshGL::DIRTY_ALL;
+        }
+        ImGui::Checkbox("Show Stitches", &show_stitches);
+        make_checkbox("Show texture", viewer->data().show_texture);
+        if (ImGui::Checkbox("Invert normals", &(viewer->data().invert_normals))) {
+            viewer->data().dirty |= igl::opengl::MeshGL::DIRTY_NORMAL;
+        }
+        ImGui::ColorEdit4("Background", viewer->core().background_color.data(),
+            ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_PickerHueWheel);
+        ImGui::ColorEdit4("Line color", viewer->data().line_color.data(),
+            ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_PickerHueWheel);
+        ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.3f);
+        ImGui::DragFloat("Shininess", &(viewer->data().shininess), 0.05f, 0.0f, 100.0f);
+        ImGui::PopItemWidth();
+    }
+    // Overlays
+    if (ImGui::CollapsingHeader("Overlays", ImGuiTreeNodeFlags_OpenOnArrow)) {
+        make_checkbox("Wireframe", viewer->data().show_lines);
+        make_checkbox("Fill", viewer->data().show_faces);
+        make_checkbox("Show overlay", viewer->data().show_overlay);
+        make_checkbox("Show overlay depth", viewer->data().show_overlay_depth);
+        ImGui::Checkbox("Show vertex labels", &(viewer->data().show_vertid));
+        ImGui::Checkbox("Show faces labels", &(viewer->data().show_faceid));
+    }
+}
+
+void RemeshingMenu::setup_mesh() {
     // Compute face barycenters
     igl::barycenter(V, F, B);
+
+    // Compute local basis
+    igl::local_basis(V, F, B1, B2, B3);
+
+    // Compute edge topology
+    igl::edge_topology(V, F, EV, FE, EF);
 
     // Compute scale for visualizing fields
     global_scale = .5 * igl::avg_edge_length(V, F);
@@ -359,13 +367,14 @@ void RemeshingPlugin::setup_mesh() {
     points_vectors = std::vector<bool>(V.rows(), false);
 }
 
-bool RemeshingPlugin::load(std::string filename) {
+bool RemeshingMenu::load(std::string filename) {
     // Load the mesh.
     clear();
     Eigen::MatrixXd tempV;
     Eigen::MatrixXi tempF;
     igl::read_triangle_mesh(filename, tempV, tempF);
-    igl::remove_unreferenced(tempV, tempF, V, F, Eigen::VectorXi(), Eigen::VectorXi());
+    Eigen::VectorXi tmp1, tmp2; // Usused, needed for static igl on clang
+    igl::remove_unreferenced(tempV, tempF, V, F, tmp1, tmp2);
     if (V.rows() <= 3 || F.rows() <= 1) {
         std::cerr << "Fail to load file " << filename << "...\n";
         return false;
@@ -395,7 +404,7 @@ bool RemeshingPlugin::load(std::string filename) {
     return true;
 }
 
-void RemeshingPlugin::load_temp_data(std::string filename) {
+void RemeshingMenu::load_temp_data(std::string filename) {
     ////////////////////////////////////////////////////////
     std::string face_path_temp;
     std::string edge_path_temp;
@@ -446,7 +455,7 @@ void RemeshingPlugin::load_temp_data(std::string filename) {
     ifs.close();
 }
 
-bool RemeshingPlugin::save(std::string filename) {
+bool RemeshingMenu::save(std::string filename) {
     ////////////////////////////////////////////////////////
 	std::string face_path_temp;
 	std::string edge_path_temp;
@@ -493,11 +502,12 @@ bool RemeshingPlugin::save(std::string filename) {
 	return true;
 }
 
-void RemeshingPlugin::clear() {
+void RemeshingMenu::clear() {
 	// feature points
 	std::vector<Eigen::Vector3d>().swap(feature_points);
-	std::vector<int>().swap(feature_face_ids);
-	std::vector<bool>().swap(points_vectors);
+    std::vector<int>().swap(feature_face_ids);
+    std::vector<int>().swap(loop_feature_face_ids);
+    std::vector<bool>().swap(points_vectors);
 	// directional faces
 	std::vector<FaceVector>().swap(face_vectors);
 	std::vector<SplitEdge>().swap(split_edges);
@@ -508,9 +518,6 @@ void RemeshingPlugin::clear() {
 	std::vector<std::unordered_set<int>>().swap(igl_v_faces);
 	std::vector<int>().swap(split_points);
 	std::vector<std::vector<double>>().swap(graph_adj);
-    if (quad_mesh != nullptr) {
-        delete quad_mesh;
-    }
     clear_loops();
     // reset values
     show_axis = false;
@@ -524,6 +531,7 @@ void RemeshingPlugin::clear() {
     has_curl = false;
     is_quad_meshed = false;
     should_redraw = false;
+    isInteger = true;
     viewing_mode = ViewingMode::MESH_ONLY;
     drawing_mode = DrawingMode::WALE;
     miq_mode = MIQMode::CROSS;
@@ -532,7 +540,9 @@ void RemeshingPlugin::clear() {
 
 ////////////////////////////// UI MAIN LOGIC ///////////////////////////////
 
-bool RemeshingPlugin::mouse_down(int button, int modifier) {
+bool RemeshingMenu::mouse_down(int button, int modifier) {
+    if (igl::opengl::glfw::imgui::ImGuiMenu::mouse_down(button, modifier)) return true;
+
 	mouse_key = button;
 	ctrl_on = modifier & IGL_MOD_CONTROL;
 	alt_on = modifier & IGL_MOD_ALT;
@@ -543,7 +553,9 @@ bool RemeshingPlugin::mouse_down(int button, int modifier) {
 	return false;
 }
 
-bool RemeshingPlugin::mouse_move(int mouse_x, int mouse_y) {
+bool RemeshingMenu::mouse_move(int mouse_x, int mouse_y) {
+    if (igl::opengl::glfw::imgui::ImGuiMenu::mouse_move(mouse_x, mouse_y)) return true;
+
 	if (model_loaded()) {
 		if ((mouse_key == 0|| mouse_key == 1|| mouse_key == 2) && mouse_down_on) { // left/right click-and-drag
             double x = viewer->current_mouse_x;
@@ -563,8 +575,8 @@ bool RemeshingPlugin::mouse_move(int mouse_x, int mouse_y) {
 						(V.row(F(fid, 0)) * bc(0) + V.row(F(fid, 1)) * bc(1) + V.row(F(fid, 2)) * bc(2)).transpose();
 					Eigen::Vector3d normal = face_vectors[fid].normal;
 					feature_points.emplace_back(intersection);
-					feature_face_ids.emplace_back(fid);
-					if (feature_points.size() > 2) {
+					loop_feature_face_ids.emplace_back(fid);
+					if (feature_points.size() >= 2) {
 						Eigen::Vector3d src = feature_points[0] + normal * mesh_size * 0.001;
 						Eigen::Vector3d dst = feature_points[feature_points.size() - 1] + normal * mesh_size * 0.001;
 						std::vector<Eigen::Vector3d> vecs = { src, dst };
@@ -573,7 +585,7 @@ bool RemeshingPlugin::mouse_move(int mouse_x, int mouse_y) {
                             draw_points(vecs, 0);
 						} else if (alt_on) {
                             if (mouse_key == 0) { draw_points(vecs, 1); }
-                            if (mouse_key == 1 || mouse_key==2) {
+                            if (mouse_key == 1 || mouse_key == 2) {
                                 viewer->data().points = Eigen::MatrixXd(0, 6);
                                 viewer->data().lines = Eigen::MatrixXd(0, 9);
                                 draw_segments(vecs, 1, 0.0);
@@ -587,11 +599,11 @@ bool RemeshingPlugin::mouse_move(int mouse_x, int mouse_y) {
 					return true;
 				}
 			} else { // discard stroke data
-				if (!feature_points.empty() || !feature_face_ids.empty()) {
+				if (!feature_points.empty() || !loop_feature_face_ids.empty()) {
 					should_redraw = true;
                 }
 				feature_points.clear();
-				feature_face_ids.clear();
+                loop_feature_face_ids.clear();
 				if (should_redraw) {
                     update_visualization();
 					should_redraw = false;
@@ -603,7 +615,9 @@ bool RemeshingPlugin::mouse_move(int mouse_x, int mouse_y) {
 	return false;
 }
 
-bool RemeshingPlugin::mouse_scroll(float delta_y) {
+bool RemeshingMenu::mouse_scroll(float delta_y) {
+    if (igl::opengl::glfw::imgui::ImGuiMenu::mouse_scroll(delta_y)) return true;
+
 	if (model_loaded()) {
 		float x = viewer->core().viewport(2) / 2.0;
         float y = viewer->core().viewport(3) / 2.0;
@@ -648,7 +662,9 @@ bool RemeshingPlugin::mouse_scroll(float delta_y) {
 }
 
 // TODO: remove alt_on/shift_on/ctrl_on
-bool RemeshingPlugin::mouse_up(int button, int modifier) {
+bool RemeshingMenu::mouse_up(int button, int modifier) {
+    if (igl::opengl::glfw::imgui::ImGuiMenu::mouse_up(button, modifier)) return true;
+
 	mouse_down_on = false;
 
 	if (!model_loaded()) return true;
@@ -659,11 +675,11 @@ bool RemeshingPlugin::mouse_up(int button, int modifier) {
     double x = viewer->current_mouse_x;
     double y = viewer->core().viewport(3) - viewer->current_mouse_y;
 
-    if (viewing_mode == ViewingMode::QUAD_INTERACT && is_quad_meshed && mouse_key == 0) {
+    if (viewing_mode == ViewingMode::QUAD_INTERACT && is_quad_meshed && button == 0) {
         int fid;
         Eigen::Vector3f bc;
-        Eigen::MatrixXd qV = quad_mesh->V;
-        Eigen::MatrixXi qF = quad_mesh->F_t;
+        Eigen::MatrixXd qV = quad_mesh.V;
+        Eigen::MatrixXi qF = quad_mesh.F_t;
         if (igl::unproject_onto_mesh(Eigen::Vector2f(x, y), viewer->core().view,
             viewer->core().proj, viewer->core().viewport, qV, qF, fid, bc)) {
 
@@ -672,13 +688,13 @@ bool RemeshingPlugin::mouse_up(int button, int modifier) {
 
             int curr_he = fid;
             while (true) {
-                int quad_face = quad_mesh->quad(curr_he);
-                for (const int he : quad_mesh->sides(quad_face)) {
+                int quad_face = quad_mesh.quad(curr_he);
+                for (const int he : quad_mesh.sides(quad_face)) {
                     interactive_colors.row(he) = Eigen::RowVector3d(0.8, 1., 0.6);
                 }
-                curr_he = quad_mesh->opposite_side(curr_he);
-                if (quad_mesh->flip_side(curr_he) < 0) break;
-                curr_he = quad_mesh->flip_side(curr_he);
+                curr_he = quad_mesh.opposite_side(curr_he);
+                if (quad_mesh.flip_side(curr_he) < 0) break;
+                curr_he = quad_mesh.flip_side(curr_he);
                 if (curr_he == fid) break;
             }
             stylize_quad_mesh(interactive_colors);
@@ -694,16 +710,8 @@ bool RemeshingPlugin::mouse_up(int button, int modifier) {
 
     if ((button == 2 || button == 1) && alt_on && !shift_on && !ctrl_on) { // loop
 		if (feature_points.size() > 2) {
-			auto n = face_vectors[feature_face_ids[0]].normal;
+			auto n = face_vectors[loop_feature_face_ids[0]].normal;
             Eigen::Vector3d a = feature_points.back() - feature_points.front();
-
-			if (false) {
-				double angle_0 = angle_between(a, face_vectors[feature_face_ids[0]].frame[1]);
-				double angle_1 = angle_between(a, face_vectors[feature_face_ids[0]].base_vector);
-				if (angle_0 > M_PI / 2.0) angle_0 = M_PI - angle_0;
-				if (angle_1 > M_PI / 2.0) angle_1 = M_PI - angle_1;
-				a = angle_0 > angle_1 ? face_vectors[feature_face_ids[0]].base_vector : face_vectors[feature_face_ids[0]].frame[1];
-			}
 
 			if (button==2) {
 				auto plane_n = a.cross(n).normalized();
@@ -729,7 +737,7 @@ bool RemeshingPlugin::mouse_up(int button, int modifier) {
             std::vector<int> cutting_1_edges;
             std::vector<Eigen::Vector3d> cutting_points;
 			CGAL_Mesh_Cutting(feature_points, mesh_edge_size * click_threshold,
-				igl_tree, cutting_0_edges, cutting_1_edges, cutting_points, cutting_faces);
+				igl_tree, feature_face_ids, cutting_0_edges, cutting_1_edges, cutting_points, cutting_faces);
 
             if (!cutting_0_edges.empty()) {
                 for (int fid = 0; fid < cutting_faces.size(); fid++) {
@@ -825,7 +833,7 @@ bool RemeshingPlugin::mouse_up(int button, int modifier) {
 
 		// close all multi points selecting/seaming lines
 		if (!((multi_points_drawing && feature_points.size() < 2) ||
-			(!multi_points_drawing && feature_points.size() != 2))) {
+			(!multi_points_drawing && feature_points.size() >= 2))) { // was != 2
 
 			// hard constraint / soft constraint
 			if ((ctrl_on && !shift_on && !alt_on) || (shift_on && !ctrl_on && !alt_on)) { // ctrl/shift
@@ -850,6 +858,7 @@ bool RemeshingPlugin::mouse_up(int button, int modifier) {
     shift_on = false;
     feature_points.clear();
     feature_face_ids.clear();
+    loop_feature_face_ids.clear();
 
     // clear geodesic data
     if (existing_edge_label) {
@@ -868,7 +877,7 @@ bool RemeshingPlugin::mouse_up(int button, int modifier) {
 }
 
 /////////////////////////////////////////////////////////////////////////////
-void RemeshingPlugin::assign_vector(int face_id, Eigen::Vector3d n) {
+void RemeshingMenu::assign_vector(int face_id, Eigen::Vector3d n) {
     face_vectors[face_id].assigned[drawing_mode] = true;
     // n is not normalized any more because we want to keep track of sizing information
     face_vectors[face_id].frame[drawing_mode] = n;
@@ -877,14 +886,14 @@ void RemeshingPlugin::assign_vector(int face_id, Eigen::Vector3d n) {
     should_redraw = true;
 }
 
-void RemeshingPlugin::assign_vector() {
+void RemeshingMenu::assign_vector() {
 	// compute cutting edges
 	std::vector<std::vector<int>> cutting_faces(F.rows(), std::vector<int>());
 	std::vector<int> cutting_0_edges;
 	std::vector<int> cutting_1_edges;
 	std::vector<Eigen::Vector3d> cutting_points;
 	CGAL_Mesh_Cutting(feature_points, mesh_edge_size * click_threshold,
-		igl_tree, cutting_0_edges, cutting_1_edges, cutting_points, cutting_faces);
+		igl_tree, feature_face_ids, cutting_0_edges, cutting_1_edges, cutting_points, cutting_faces);
 
     // feature
     if (feature_face_ids[0] == feature_face_ids[feature_face_ids.size() - 1]) {
@@ -933,17 +942,22 @@ void RemeshingPlugin::assign_vector() {
 			int index_1 = cutting_faces[i][1];
 			assign_vector(i, cutting_points[index_1] - cutting_points[index_0]);
 		}
-		if (cutting_faces[i].size() == 1){
-			int index= cutting_faces[i][0];
-			if (feature_face_ids.front() == i)assign_vector(i, cutting_points[index]- feature_points.front());
-			if (feature_face_ids.back() == i)assign_vector(i, feature_points.back()-cutting_points[index]);
-		}
 	}
+
+    if (!loop_feature_face_ids.empty()) {
+        for (int i = 0; i < cutting_faces.size(); i++) {
+            if (cutting_faces[i].size() == 1) {
+                int index = cutting_faces[i][0];
+                if (loop_feature_face_ids.front() == i) assign_vector(i, cutting_points[index] - feature_points.front());
+                if (loop_feature_face_ids.back() == i) assign_vector(i, feature_points.back() - cutting_points[index]);
+            }
+        }
+    }
 
 	std::vector<std::vector<int>>().swap(cutting_faces);
 }
 
-std::unordered_set<int> RemeshingPlugin::neighbor_faces(std::vector<std::unordered_set<int>>& igl_faces, int e_0, int e_1) {
+std::unordered_set<int> RemeshingMenu::neighbor_faces(std::vector<std::unordered_set<int>>& igl_faces, int e_0, int e_1) {
     std::unordered_set<int> faces;
     for (int face_index : igl_faces[e_0]) {
         int index_0 = F.row(face_index)[0];
@@ -964,7 +978,7 @@ std::unordered_set<int> RemeshingPlugin::neighbor_faces(std::vector<std::unorder
     return faces;
 }
 
-void RemeshingPlugin::geodesic_assign_vector() {
+void RemeshingMenu::geodesic_assign_vector() {
     // point index => face
     for (int i = 1; i < geodesic_path.size(); i++) {
         int e_0 = geodesic_path[i - 1];
@@ -978,7 +992,7 @@ void RemeshingPlugin::geodesic_assign_vector() {
     }
 }
 
-bool RemeshingPlugin::same_line(
+bool RemeshingMenu::same_line(
 	const std::vector<Eigen::Vector3d> & feature_points_save, const std::vector<Eigen::Vector3d> & feature_points) {
 
 	double d0 = (feature_points_save[0] - feature_points[feature_points.size() - 1]).norm();
@@ -986,7 +1000,7 @@ bool RemeshingPlugin::same_line(
 	return (d0 + d1) < mesh_size * 0.15;
 }
 
-void RemeshingPlugin::symmetry_assign_vector(std::vector<int> axes, int start, int end) {
+void RemeshingMenu::symmetry_assign_vector(std::vector<int> axes, int start, int end) {
 	bool sym = true;
 	for (int axis : axes) sym = sym && symmetrizer.has_vertex_symmetry(axis);
 	if (sym) {
@@ -999,7 +1013,7 @@ void RemeshingPlugin::symmetry_assign_vector(std::vector<int> axes, int start, i
 	}
 }
 
-void RemeshingPlugin::symmetry_assign_vector(
+void RemeshingMenu::symmetry_assign_vector(
 	std::vector<int> axes, const std::vector<Eigen::Vector3d> & feature_points_save) {
 
 	feature_points.clear();
@@ -1013,7 +1027,7 @@ void RemeshingPlugin::symmetry_assign_vector(
 	if (!same_line(feature_points_save, feature_points)) assign_vector();
 }
 
-void RemeshingPlugin::symmetry_assign_vector(const std::vector<Eigen::Vector3d> & feature_points_save) {
+void RemeshingMenu::symmetry_assign_vector(const std::vector<Eigen::Vector3d> & feature_points_save) {
 	if (existing_edge_label && geodesic_path.size() >= 2) {
 		//geodesic_path
 		int start_index = geodesic_path[0];
@@ -1140,7 +1154,7 @@ void RemeshingPlugin::symmetry_assign_vector(const std::vector<Eigen::Vector3d> 
 	}
 }
 
-void RemeshingPlugin::split_mesh() {
+void RemeshingMenu::split_mesh() {
 
 	// compute cutting edges
 	std::vector<std::vector<int>> cutting_faces(F.rows(), std::vector<int>());
@@ -1148,7 +1162,7 @@ void RemeshingPlugin::split_mesh() {
 	std::vector<int> cutting_1_edges;
 	std::vector<Eigen::Vector3d> cutting_points;
 	CGAL_Mesh_Cutting(feature_points, mesh_edge_size * click_threshold,
-		igl_tree, cutting_0_edges, cutting_1_edges, cutting_points, cutting_faces);
+		igl_tree, feature_face_ids, cutting_0_edges, cutting_1_edges, cutting_points, cutting_faces);
 
     // remesh
     std::vector<Eigen::Vector3d> new_points;
@@ -1395,7 +1409,7 @@ void RemeshingPlugin::split_mesh() {
     should_redraw = true;
 }
 
-void RemeshingPlugin::geodesic_split_mesh() {
+void RemeshingMenu::geodesic_split_mesh() {
 	// point index => face
 	for (int i = 1; i < geodesic_path.size(); i++) {
 		int e_0 = geodesic_path[i - 1];
@@ -1405,7 +1419,7 @@ void RemeshingPlugin::geodesic_split_mesh() {
 	}
 }
 
-void RemeshingPlugin::split_existing_edges(int index_0, int index_1, int insert_index) {
+void RemeshingMenu::split_existing_edges(int index_0, int index_1, int insert_index) {
 	int index = -1;
 	for (int i = 0; i < split_edges.size(); i++) {
 		if ((split_edges[i].index_0 == index_0 && split_edges[i].index_1 == index_1) ||
@@ -1422,7 +1436,7 @@ void RemeshingPlugin::split_existing_edges(int index_0, int index_1, int insert_
 	}
 }
 
-void RemeshingPlugin::symmetry_split_mesh(std::vector<int> axes, int start, int end) {
+void RemeshingMenu::symmetry_split_mesh(std::vector<int> axes, int start, int end) {
 	bool sym = true;
 	for (int axis : axes) sym = sym && symmetrizer.has_vertex_symmetry(axis);
 	if (sym) {
@@ -1435,7 +1449,7 @@ void RemeshingPlugin::symmetry_split_mesh(std::vector<int> axes, int start, int 
 	}
 }
 
-void RemeshingPlugin::symmetry_split_mesh(
+void RemeshingMenu::symmetry_split_mesh(
 	std::vector<int> axes, const std::vector<Eigen::Vector3d> & feature_points_save) {
 
 	feature_points.clear();
@@ -1449,7 +1463,7 @@ void RemeshingPlugin::symmetry_split_mesh(
 	if (!same_line(feature_points_save, feature_points)) split_mesh();
 }
 
-void RemeshingPlugin::symmetry_split_mesh(const std::vector<Eigen::Vector3d> & feature_points_save) {
+void RemeshingMenu::symmetry_split_mesh(const std::vector<Eigen::Vector3d> & feature_points_save) {
 
 	if (existing_edge_label && geodesic_path.size() >= 2) {
 		//geodesic_path
@@ -1579,7 +1593,7 @@ void RemeshingPlugin::symmetry_split_mesh(const std::vector<Eigen::Vector3d> & f
 
 ///////////////////////////////// DRAW IMPLS /////////////////////////////////
 //TODO: remove unnecessary drawing (use underlying_loop_edges to debug?)
-void RemeshingPlugin::update_drawing() {
+void RemeshingMenu::update_drawing() {
 #ifdef HAISEN1
 	for (auto& node : loop_gi_nodes) {
 		draw_a_segment(V.row(node.g_n_0), V.row(node.g_n_1), 2);
@@ -1679,13 +1693,9 @@ void RemeshingPlugin::update_drawing() {
 //#endif
 }
 
-void RemeshingPlugin::draw_direction_field() {
-    // Get all 4 direction vectors
-    Eigen::MatrixXd B1, B2, B3;
-    igl::local_basis(V, F, B1, B2, B3);
-
+void RemeshingMenu::draw_direction_field() {
     // Plot N-Rosy Mesh
-    const Eigen::MatrixXd& PD1 = direction_field;
+    const Eigen::MatrixXd& PD1 = direction_field[1]; // draw only the wale field
     Eigen::MatrixXd Y(F.rows() * rosy, 3);
     for (int i = 0; i < F.rows(); ++i) {
         double x = PD1.row(i) * B1.row(i).transpose();
@@ -1713,27 +1723,33 @@ void RemeshingPlugin::draw_direction_field() {
 }
 
 //////////////// MAIN VIEW SWITCHING LOGIC ////////////////
-void RemeshingPlugin::set_mesh_overlays(const int mesh_id, const bool wireframe, const bool overlay, const bool fill) {
+void RemeshingMenu::set_mesh_overlays(const int mesh_id, const bool wireframe, const bool overlay, const bool fill) {
     viewer->data(mesh_id).show_lines = wireframe;
     viewer->data(mesh_id).show_faces = fill;
     viewer->data(mesh_id).show_overlay = overlay;
 }
 
-void RemeshingPlugin::stylize_tri_mesh(const Eigen::MatrixXd& colors) {
+void RemeshingMenu::stylize_tri_mesh(const Eigen::MatrixXd& colors) {
     viewer->data().clear();
     viewer->data().set_mesh(V, F);
     if (has_integer_grid) {
+        if (miq_mode == MIQMode::POLYVECTOR) {
+            viewer->data().clear();
+            viewer->data().set_mesh(VMeshCut, FMeshCut);
+            viewer->data().set_uv(cutUV, FMeshCut);
+        } else {
+            viewer->data().set_uv(V_uv, F_uv);
+        }
         viewer->data().set_texture(texture_R, texture_B, texture_G);
-        viewer->data().set_uv(V_uv, F_uv);
     }
     viewer->data().show_texture = has_integer_grid;
     viewer->data().set_colors(colors);
     set_mesh_overlays(viewer->selected_data_index, !has_integer_grid);
 }
 
-void RemeshingPlugin::stylize_quad_mesh(const Eigen::MatrixXd& colors) {
-    Eigen::MatrixX3d verts = quad_mesh->V;
-    Eigen::MatrixX3i faces = quad_mesh->F_t;
+void RemeshingMenu::stylize_quad_mesh(const Eigen::MatrixXd& colors) {
+    Eigen::MatrixX3d verts = quad_mesh.V;
+    Eigen::MatrixX3i faces = quad_mesh.F_t;
     Eigen::MatrixXd TC(3, 2);
     TC.row(0) = Eigen::Vector2d(0, 0);
     TC.row(1) = Eigen::Vector2d(1, 0);
@@ -1751,7 +1767,7 @@ void RemeshingPlugin::stylize_quad_mesh(const Eigen::MatrixXd& colors) {
     viewer->data_list[1].show_texture = true;
 }
 
-void RemeshingPlugin::update_visualization() {
+void RemeshingMenu::update_visualization() {
     for (const igl::opengl::ViewerData& data : viewer->data_list) {
         set_mesh_overlays(data.id, false, false, false);
     }
@@ -1802,7 +1818,9 @@ void RemeshingPlugin::update_visualization() {
     case ViewingMode::MESH_ONLY:
     {
         stylize_tri_mesh(directional::default_mesh_color());
-        update_drawing();
+        if (viewing_mode != ViewingMode::MESH_FIELD) {
+            update_drawing();
+        }
         break;
     }
 
@@ -1860,7 +1878,7 @@ void RemeshingPlugin::update_visualization() {
 }
 
 /////////////////////////////////////////////////////////////////////////////
-void RemeshingPlugin::update_polyhedron_tree(const std::vector<int> & face_refs) {
+void RemeshingMenu::update_polyhedron_tree(const std::vector<int> & face_refs) {
 	///////////////////////////////////////
 	igl_polyhedron.clear();
 	if (!igl::copyleft::cgal::mesh_to_polyhedron(V, F, igl_polyhedron)) {
@@ -1918,7 +1936,7 @@ void RemeshingPlugin::update_polyhedron_tree(const std::vector<int> & face_refs)
 	update_loop_graph();
 }
 
-void RemeshingPlugin::apply_subdivision() {
+void RemeshingMenu::apply_subdivision() {
     Eigen::MatrixXd NV;
     Eigen::MatrixXi NF;
     igl::loop(V, F, NV, NF);
@@ -1930,7 +1948,7 @@ void RemeshingPlugin::apply_subdivision() {
     update_visualization();
 }
 
-void RemeshingPlugin::construct_half_edge(std::vector<int>& half_edges) {
+void RemeshingMenu::construct_half_edge(std::vector<int>& half_edges) {
     std::vector<std::unordered_set<int>> v_faces(V.rows(), std::unordered_set<int>());
     if (igl_v_faces.empty()) {
         for (int i = 0; i < F.rows(); i++) {
@@ -1962,7 +1980,7 @@ void RemeshingPlugin::construct_half_edge(std::vector<int>& half_edges) {
     }
 }
 
-void RemeshingPlugin::get_mesh_information() {
+void RemeshingMenu::get_mesh_information() {
     Eigen::Vector3d minimal_vector = V.row(0);
     Eigen::Vector3d maximal_vector = V.row(0);
 
@@ -2001,7 +2019,7 @@ void RemeshingPlugin::get_mesh_information() {
     mesh_center[2] = (maximal_vector[2] + minimal_vector[2]) / 2.0;
 }
 
-void RemeshingPlugin::draw_a_segment(const Eigen::Vector3d v0, const Eigen::Vector3d v1, const int color_index, const double face_dis) {
+void RemeshingMenu::draw_a_segment(const Eigen::Vector3d v0, const Eigen::Vector3d v1, const int color_index, const double face_dis) {
 	Eigen::MatrixXd vec0;
 	vec0.resize(1, 3);
 	vec0.row(0) = v0;
@@ -2028,15 +2046,15 @@ void RemeshingPlugin::draw_a_segment(const Eigen::Vector3d v0, const Eigen::Vect
     viewer->data().add_edges(vec0, vec1, color);
 }
 
-void RemeshingPlugin::draw_segments(const std::vector<Eigen::Vector3d>& segments, const int color_index, const double face_dis) {
+void RemeshingMenu::draw_segments(const std::vector<Eigen::Vector3d>& segments, const int color_index, const double face_dis) {
 	if (segments.size() >= 2) {
 		for (int i = 0; i < segments.size() - 1; i++)
 			draw_a_segment(segments[i], segments[i + 1], color_index,face_dis);
-		//if (loop) draw_a_segment(segments[0], segments[segments.size() - 1], color_index);
+		// if (loop) draw_a_segment(segments[0], segments[segments.size() - 1], color_index);
 	}
 }
 
-void RemeshingPlugin::draw_a_point(const Eigen::Vector3d v, const int color_index, const double face_dis) {
+void RemeshingMenu::draw_a_point(const Eigen::Vector3d v, const int color_index, const double face_dis) {
 	Eigen::MatrixXd vec;
 	vec.resize(1, 3);
 	vec.row(0) = v;
@@ -2058,11 +2076,11 @@ void RemeshingPlugin::draw_a_point(const Eigen::Vector3d v, const int color_inde
     viewer->data().add_points(vec, color);
 }
 
-void RemeshingPlugin::draw_points(const std::vector<Eigen::Vector3d> & vecs, const int color_index, const double face_dis) {
+void RemeshingMenu::draw_points(const std::vector<Eigen::Vector3d> & vecs, const int color_index, const double face_dis) {
 	for (int i = 0; i < vecs.size(); i++) draw_a_point(vecs[i], color_index, face_dis);
 }
 
-bool RemeshingPlugin::highlight_symmetries() {
+bool RemeshingMenu::highlight_symmetries() {
 	int face_hit = -1;
 	if (model_loaded()) {
 		int fid;
@@ -2087,7 +2105,7 @@ bool RemeshingPlugin::highlight_symmetries() {
     return false;
 }
 
-std::vector<int> RemeshingPlugin::symmetry_axes() {
+std::vector<int> RemeshingMenu::symmetry_axes() {
 	std::vector<int> symmetries;
 	if (symmetrizer.has_face_symmetry()) {
 		if (symmetry_mode_yz && symmetrizer.has_face_symmetry(0)) {
