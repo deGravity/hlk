@@ -40,7 +40,7 @@ namespace hlk {
 		int index;
 		CoarseKnitMesh* mesh;
 
-		std::vector<z3::expr> get_constraints();
+		std::vector<std::pair<z3::expr, std::string>> get_constraints();
 		void update_texture();
 	};
 
@@ -66,7 +66,7 @@ namespace hlk {
 		int index;
 		CoarseKnitMesh* mesh;
 
-		std::vector<z3::expr> get_constraints();
+		std::vector<std::pair<z3::expr, std::string>> get_constraints();
 		void update_texture();
 	};
 

@@ -5,8 +5,8 @@
 
 namespace hlk {
 
-	const char* nth_label(std::string label, int n) {
-		return (label + "_" + std::to_string(n)).c_str();
+	std::string nth_label(std::string label, int n) {
+		return (label + "_" + std::to_string(n));
 	}
 
 	void CoarseKnitMesh::update_textures()
@@ -90,12 +90,11 @@ namespace hlk {
 
 		// TODO - Bug with the solver! It's probably due to not using shared pointers
 		// try changing this next.
-		//update_textures();
+		update_textures();
 		// Solve the SMT problem and update the textures
-		/*if (!optimize_geometry()) {
+		if (!optimize_geometry()) {
 			std::cout << "Unable to initialize" << std::endl;
 		}
-		*/
 
 	}
 
@@ -108,29 +107,37 @@ namespace hlk {
 		index = i;
 		mesh = m;
 	}
-	std::vector<z3::expr> CoarseKnitEdge::get_constraints()
+	std::vector<std::pair<z3::expr, std::string>> CoarseKnitEdge::get_constraints()
 	{
-		std::vector<z3::expr> constraints;
+		std::vector<std::pair<z3::expr, std::string>> constraints;
 		int side_a_idx = mesh->edges_to_sides(index, 0);
 		int side_b_idx = mesh->edges_to_sides(index, 1);
 		auto& side_a = mesh->sides[side_a_idx];
 		auto& side_b = mesh->sides[side_b_idx];
-		auto& time_a = mesh->quads[side_a_idx / 4].time->var;
-		auto& time_b = mesh->quads[side_b_idx / 4].time->var;
+		int quad_a_idx = side_a_idx / 4;
+		int quad_b_idx = side_b_idx / 4;
+		auto& time_a = mesh->quads[quad_a_idx].time->var;
+		auto& time_b = mesh->quads[quad_b_idx].time->var;
+
+		std::string edge_consistency_name = "edge_consistency_" + std::to_string(index);
+		std::string time_alignment_name = "time_alignment_" + std::to_string(index);
 
 
 		auto edge_consistency = (side_a.is_loop == side_b.is_loop) && (side_a.is_out != side_b.is_out);
 		// TODO - Add more IntProp and BoolProp overloads to simplify time alignment
-		auto time_alignment = 
-			(side_a.is_loop && side_a.is_out && time_a < time_b) || 
-			(side_a.is_loop && !side_a.is_out && time_b < time_a) || 
-			(!side_a.is_loop && time_a == time_b);
+		
+		auto time_alignment =
+			(side_a.is_loop->var && side_a.is_out->var && (time_a < time_b)) || 
+			(side_a.is_loop->var && !side_a.is_out->var && (time_b < time_a)) ||
+			(!side_a.is_loop->var && (time_a == time_b));
+
 		if (seam >= 0) {
-			constraints.push_back(
-				mesh->seams[seam]->var || (edge_consistency && time_alignment));
+			constraints.push_back(std::make_pair(mesh->seams[seam]->var || edge_consistency, edge_consistency_name));
+			constraints.push_back(std::make_pair(mesh->seams[seam]->var || time_alignment, time_alignment_name));
 		}
 		else {
-			constraints.push_back(edge_consistency && time_alignment);
+			constraints.push_back(std::make_pair(edge_consistency, edge_consistency_name));
+			constraints.push_back(std::make_pair(time_alignment, time_alignment_name));
 		}
 
 		return constraints;
@@ -163,7 +170,6 @@ namespace hlk {
 		short_row_distribution = NONE;
 		index = i;
 		mesh = m;
-
 		time = geo_opt.get_int_prop(nth_label("time", i));
 	}
 	void CoarseKnitQuad::update_texture()
@@ -173,11 +179,14 @@ namespace hlk {
 	CoarseKnitSide::CoarseKnitSide(Optimizer & geo_opt, Optimizer & topo_opt, int i, CoarseKnitMesh * m)
 	{
 		is_loop = geo_opt.get_bool_prop(nth_label("is_loop", i));
+		is_out = geo_opt.get_bool_prop(nth_label("is_out", i));
+		index = i;
+		mesh = m;
 	}
 
-	std::vector<z3::expr> CoarseKnitSide::get_constraints()
+	std::vector<std::pair<z3::expr,std::string>> CoarseKnitSide::get_constraints()
 	{
-		std::vector<z3::expr> constraints;
+		std::vector<std::pair<z3::expr, std::string>> constraints;
 		int u = mesh->side_u(index);
 		bool is_border = mesh->is_border_vertex[u];
 		int valence = mesh->valence[u];
@@ -194,9 +203,17 @@ namespace hlk {
 			// The orientation (in/out) switches after loops and stays the
 			// same after yarns, while the direction (loop/yarn) always switches.
 			// If both conditions are true, then the corner has proper handedness
-			auto orientation_check = (prev_is_out == is_out) == prev_is_loop;
+			auto orientation_check = (prev_is_out == is_out) != prev_is_loop;
 			auto direction_check = prev_is_loop != is_loop;
-			constraints.push_back(orientation_check && direction_check);
+
+			constraints.push_back(
+				std::make_pair(
+					orientation_check && direction_check,
+					"corner_" + std::to_string(index)
+				)
+			);
+
+			//constraints.push_back(orientation_check && direction_check);
 
 		}
 		else {
@@ -225,23 +242,23 @@ namespace hlk {
 	void CoarseKnitSide::update_texture()
 	{
 		auto& arrow = is_loop->is_fixed ? glyphs::SOLID_ARROW : glyphs::DASHED_ARROW;
-		auto& line = is_loop->is_fixed ? glyphs::SOLID_LINE : glyphs::DASHED_LINE;
+		auto& line = is_loop->is_fixed ? glyphs::THIN_SOLID_LINE : glyphs::THIN_DASHED_LINE;
 		auto& s_color = is_loop->val ? color::ORANGE : color::GREEN;
 		auto& symbol = is_out->val ? line : arrow;
 		mesh->set_glyph(mesh->dual_half_edge_slots[index], symbol, s_color);
 	}
 	bool CoarseKnitMesh::optimize_geometry()
 	{
-		geometry_optimizer.push();
+		geometry_optimizer.push();		
 
 		for (auto& edge : edges) {
 			for (auto constraint : edge.get_constraints()) {
-				geometry_optimizer.add_constraint(constraint);
+				geometry_optimizer.add_constraint(constraint.first, constraint.second);
 			}
 		}
 		for (auto& side : sides) {
 			for (auto constraint : side.get_constraints()) {
-				geometry_optimizer.add_constraint(constraint);
+				geometry_optimizer.add_constraint(constraint.first, constraint.second);
 			}
 		}
 
@@ -249,7 +266,7 @@ namespace hlk {
 
 		if (result.has_result) {
 			geometry_optimizer.update_all_props(*result.result_model);
-			
+			update_textures();
 		}
 		else {
 			// TODO - Get Information from the UNSAT core

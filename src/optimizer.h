@@ -184,10 +184,12 @@ namespace hlk {
     public:
 
         struct Result {
-            Result();
             void set_model(z3::model m);
-            bool has_result;
+			void set_unsat_core(z3::expr_vector u);
+            bool has_result = false;
+			bool has_unsat_core = false;
             std::unique_ptr<z3::model> result_model;
+			std::unique_ptr<z3::expr_vector> unsat_core;
         };
 
         enum Strategy {
@@ -201,6 +203,7 @@ namespace hlk {
         Result minimize(z3::expr objective, unsigned int timeout = -1U, Strategy strategy = BINARY_SEARCH);
         bool update_all_props(z3::model model);
         void add_constraint(z3::expr constraint);
+		void add_constraint(z3::expr constraint, std::string name);
         void push();
         void pop();
         std::shared_ptr<BoolProp> get_bool_prop(std::string id);
@@ -208,7 +211,7 @@ namespace hlk {
         z3::context context;
         void print_info();
         void clear();
-    private:
+    //private:
         Result minimize_bs(z3::expr objective, unsigned int timeout = -1U);
         Result minimize_inc(z3::expr objective, unsigned int timeout = -1U);
         Result minimize_dec(z3::expr objective, unsigned int timeout = -1U); // timeout in seconds

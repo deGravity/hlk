@@ -227,5 +227,24 @@ void main_labeler() {
 
 int main(void) {
 	main_labeler();
+	
+	//std::string f = igl::file_dialog_open();
+	/*
+	igl::opengl::glfw::Viewer viewer;
+	igl::opengl::glfw::imgui::ImGuiMenu menu;
+	viewer.plugins.push_back(&menu);
+	*/
+	/*
+	QuadMesh M;
+	hlk::read_quad_mesh(f, M);
+	std::cout << M.edges_to_sides << std::endl;
+	viewer.data().set_mesh(M.V, M.F_t);
+	viewer.data().show_faceid = true;
+	viewer.data().show_overlay = true;
+	viewer.launch();
+	*/
+	//CoarseKnitMesh ckm;
+	//hlk::read_quad_mesh(f, ckm);
+
 	return 0;
 }

@@ -112,7 +112,7 @@ namespace hlk {
         Result result;
         if (is_sat) {
             result.set_model(solver.get_model());
-        }
+		}
         solver.pop();
         return result;
     }
@@ -288,6 +288,12 @@ namespace hlk {
         return updated;
     }
 
+
+	void Optimizer::add_constraint(z3::expr constraint, std::string name)
+	{
+		solver.add(constraint, name.c_str());
+	}
+
     void Optimizer::add_constraint(z3::expr constraint)
     {
         solver.add(constraint);
@@ -347,15 +353,16 @@ namespace hlk {
         }
     }
 
-    Optimizer::Result::Result()
-    {
-        has_result = false;
-    }
-
     void Optimizer::Result::set_model(z3::model m)
     {
         result_model = make_unique<model>(m);
         has_result = true;
     }
+
+	void Optimizer::Result::set_unsat_core(z3::expr_vector u)
+	{
+		unsat_core = make_unique<expr_vector>(u);
+		has_unsat_core = true;
+	}
 
 };
