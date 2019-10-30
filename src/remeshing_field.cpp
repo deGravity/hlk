@@ -231,7 +231,7 @@ void RemeshingMenu::interpolate_field() {
                 constrained_faces.push_back(fv.face_id);
                 std::vector<Eigen::Vector3d> face_constraints;
                 if (fv.assigned[0] && fv.assigned[1]) {
-                    face_constraints = { fv.frame[0], fv.frame[1], -fv.frame[0], -fv.frame[1] };
+                    face_constraints = { fv.frame[1], fv.frame[0], -fv.frame[1], -fv.frame[0] };
                 } else {
                     if (fv.assigned[0]) {
                         Eigen::Vector3d ortho_dir = fv.normal.cross(fv.frame[0]);

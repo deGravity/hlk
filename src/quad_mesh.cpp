@@ -227,7 +227,7 @@ namespace hlk {
     bool QuadMesh::is_course_loop(int curr_he, Cardinal c) {
 
         int count = 0;
-        int max_to_check = n; // disjoint_set.max_row_length;
+        int max_to_check = m; // disjoint_set.max_row_length;
         std::map<int, Cardinal> face_directions;
         std::unordered_set<int> visited_hes;
 
@@ -289,15 +289,19 @@ namespace hlk {
 
         for (int curr_he : singular_quads) {
 
-            if (is_course_loop(curr_he, c)) continue;
+            bool is_loop = false;
+            for (int idx = 0; idx < 4; ++idx) {
+                if (is_course_loop(curr_he, (Cardinal)((c + idx) % 4)))
+                    is_loop = true;
+            }
+            if (is_loop) continue;
 
+            std::map<int, Cardinal> face_directions;
+            std::unordered_set<int> visited;
             bool found = false;
-            int count = 0;
+            int count = 0;        
 
             while (true) {
-                std::map<int, Cardinal> face_directions;
-                std::unordered_set<int> visited;
-
                 int quad_face = quad(curr_he);
                 std::vector<int> hes = sides(quad_face);
                 for (int idx = 0; idx < 4; ++idx) {

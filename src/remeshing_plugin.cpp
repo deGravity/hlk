@@ -170,7 +170,7 @@ void RemeshingMenu::draw_viewer_menu() {
                     std::vector<std::vector<double>> Vs, TCs;
                     std::vector<std::vector<int>> Fs;
                     if (miq_mode == MIQMode::POLYVECTOR) {
-                        extract_quad_mesh(VMeshCut, FMeshCut, cutUV, FMeshCut, quad_mesh);
+                        extract_quad_mesh(V, F, cutUV, FMeshCut, quad_mesh);
                     } else {
                         extract_quad_mesh(V, F, V_uv, F_uv, quad_mesh);
                     }
@@ -191,6 +191,7 @@ void RemeshingMenu::draw_viewer_menu() {
             }
             if (viewing_mode == ViewingMode::QUAD_INTERACT) {
                 if (ImGui::Button("Helix Finding", ImVec2(w - p, 0))) {
+                    stylize_quad_mesh(directional::default_mesh_color());
                     quad_helix_finding();
                 }
             }
