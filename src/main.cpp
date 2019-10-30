@@ -10,15 +10,11 @@ using namespace hlk;
 using namespace std;
 
 int main(void) {
-
-	int mode = 2;
-
-	/*
+    int mode;
 	cout << "Choose an Interface" << endl;
 	cout << "1) Remeshing" << endl;
 	cout << "2) Labeling" << endl;
 	cin >> mode;
-	*/
 
 	if (mode == 1) {
 		igl::opengl::glfw::Viewer viewer;
@@ -32,8 +28,7 @@ int main(void) {
 		}
 		viewer.plugins.push_back(&remeshing_menu);
 		viewer.launch();
-	}
-	else {
+	} else {
 		igl::opengl::glfw::Viewer viewer2;
 		LabelingUI labelingui;
 		viewer2.plugins.push_back(&labelingui);

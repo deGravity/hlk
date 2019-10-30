@@ -58,8 +58,7 @@ namespace hlk {
 		for (int i = 0; i < n; ++i) {
 			if (is_border_vertex[i]) {
 				is_singularity[i] = valence[i] > 3;
-			}
-			else {
+			} else {
 				is_singularity[i] = valence[i] != 4;
 			}
 			if (is_singularity[i]) singular_vertices.push_back(i);
@@ -68,6 +67,7 @@ namespace hlk {
         // Find faces around singularities
         singular_quads.clear();
         for (int vi : singular_vertices) {
+            if (is_border_vertex[vi]) continue;
             for (int nrow = 0; nrow < F_q.rows(); ++nrow) {
                 for (int j = 0; j < 4; ++j) {
                     if (F_q(nrow, j) == vi) {
@@ -257,6 +257,7 @@ namespace hlk {
         const std::map<int, Cardinal>& face_directions) {
 
         Cardinal c_opp = (Cardinal)((face_directions.at(curr_he) + 2) % 4);
+        if (is_course_loop(curr_he, c_opp)) return false;
 
         while (true) {
 
@@ -282,19 +283,21 @@ namespace hlk {
         return false;
     }
 
-    bool QuadMesh::helix_free(std::unordered_set<int>& helix, Cardinal c) {
+    bool QuadMesh::helix_free(std::unordered_set<int>& helix, std::unordered_set<int>& all_helices, Cardinal c) {
 
         int nskip = 1; // disjoint_set.min_row_length;
         helix.clear();
 
         for (int curr_he : singular_quads) {
 
+            if (is_course_loop(curr_he, c)) continue;
+            /*
             bool is_loop = false;
             for (int idx = 0; idx < 4; ++idx) {
                 if (is_course_loop(curr_he, (Cardinal)((c + idx) % 4)))
                     is_loop = true;
             }
-            if (is_loop) continue;
+            if (is_loop) continue;*/
 
             std::map<int, Cardinal> face_directions;
             std::unordered_set<int> visited;
@@ -320,6 +323,7 @@ namespace hlk {
                         std::unordered_set<int> curr_helix;
                         curr_helix.insert(visited.begin(), visited.end());
                         curr_helix.insert(ortho_visited.begin(), ortho_visited.end());
+                        all_helices.insert(curr_helix.begin(), curr_helix.end());
                         found = true;
                         if (helix.size() < curr_helix.size()) {
                             helix = curr_helix;
@@ -333,6 +337,7 @@ namespace hlk {
                         std::unordered_set<int> curr_helix;
                         curr_helix.insert(visited.begin(), visited.end());
                         curr_helix.insert(ortho_visited.begin(), ortho_visited.end());
+                        all_helices.insert(curr_helix.begin(), curr_helix.end());
                         found = true;
                         if (helix.size() < curr_helix.size()) {
                             helix = curr_helix;
@@ -348,7 +353,7 @@ namespace hlk {
             }
         }
 
-        return helix.empty();
+        return all_helices.empty();
     }
 
 }

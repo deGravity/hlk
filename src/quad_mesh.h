@@ -107,7 +107,7 @@ namespace hlk {
             std::unordered_set<int>& ortho_visited,
             const std::unordered_set<int>& visited,
             const std::map<int, Cardinal>& face_directions);
-        bool helix_free(std::unordered_set<int>& helix, Cardinal c = Cardinal::N);
+        bool helix_free(std::unordered_set<int>& helix, std::unordered_set<int>& all_helices, Cardinal c = Cardinal::N);
 	};
 
 }
