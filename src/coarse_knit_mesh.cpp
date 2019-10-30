@@ -265,10 +265,6 @@ namespace hlk {
 			++i;
 		}
 
-		z3::expr cost = seam_costs[0];
-		for (int i = 1; i < seam_costs.size(); ++i) {
-			cost = cost + seam_costs[i];
-		}
 		
 		for (auto& edge : edges) {
 			for (auto constraint : edge.get_constraints()) {
@@ -281,8 +277,17 @@ namespace hlk {
 			}
 		}
 
-		//auto result = geometry_optimizer.minimize_inc(cost);
-		auto result = geometry_optimizer.minimize(cost, 15);
+
+
+		z3::expr cost = geometry_optimizer.context.int_const("cst");
+		if (seam_costs.size() > 0) {
+			cost = seam_costs[0];
+			for (int i = 1; i < seam_costs.size(); ++i) {
+				cost = cost + seam_costs[i];
+			}
+		}
+
+		auto result = seam_costs.size() > 0 ? geometry_optimizer.minimize(cost, 15) : geometry_optimizer.solve();
 
 		if (result.has_result) {
 			geometry_optimizer.update_all_props(*result.result_model);
@@ -372,6 +377,7 @@ namespace hlk {
 	{
 		sides[side].is_loop->is_fixed = false;
 		sides[side].is_out->is_fixed = false;
+		sides[side].update_texture();
 	}
 	void CoarseKnitMesh::erase_textue(int side)
 	{

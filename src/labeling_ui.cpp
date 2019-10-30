@@ -111,6 +111,13 @@ namespace hlk {
 					last_drag_side = fid;
 					return true;
 				}
+
+				if (current_tool == ERASER) {
+					if (eraser_mode == ERASE_ORIENTATIONS) {
+						M.erase_orientation(fid);
+						update_mesh();
+					}
+				}
 			}
 		}
 
