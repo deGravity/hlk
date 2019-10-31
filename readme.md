@@ -87,7 +87,7 @@ If you want to use the meshing UI, you must compile in release mode. This is bec
 
 ### Interaction Operation (1)Remeshing)
 
-
+```interaction
 Alt+(Middle Button): compute elastic loop
 Alt+(Right Buttion): compute geodesic loop
 Ctrl+Alt+(Right Buttion):erease face vector (Error!)
@@ -104,6 +104,7 @@ Shift+(Left Button):add SOFT constraint for faces
 Alt+(Left Button):add seaming lines
   1)draw a line on the mesh (Error!)
   2)click on two existing vertices (Error!)
+```
   
 
 
