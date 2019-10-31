@@ -165,8 +165,8 @@ void RemeshingMenu::draw_viewer_menu() {
             if (miq_mode == MIQMode::POLYVECTOR) {
                 ImGui::Checkbox("[parameterize.h] isInteger", &isInteger);
             }
-            if (ImGui::Button("Extract Quads", ImVec2((w - p) / 2.f, 0))) {
-                if (has_integer_grid) {
+            if (has_integer_grid) {
+                if (ImGui::Button("Extract Quad Mesh", ImVec2(w - p, 0))) {
                     std::vector<std::vector<double>> Vs, TCs;
                     std::vector<std::vector<int>> Fs;
                     if (miq_mode == MIQMode::POLYVECTOR) {
@@ -179,18 +179,18 @@ void RemeshingMenu::draw_viewer_menu() {
                     update_visualization();
                 }
             }
-            ImGui::SameLine(0, p);
-            if (ImGui::Button("Save Quads", ImVec2((w - p) / 2.f, 0))) {
-                if (is_quad_meshed) {
-                    std::string fname = igl::file_dialog_save();
-                    if (fname.length() > 0) {
-                        Eigen::MatrixXd V_q = quad_mesh.V.block(0, 0, quad_mesh.n, 3);
-                        igl::writeOBJ(fname, V_q, quad_mesh.F_q);
+            if (is_quad_meshed) {
+                if (ImGui::Button("Save Quads", ImVec2((w - p) / 2.f, 0))) {
+                    if (is_quad_meshed) {
+                        std::string fname = igl::file_dialog_save();
+                        if (fname.length() > 0) {
+                            Eigen::MatrixXd V_q = quad_mesh.V.block(0, 0, quad_mesh.n, 3);
+                            igl::writeOBJ(fname, V_q, quad_mesh.F_q);
+                        }
                     }
                 }
-            }
-            if (viewing_mode == ViewingMode::QUAD_INTERACT) {
-                if (ImGui::Button("Helix Finding", ImVec2(w - p, 0))) {
+                ImGui::SameLine(0, p);
+                if (ImGui::Button("Check Helix", ImVec2((w - p) / 2.f, 0))) {
                     stylize_quad_mesh(directional::default_mesh_color());
                     quad_helix_finding();
                 }
@@ -552,6 +552,7 @@ bool RemeshingMenu::mouse_down(int button, int modifier) {
 	mouse_down_on = true;
 	mouse_x = viewer->current_mouse_x;
 	mouse_y = viewer->core().viewport(3) - viewer->current_mouse_y;
+
 	return false;
 }
 
@@ -568,9 +569,10 @@ bool RemeshingMenu::mouse_move(int mouse_x, int mouse_y) {
                 viewer->core().proj, viewer->core().viewport, V, F, fid, bc)) {
                 if ((ctrl_on && !alt_on && !shift_on && mouse_key == 0) || // ctrl+left, red
                     (!ctrl_on && alt_on && !shift_on && mouse_key == 0) || // alt+left, green
-                    (!ctrl_on && !alt_on && shift_on && mouse_key == 0) || // shift+left, blue
+                    (!ctrl_on && !alt_on && shift_on && mouse_key == 0) || // shift+left, blue/orange
                     (!ctrl_on && alt_on && !shift_on && mouse_key == 1) || // alt+middle, green
-					(!ctrl_on && alt_on && !shift_on && mouse_key == 2)) { // alt+right, green
+                    ( ctrl_on && alt_on && !shift_on && mouse_key == 2) || // ctrl+alt+right, black
+                    (!ctrl_on && alt_on && !shift_on && mouse_key == 2)) { // alt+right, green
 
 					// draw stroke if intersecting
 					const Eigen::Vector3d intersection =
@@ -583,7 +585,9 @@ bool RemeshingMenu::mouse_move(int mouse_x, int mouse_y) {
 						Eigen::Vector3d dst = feature_points[feature_points.size() - 1] + normal * mesh_size * 0.001;
 						std::vector<Eigen::Vector3d> vecs = { src, dst };
 						
-						if (ctrl_on) {
+                        if (ctrl_on && alt_on) {
+                            draw_points(vecs, 4);
+                        } else if (ctrl_on) {
                             draw_points(vecs, 0);
 						} else if (alt_on) {
                             if (mouse_key == 0) { draw_points(vecs, 1); }
@@ -594,7 +598,7 @@ bool RemeshingMenu::mouse_move(int mouse_x, int mouse_y) {
                                 draw_points(vecs, 1, 0.0);
                             }
 						} else if (shift_on) {
-                            draw_points(vecs, drawing_mode == DrawingMode::COURSE ? 1 : 3);
+                            draw_points(vecs, drawing_mode == DrawingMode::COURSE ? 2 : 3);
                         }
 						should_redraw = true;
 					}
@@ -676,41 +680,28 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
 
     double x = viewer->current_mouse_x;
     double y = viewer->core().viewport(3) - viewer->current_mouse_y;
-
-    if (viewing_mode == ViewingMode::QUAD_INTERACT && is_quad_meshed && button == 0) {
-        int fid;
-        Eigen::Vector3f bc;
-        Eigen::MatrixXd qV = quad_mesh.V;
-        Eigen::MatrixXi qF = quad_mesh.F_t;
-        if (igl::unproject_onto_mesh(Eigen::Vector2f(x, y), viewer->core().view,
-            viewer->core().proj, viewer->core().viewport, qV, qF, fid, bc)) {
-
-            Eigen::MatrixXd interactive_colors(qF.rows(), 3);
-            interactive_colors.setOnes();
-
-            int curr_he = fid;
-            while (true) {
-                int quad_face = quad_mesh.quad(curr_he);
-                for (const int he : quad_mesh.sides(quad_face)) {
-                    interactive_colors.row(he) = Eigen::RowVector3d(0.8, 1., 0.6);
-                }
-                curr_he = quad_mesh.opposite_side(curr_he);
-                if (quad_mesh.flip_side(curr_he) < 0) break;
-                curr_he = quad_mesh.flip_side(curr_he);
-                if (curr_he == fid) break;
-            }
-            stylize_quad_mesh(interactive_colors);
-            return false;
-        }
-    }
-
     double mouse_d = std::sqrt(std::pow(x-mouse_x, 2) + std::pow(y-mouse_y, 2));
     int fid;
     Eigen::Vector3f bc;
     bool intersects = igl::unproject_onto_mesh(Eigen::Vector2f(x, y), viewer->core().view,
         viewer->core().proj, viewer->core().viewport, V, F, fid, bc);
 
-    if ((button == 2 || button == 1) && alt_on && !shift_on && !ctrl_on) { // loop
+    if (button == 1 && mouse_d < 2) { // mid and distance small
+        if (intersects) {
+            const Eigen::RowVector3d intersection =
+                V.row(F(fid, 0)) * bc(0) + V.row(F(fid, 1)) * bc(1) + V.row(F(fid, 2)) * bc(2);
+            double d0 = (V.row(F(fid, 0)) - intersection).norm();
+            double d1 = (V.row(F(fid, 1)) - intersection).norm();
+            double d2 = (V.row(F(fid, 2)) - intersection).norm();
+
+            if (existing_point_label) {
+                if (d0 < mesh_edge_size * click_threshold) points_vectors[F(fid, 0)] = !points_vectors[F(fid, 0)];
+                if (d1 < mesh_edge_size * click_threshold) points_vectors[F(fid, 1)] = !points_vectors[F(fid, 1)];
+                if (d2 < mesh_edge_size * click_threshold) points_vectors[F(fid, 2)] = !points_vectors[F(fid, 2)];
+            }
+        }
+
+    } else if ((button == 2 || button == 1) && alt_on && !shift_on && !ctrl_on) { // loop
 		if (feature_points.size() > 2) {
 			auto n = face_vectors[loop_feature_face_ids[0]].normal;
             Eigen::Vector3d a = feature_points.back() - feature_points.front();
@@ -738,8 +729,8 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
             std::vector<int> cutting_0_edges;
             std::vector<int> cutting_1_edges;
             std::vector<Eigen::Vector3d> cutting_points;
-			CGAL_Mesh_Cutting(feature_points, mesh_edge_size * click_threshold,
-				igl_tree, feature_face_ids, cutting_0_edges, cutting_1_edges, cutting_points, cutting_faces);
+            CGAL_Mesh_Cutting(feature_points, mesh_edge_size * click_threshold,
+                igl_tree, feature_face_ids, cutting_0_edges, cutting_1_edges, cutting_points, cutting_faces);
 
             if (!cutting_0_edges.empty()) {
                 for (int fid = 0; fid < cutting_faces.size(); fid++) {
@@ -750,23 +741,8 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
                 }
             }
         }
- 
-    } else if (button == 1 && mouse_d < 2) { // mid and distance small
-        if (intersects) {
-            const Eigen::RowVector3d intersection =
-                V.row(F(fid, 0))*bc(0) + V.row(F(fid, 1))*bc(1) + V.row(F(fid, 2))*bc(2);
-            double d0 = (V.row(F(fid, 0)) - intersection).norm();
-            double d1 = (V.row(F(fid, 1)) - intersection).norm();
-            double d2 = (V.row(F(fid, 2)) - intersection).norm();
 
-            if (existing_point_label) {
-                if (d0 < mesh_edge_size * click_threshold) points_vectors[F(fid, 0)] = !points_vectors[F(fid, 0)];
-                if (d1 < mesh_edge_size * click_threshold) points_vectors[F(fid, 1)] = !points_vectors[F(fid, 1)];
-                if (d2 < mesh_edge_size * click_threshold) points_vectors[F(fid, 2)] = !points_vectors[F(fid, 2)];
-            }
-        }
-
-	} else if (button == 0) { // left
+    } else if (button == 0) { // left
 		if ((ctrl_on && !shift_on && !alt_on) ||
 			(shift_on && !ctrl_on && !alt_on) ||
 			(alt_on && !shift_on && !ctrl_on)) { // ctrl/shift/alt
@@ -843,14 +819,15 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
 				if (existing_edge_label && geodesic_path.size() >= 2) { geodesic_assign_vector(); }
 				else { assign_vector(); }
 				symmetry_assign_vector(feature_points_save);
-			}
+                should_redraw = true;
 
             // seaming line
-            if (alt_on && !shift_on && !ctrl_on) { // alt
+			} else if (alt_on && !shift_on && !ctrl_on) { // alt
                 std::vector<Eigen::Vector3d> feature_points_save = feature_points;
                 if (existing_edge_label && geodesic_path.size() >= 2) { geodesic_split_mesh(); }
                 else { split_mesh(); }
                 symmetry_split_mesh(feature_points_save);
+                should_redraw = true;
             }
         }
     } 
@@ -1407,8 +1384,6 @@ void RemeshingMenu::split_mesh() {
     points_vectors.clear();
     points_vectors = new_points_vectors;
     new_points_vectors.clear();
-
-    should_redraw = true;
 }
 
 void RemeshingMenu::geodesic_split_mesh() {
@@ -1621,7 +1596,7 @@ void RemeshingMenu::update_drawing() {
             Eigen::Vector3d s = face_vectors[i].center - face_vectors[i].frame[0].normalized() * mesh_scale;
             Eigen::Vector3d t = face_vectors[i].center + face_vectors[i].frame[0].normalized() * mesh_scale;
             s += nudge; t += nudge;
-            draw_a_segment(s, t, 1);
+            draw_a_segment(s, t, 2);
             // arrow 1
             Eigen::Vector3d base = face_vectors[i].frame[0].cross(face_vectors[i].normal);
             Eigen::Vector3d arrow_base = face_vectors[i].center + face_vectors[i].frame[0].normalized() * mesh_size * 0.02 * 0.8;
@@ -2074,6 +2049,8 @@ void RemeshingMenu::draw_a_point(const Eigen::Vector3d v, const int color_index,
         color = { 0.2, 0.2, 0.8 }; break; // blue
     case 3:
         color = { 0.9, 0.5, 0.1 }; break; // orange
+    case 4:
+        color = { 0.0, 0.0, 0.0 }; break; // black
     }
     viewer->data().add_points(vec, color);
 }

@@ -90,7 +90,7 @@ If you want to use the meshing UI, you must compile in release mode. This is bec
 ```interaction
 Alt+(Middle Button): compute elastic loop
 Alt+(Right Buttion): compute geodesic loop
-Ctrl+Alt+(Right Buttion):erease face vector (Error!)
+Ctrl+Alt+(Right Buttion): erase face vector
 
 Ctrl+(Left Button):add HARD constraint for faces
   1)draw a line on the mesh 
@@ -103,7 +103,7 @@ Shift+(Left Button):add SOFT constraint for faces
   
 Alt+(Left Button):add seaming lines
   1)draw a line on the mesh (Error!)
-  2)click on two existing vertices (Error!)
+  2)click on two existing vertices
 ```
   
 

@@ -462,12 +462,12 @@ void RemeshingMenu::reduce_curl() {
 
 void RemeshingMenu::quad_helix_finding() {
     if (!is_quad_meshed) { return; }
+
     std::unordered_set<int> longest_helix;
-    std::unordered_set<int> all_helices;
-    if (!quad_mesh.helix_free(longest_helix, all_helices, cardinal)) {
+    if (!quad_mesh.helix_free(longest_helix, cardinal)) {
         Eigen::MatrixXd interactive_colors(quad_mesh.m * 4, 3);
         interactive_colors.setOnes();
-        for (auto iter = all_helices.begin(); iter != all_helices.end(); ++iter) {
+        for (auto iter = longest_helix.begin(); iter != longest_helix.end(); ++iter) {
             interactive_colors.row((*iter)) = Eigen::RowVector3d(0.8, 1., 0.6);
         }
         stylize_quad_mesh(interactive_colors);

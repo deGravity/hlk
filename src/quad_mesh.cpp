@@ -67,7 +67,6 @@ namespace hlk {
         // Find faces around singularities
         singular_quads.clear();
         for (int vi : singular_vertices) {
-            if (is_border_vertex[vi]) continue;
             for (int nrow = 0; nrow < F_q.rows(); ++nrow) {
                 for (int j = 0; j < 4; ++j) {
                     if (F_q(nrow, j) == vi) {
@@ -253,11 +252,9 @@ namespace hlk {
     bool QuadMesh::perp_direction_check(
         int curr_he,
         std::unordered_set<int>& ortho_visited,
-        const std::unordered_set<int>& visited,
         const std::map<int, Cardinal>& face_directions) {
 
         Cardinal c_opp = (Cardinal)((face_directions.at(curr_he) + 2) % 4);
-        if (is_course_loop(curr_he, c_opp)) return false;
 
         while (true) {
 
@@ -283,26 +280,20 @@ namespace hlk {
         return false;
     }
 
-    bool QuadMesh::helix_free(std::unordered_set<int>& helix, std::unordered_set<int>& all_helices, Cardinal c) {
+    bool QuadMesh::helix_free(std::unordered_set<int>& helix, Cardinal c) {
 
         int nskip = 1; // disjoint_set.min_row_length;
+        std::unordered_set<int> all_helices;
         helix.clear();
 
         for (int curr_he : singular_quads) {
 
             if (is_course_loop(curr_he, c)) continue;
-            /*
-            bool is_loop = false;
-            for (int idx = 0; idx < 4; ++idx) {
-                if (is_course_loop(curr_he, (Cardinal)((c + idx) % 4)))
-                    is_loop = true;
-            }
-            if (is_loop) continue;*/
 
             std::map<int, Cardinal> face_directions;
             std::unordered_set<int> visited;
             bool found = false;
-            int count = 0;        
+            int count = 0;
 
             while (true) {
                 int quad_face = quad(curr_he);
@@ -315,33 +306,11 @@ namespace hlk {
                 if (flip_side(opp_he) < 0) break;
 
                 if (count > nskip) {
-
                     std::unordered_set<int> ortho_visited;
-                    if (perp_direction_check(prev_side(curr_he),
-                        ortho_visited, visited, face_directions)) {
-
-                        std::unordered_set<int> curr_helix;
-                        curr_helix.insert(visited.begin(), visited.end());
-                        curr_helix.insert(ortho_visited.begin(), ortho_visited.end());
-                        all_helices.insert(curr_helix.begin(), curr_helix.end());
-                        found = true;
-                        if (helix.size() < curr_helix.size()) {
-                            helix = curr_helix;
-                        }
-                    }
-
-                    ortho_visited.clear();
-                    if (perp_direction_check(prev_side(opp_he),
-                        ortho_visited, visited, face_directions)) {
-
-                        std::unordered_set<int> curr_helix;
-                        curr_helix.insert(visited.begin(), visited.end());
-                        curr_helix.insert(ortho_visited.begin(), ortho_visited.end());
-                        all_helices.insert(curr_helix.begin(), curr_helix.end());
-                        found = true;
-                        if (helix.size() < curr_helix.size()) {
-                            helix = curr_helix;
-                        }
+                    found = perp_direction_check(prev_side(curr_he), ortho_visited, face_directions);
+                    if (!found) {
+                        ortho_visited.clear();
+                        found = perp_direction_check(prev_side(opp_he), ortho_visited, face_directions);
                     }
                 }
 
@@ -350,6 +319,25 @@ namespace hlk {
                 curr_he = flip_side(opp_he);
                 ++count;
                 if (visited.find(curr_he) != visited.end()) break;
+            }
+
+            if (found) {
+                std::unordered_set<int> curr_helix;
+                int he = curr_he;
+                while (true) {
+                    int quad_face = quad(he);
+                    for (const int he : sides(quad_face)) {
+                        curr_helix.emplace(he);
+                    }
+                    he = opposite_side(he);
+                    if (flip_side(he) < 0) break;
+                    he = flip_side(he);
+                    if (he == curr_he) break;
+                }
+                if (helix.size() < curr_helix.size()) {
+                    helix = curr_helix;
+                    all_helices.insert(curr_helix.begin(), curr_helix.end());
+                }
             }
         }
 
