@@ -94,13 +94,14 @@ Ctrl+Alt+(Right Buttion): erase face vector
 Ctrl+(Left Button): add HARD constraint for faces
   1)draw a line on the mesh 
   2)click on two existing vertices
-  3)draw a line in a single triangle (Fixed?)
+  3)draw a line in a single triangle
   
 Shift+(Left Button): add SOFT constraint for faces
   1)draw a line on the mesh
   2)click on two existing vertices
+  3)draw a line in a single triangle
   
 Alt+(Left Button): add seaming lines
-  1)draw a line on the mesh (Error!)
+  1)draw a line on the mesh
   2)click on two existing vertices
 ```

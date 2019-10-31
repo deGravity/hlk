@@ -107,6 +107,7 @@ public:
     std::vector<int> symmetry_axes();
 
     // field - impl in remeshing_field.cpp
+    void reset_face_vectors();
     void reset_field();
     void init_curvature_field();
     void setup_boundary();

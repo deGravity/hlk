@@ -297,6 +297,7 @@ void CGAL_Mesh_Cutting(
     std::vector<Eigen::Vector3d>& igl_cutting_points,
     std::vector<std::vector<int>>& cutting_faces) {
 
+    face_ids.clear();
     std::vector<Eigen::Vector3d> new_features;
 
     for (int i = 0; i < features.size(); i++) {

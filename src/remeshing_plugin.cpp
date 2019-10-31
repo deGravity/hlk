@@ -349,23 +349,6 @@ void RemeshingMenu::setup_mesh() {
     viewer->data().set_mesh(V, F);
     get_mesh_information();
     draw_a_point(mesh_center, 1);
-
-    std::vector<int> face_refs;
-    update_polyhedron_tree(face_refs);
-
-    for (int i = 0; i < F.rows(); i++) {
-        FaceVector fv;
-        fv.face_id = i;
-        Eigen::Vector3d v0 = V.row(F.row(i)[0]);
-        Eigen::Vector3d v1 = V.row(F.row(i)[1]);
-        Eigen::Vector3d v2 = V.row(F.row(i)[2]);
-        fv.center = (v0 + v1 + v2) / 3.0;
-        fv.normal = (v1 - v0).cross(v2 - v0).normalized();
-        fv.assigned[0] = false;
-        fv.assigned[1] = false;
-        face_vectors.push_back(fv);
-    }
-    points_vectors = std::vector<bool>(V.rows(), false);
 }
 
 bool RemeshingMenu::load(std::string filename) {
@@ -381,9 +364,11 @@ bool RemeshingMenu::load(std::string filename) {
         return false;
     }
 	setup_mesh();
+    std::vector<int> face_refs; 
+    update_polyhedron_tree(face_refs);
+    reset_face_vectors();
     load_temp_data(filename);
  
-
     // Set up the field.
     setup_boundary();
     interpolate_field();    
@@ -811,7 +796,7 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
 
 		// close all multi points selecting/seaming lines
 		if (!((multi_points_drawing && feature_points.size() < 2) ||
-			(!multi_points_drawing && feature_points.size() >= 2))) { // was != 2
+			(!multi_points_drawing && feature_points.size() != 2))) {
 
 			// hard constraint / soft constraint
 			if ((ctrl_on && !shift_on && !alt_on) || (shift_on && !ctrl_on && !alt_on)) { // ctrl/shift
@@ -1334,6 +1319,7 @@ void RemeshingMenu::split_mesh() {
     }
 
     ///////////////////////////////////////
+
     Eigen::MatrixX3d newV;
     newV.resize(new_points.size(), 3);
     for (int i = 0; i < new_points.size(); i++) { newV.row(i) = new_points[i]; }
@@ -1344,16 +1330,9 @@ void RemeshingMenu::split_mesh() {
     for (int i = 0; i < new_faces.size(); i++) { newF.row(i) = new_faces[i]; }
     F = newF;
 
-    viewer->data().clear();
-    viewer->data().set_mesh(V, F);
-    symmetrizer = Symmetrizer(V, F);
-    viewer->data().show_lines = true;
-    viewer->core().lighting_factor = 0.0;
-    viewer->data().set_colors(directional::default_mesh_color());
-    viewer->data().set_face_based(true);
-    viewer->data().show_texture = false;
-
+    setup_mesh();
     update_polyhedron_tree(face_refs);
+
     ///////////////////////////////////////
 
     // update face vectors
@@ -1367,6 +1346,8 @@ void RemeshingMenu::split_mesh() {
         fv.center = (v_0 + v_1 + v_2) / 3.0;
         fv.normal = (v_1 - v_0).cross(v_2 - v_0).normalized();
         new_face_vectors.push_back(fv);
+        fv.assigned[0] = false;
+        fv.assigned[1] = false;
     }
     for (int i = 0; i < face_refs.size(); i = i + 2) {
         int new_face_index = face_refs[i];
@@ -1855,7 +1836,7 @@ void RemeshingMenu::update_visualization() {
 }
 
 /////////////////////////////////////////////////////////////////////////////
-void RemeshingMenu::update_polyhedron_tree(const std::vector<int> & face_refs) {
+void RemeshingMenu::update_polyhedron_tree(const std::vector<int>& face_refs) {
 	///////////////////////////////////////
 	igl_polyhedron.clear();
 	if (!igl::copyleft::cgal::mesh_to_polyhedron(V, F, igl_polyhedron)) {
@@ -1920,6 +1901,9 @@ void RemeshingMenu::apply_subdivision() {
     V = NV;
     F = NF;
     setup_mesh();
+    std::vector<int> face_refs;
+    update_polyhedron_tree(face_refs);
+    reset_face_vectors();
     setup_boundary();
     interpolate_field();
     update_visualization();
