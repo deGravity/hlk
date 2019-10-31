@@ -84,7 +84,6 @@ Use your distribution's package manager to install z3 and OpenMesh.
 
 If you want to use the meshing UI, you must compile in release mode. This is because we use CGAL polyhedrons for calculating geodesic paths. This data structure assumes that the meshes will be manifold, but most clothing meshes are not. In release mode, the assertions that check this precondition are not run, and so the code works. In debug mode, the assertions will crash the code immediately upon model import.
 
-
 ### Interaction Operation of "Remeshing" mode
 
 ```interaction
@@ -92,24 +91,16 @@ Alt+(Middle Button): compute elastic loop
 Alt+(Right Buttion): compute geodesic loop
 Ctrl+Alt+(Right Buttion): erase face vector
 
-Ctrl+(Left Button):add HARD constraint for faces
+Ctrl+(Left Button): add HARD constraint for faces
   1)draw a line on the mesh 
   2)click on two existing vertices
-  3)draw a line in a single triangle (Error!)
+  3)draw a line in a single triangle (Fixed?)
   
-Shift+(Left Button):add SOFT constraint for faces
+Shift+(Left Button): add SOFT constraint for faces
   1)draw a line on the mesh
-  2)click on two existing vertices (Error!)
+  2)click on two existing vertices
   
-Alt+(Left Button):add seaming lines
+Alt+(Left Button): add seaming lines
   1)draw a line on the mesh (Error!)
   2)click on two existing vertices
 ```
-  
-
-
-
-
-
-
-
