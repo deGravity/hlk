@@ -380,8 +380,9 @@ bool RemeshingMenu::load(std::string filename) {
         std::cerr << "Fail to load file " << filename << "...\n";
         return false;
     }
+	setup_mesh();
     load_temp_data(filename);
-    setup_mesh();
+ 
 
     // Set up the field.
     setup_boundary();
@@ -429,16 +430,15 @@ void RemeshingMenu::load_temp_data(std::string filename) {
     int nb;
     ifs >> nb;
     for (int i = 0; i < nb; i++) {
-        int index;
-        bool is_hard;
-        bool assigned[2];
-        Eigen::Vector3d vec1, vec2, cen, nor;
-        ifs >> index >> is_hard >> assigned[0] >> assigned[1]
-            >> vec1[0] >> vec1[1] >> vec1[2]
-            >> vec2[0] >> vec2[1] >> vec2[2]
-            >> cen[0] >> cen[1] >> cen[2] 
-            >> nor[0] >> nor[1] >> nor[2];
-        face_vectors[i] = { index, is_hard, {assigned[0], assigned[1]}, {vec1, vec2}, cen, nor };
+        int face_id;
+		ifs >> face_id;
+		auto& face = face_vectors[face_id];
+        ifs >> face.is_hard >> face.assigned[0] >> face.assigned[1]
+            >> face.frame[0][0] >> face.frame[0][1] >> face.frame[0][2]
+			>> face.frame[1][0] >> face.frame[1][1] >> face.frame[1][2]
+			>> face.base_vector[0] >> face.base_vector[1] >> face.base_vector[2]
+			>> face.center[0] >> face.center[1] >> face.center[2]
+            >> face.normal[0] >> face.normal[1] >> face.normal[2];
     }
     ifs.clear();
     ifs.close();
@@ -482,9 +482,10 @@ bool RemeshingMenu::save(std::string filename) {
 		if (face_vectors[i].assigned[0] || face_vectors[i].assigned[1]) {
 			face_file_temp << face_vectors[i].face_id << " " 
                 << face_vectors[i].is_hard << " " 
-                << face_vectors[i].assigned[0] << face_vectors[i].assigned[1] << " "
+                << face_vectors[i].assigned[0] <<" "<< face_vectors[i].assigned[1] << " "
                 << face_vectors[i].frame[0][0] << " " << face_vectors[i].frame[0][1] << " " << face_vectors[i].frame[0][2] << " "
-                << face_vectors[i].frame[1][0] << " " << face_vectors[i].frame[1][1] << " " << face_vectors[i].frame[2][2] << " "
+                << face_vectors[i].frame[1][0] << " " << face_vectors[i].frame[1][1] << " " << face_vectors[i].frame[1][2] << " "
+				<< face_vectors[i].base_vector[0] << " " << face_vectors[i].base_vector[1] << " " << face_vectors[i].base_vector[2] << " "
 				<< face_vectors[i].center[0] << " " << face_vectors[i].center[1] << " " << face_vectors[i].center[2] << " "
 				<< face_vectors[i].normal[0] << " " << face_vectors[i].normal[1] << " " << face_vectors[i].normal[2] << "\n";
 		}
