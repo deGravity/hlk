@@ -50,7 +50,16 @@ public:
         cardinal = Cardinal::N;
         line_texture(texture_R, texture_G, texture_B);
     }
-	
+	~RemeshingMenu() {
+		clear();
+		for (auto& temp : temps)
+		{
+			remove(temp.mesh.c_str());
+			remove(temp.face.c_str());
+			remove(temp.edge.c_str());
+		}
+	};
+
     void init(igl::opengl::glfw::Viewer* _viewer);
     void draw_viewer_menu();
     bool load(std::string filename);
@@ -127,6 +136,8 @@ public:
 	void compute_elastic_loop_min_geodesic(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
 	void symmetry_elastic_loop(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
 	void symmetry_elastic_loop(std::vector<int> axes, const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
+
+	void save_ctrlz();
 
     // bools...
     bool has_direction_field;
@@ -257,6 +268,9 @@ public:
     int mouse_key;
     double mouse_x, mouse_y;
     bool ctrl_on, alt_on, shift_on, mouse_down_on;
+
+	CTRLZSL czsl;
+	std::vector<TEMPDATA> temps;
 };
 
 }

@@ -74,6 +74,21 @@ enum MIQMode {
     POLYVECTOR
 };
 
+struct CTRLZSL
+{
+	bool ctrl = false;
+	bool z = false;
+	bool s = false;
+	bool l = false;
+};
+
+struct TEMPDATA
+{
+	std::string mesh;
+	std::string face;
+	std::string edge;
+};
+
 double angle_between(Eigen::Vector3d v1, Eigen::Vector3d v2);
 double angle_coordinate_system(const Eigen::Vector3d& v, const Eigen::Vector3d& x, const Eigen::Vector3d& y);
 

@@ -14,10 +14,16 @@ int main(void) {
 	cout << "Choose an Interface" << endl;
 	cout << "1) Remeshing" << endl;
 	cout << "2) Labeling" << endl;
+
+#ifdef HAISEN
+	mode = 1;
+#else
 	cin >> mode;
+#endif
 
 	if (mode == 1) {
 		igl::opengl::glfw::Viewer viewer;
+
 		int rosy = 4;
 		std::string input_path = "./tmp_in.obj";
 		std::string output_path = "./tmp_out.obj";

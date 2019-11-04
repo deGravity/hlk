@@ -33,6 +33,7 @@
 
 namespace hlk {
 
+
 void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
     igl::opengl::glfw::imgui::ImGuiMenu::init(_viewer);
 
@@ -41,6 +42,45 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
     _viewer->data().line_width = 0.1f;
     _viewer->data().point_size = 0.5f;
     _viewer->core().camera_zoom = 2.f;
+
+
+	// This function is called every time a keyboard button is pressed
+	auto key_down = [&](igl::opengl::glfw::Viewer & viewer, unsigned char key, int modifier)
+	{
+		if ((unsigned int)key == 85) czsl.ctrl = true;
+		if ((unsigned int)key == 90) czsl.z = true;
+		if ((unsigned int)key == 83) czsl.s = true;
+		if ((unsigned int)key == 76) czsl.l = true;
+		if (czsl.ctrl && czsl.s) viewer.open_dialog_save_mesh();
+		if (czsl.ctrl && czsl.l) viewer.open_dialog_load_mesh();
+
+		if (czsl.ctrl && czsl.z)
+		{
+			//load();
+			if (temps.size() > 1)
+			{
+				load(temps[temps.size()-2].mesh);
+				remove(temps.back().edge.c_str());
+				remove(temps.back().face.c_str());
+				remove(temps.back().mesh.c_str());
+				temps.erase(temps.begin()+temps.size()-1);
+			}
+		}
+
+		return false;
+	};
+
+	auto key_up = [&](igl::opengl::glfw::Viewer & viewer, unsigned char key, int modifier)
+	{
+		if ((unsigned int)key == 85) czsl.ctrl = false;
+		if ((unsigned int)key == 90) czsl.z = false;
+		if ((unsigned int)key == 83) czsl.s = false;
+		if ((unsigned int)key == 76) czsl.l = false;
+		return false;
+	};
+
+	_viewer->callback_key_down = key_down;
+	_viewer->callback_key_up = key_up;
 
     if (input_model.empty()) {
 #ifdef HAISEN
@@ -102,11 +142,7 @@ void RemeshingMenu::draw_viewer_menu() {
             } else {
                 symmetry_mode_yz = false;
             }
-#ifdef HAISEN
-            symmetry_mode_xy = false;
-            symmetry_mode_xz = false;
-            symmetry_mode_yz = false;
-#endif
+
             ImGui::Checkbox("Show Axis", &show_axis);
             ImGui::Checkbox("Symmetrize N-RoSy", &symmetrize_nrosy);
             // Add threshold values.
@@ -349,6 +385,7 @@ void RemeshingMenu::setup_mesh() {
     viewer->data().set_mesh(V, F);
     get_mesh_information();
     draw_a_point(mesh_center, 1);
+
 }
 
 bool RemeshingMenu::load(std::string filename) {
@@ -388,6 +425,7 @@ bool RemeshingMenu::load(std::string filename) {
     viewer->selected_data_index = 0;
     update_visualization();
 
+	if(temps.empty()) save_ctrlz();
     return true;
 }
 
@@ -652,6 +690,8 @@ bool RemeshingMenu::mouse_scroll(float delta_y) {
 	return false;
 }
 
+
+
 // TODO: remove alt_on/shift_on/ctrl_on
 bool RemeshingMenu::mouse_up(int button, int modifier) {
     if (igl::opengl::glfw::imgui::ImGuiMenu::mouse_up(button, modifier)) return true;
@@ -834,6 +874,7 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
     if (should_redraw) {
         interpolate_field();
         update_visualization();
+		save_ctrlz();
 		should_redraw = false;
     }
 
@@ -2082,6 +2123,48 @@ std::vector<int> RemeshingMenu::symmetry_axes() {
 		}
 	}
 	return symmetries;
+}
+
+void RemeshingMenu::save_ctrlz()
+{
+	if (temps.size() < 20)
+	{
+		auto get_edge_face_path = [](const std::string & filename, std::string & mesh_path_temp, std::string & face_path_temp, std::string & edge_path_temp)
+		{
+			std::size_t found = filename.find(".obj");
+			if (found != std::string::npos) {
+				face_path_temp = filename.substr(0, found) + "_temp.face";
+				edge_path_temp = filename.substr(0, found) + "_temp.edge";
+				mesh_path_temp = filename;
+			}
+			else {
+				face_path_temp = filename + "_temp.face";
+				edge_path_temp = filename + "_temp.edge";
+				mesh_path_temp = filename + ".obj";
+			}
+		};
+
+		std::string filename, mesh_path_temp, face_path_temp, edge_path_temp;
+		filename = "ctrlz_" + std::to_string(temps.size()) + ".obj";
+		get_edge_face_path(filename, mesh_path_temp, face_path_temp, edge_path_temp);
+
+		TEMPDATA temp = { mesh_path_temp, face_path_temp, edge_path_temp };
+		temps.emplace_back(temp);
+		save(filename);
+	}
+	else
+	{
+		remove(temps[0].mesh.c_str());
+		remove(temps[0].face.c_str());
+		remove(temps[0].edge.c_str());
+		for (int i = 1; i < temps.size(); i++)
+		{
+			rename(temps[i].mesh.c_str(), temps[i - 1].mesh.c_str());
+			rename(temps[i].face.c_str(), temps[i - 1].face.c_str());
+			rename(temps[i].edge.c_str(), temps[i - 1].edge.c_str());
+		}
+		save(temps.back().mesh);
+	}
 }
 
 }
