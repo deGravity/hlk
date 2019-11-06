@@ -121,6 +121,35 @@ namespace hlk {
 			}
 		}
 
+		if (current_tool == SEAMER) {
+			int fid;
+			Eigen::Vector3f bc;
+			if (pick_face(fid, bc)) {
+				int closest_vertex;
+				bc.maxCoeff(&closest_vertex);
+				// Find the outgoing side from the closest vertex,
+				// or -1 if non-quad vertex or boundary
+				int side = -1;
+				if (closest_vertex == 0) {
+					side = fid;
+				}
+				if (closest_vertex == 1) {
+					side = M.flip_side(fid);
+				}
+				if (side >= 0) {
+					M.update_textures();
+					auto loop = M.side_loop(side);
+					for (int s : loop) {
+						int e = M.sides_to_edges[s];
+						if (e >= 0) {
+							M.set_glyph(M.edge_slots[e], glyphs::SEAM, color::RED);
+						}
+					}
+					update_mesh();
+				}
+			}
+		}
+
 		return false;
 	}
 

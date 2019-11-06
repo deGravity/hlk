@@ -1,5 +1,7 @@
 #include "coarse_knit_mesh.h"
 
+#include <algorithm>
+
 #include "glyphs.h"
 #include "glyph.h"
 
@@ -11,6 +13,22 @@ namespace hlk {
 
 	void CoarseKnitMesh::update_textures()
 	{
+		// Make Everything Invisible to start
+		for (auto& slot : slots) {
+			set_glyph(slot, glyphs::NONE, color::INVISIBLE);
+		}
+
+		for (int i = 0; i < 4 * m; ++i) {
+			if (is_boundary_side[i]) {
+				set_glyph(half_edge_slots[i], glyphs::THIN_SOLID_LINE, color::GREY);
+			}
+		}
+
+		for (auto& slot : edge_slots) {
+			set_glyph(slot, glyphs::THIN_SOLID_LINE, color::GREY);
+		}
+
+
 		for (auto& edge : edges) {
 			edge.update_texture();
 		}
@@ -26,25 +44,35 @@ namespace hlk {
 	{
 		LabeledQuadMesh::init();
 
-		// Create Topological Entities
-		// TODO - If optimization is buggy, switch these back to smart pointers,
-		// the error is probably due to copy constructor shenanigans
-		// Hopefully there won't be a problem since all z3 variables are stored
-		// as shared pointers.
 		for (int q = 0; q < m; ++q) {
 			
 			for (int j = 0; j < 4; ++j) {
 				sides.emplace_back(geometry_optimizer, topology_optimizer, 4 * q + j, this);
 			}
-
-			// It is important that these come second since they rely on
-			// the sides to compute orientation!
 			quads.emplace_back(geometry_optimizer, topology_optimizer, q, this);
 			
 		}
 		for (int i = 0; i < e; ++i) {
 			edges.emplace_back(geometry_optimizer, topology_optimizer, i, this);
 		}
+
+		/*	
+		From Motorcycle Graphs Paper:
+
+		Thus, we may often find a smaller partition than the mo-torcycle graph itself by a process 
+		in which we build up the partition by adding a single path at a time, at each step start-ing 
+		from an extraordinary vertex and extending a path from it until it hits either another 
+		extraordinary vertex or an ordinaryvertex that has previously been included in one of the 
+		paths. In this process, we should give priority first to paths that ex-tend from one 
+		extraordinary vertex to another, because these paths cannot cause us to add any additional
+		vertices to our partition. Secondly, we should prefer paths the initial edge ofwhich is an
+		even number of positions from some other edge around the same extraordinary vertex, in order 
+		to use as few paths emanating from that vertex as possible. Once no two consecutive edges at 
+		an extraordinary vertex remain unused, the partition process may terminate with a valid
+		partition. The partition in Figure5, for instance, may be constructed by a process of this
+		type, and is significantly simpler thanthe motorcycle graph partition of the same mesh 
+		in Figure7.
+		*/
 
 		// Find singularity connecting edges and add them to seams
 		// TODO - We can probably split these at intersections
@@ -67,28 +95,7 @@ namespace hlk {
 			}
 		}
 
-		// Make Everything Invisible to start
-		for (auto& slot : slots) {
-			set_glyph(slot, glyphs::NONE, color::INVISIBLE);
-		}
-
-		// White Quad Background and border lines
-		// (Should really be displaying the underlying mesh for this)
-		/*
-		for (auto& slot : quad_slots) {
-			set_glyph(slot, glyphs::SOLID_LINE, color::WHITE);
-		}
-		*/
-
-		for (int i = 0; i < 4 * m; ++i) {
-			if (is_boundary_side[i]) {
-				set_glyph(half_edge_slots[i], glyphs::THIN_SOLID_LINE, color::GREY);
-			}
-		}
-
-		for (auto& slot : edge_slots) {
-			set_glyph(slot, glyphs::THIN_SOLID_LINE, color::GREY);
-		}
+		
 
 		// TODO - Bug with the solver! It's probably due to not using shared pointers
 		// try changing this next.
@@ -196,12 +203,10 @@ namespace hlk {
 		// For our purposes, valences of multiples of 4 (3 on borders)
 		// do not count as singularities, so calculate this explicitly
 		bool is_regular = (is_border && (valence % 3 == 0)) || (valence % 4 == 0);
+		int prev_idx = mesh->prev_side(index);
+		auto& prev_is_loop = mesh->sides[prev_idx].is_loop;
+		auto& prev_is_out = mesh->sides[prev_idx].is_out;
 		if (is_regular) {
-			
-			int prev_idx = mesh->prev_side(index);
-			auto& prev_is_loop = mesh->sides[prev_idx].is_loop;
-			auto& prev_is_out = mesh->sides[prev_idx].is_out;
-
 			// Handedness order is loop_in -> yarn_out -> loop_out -> yarn_in
 			// The orientation (in/out) switches after loops and stays the
 			// same after yarns, while the direction (loop/yarn) always switches.
@@ -220,25 +225,25 @@ namespace hlk {
 
 		}
 		else {
-			// TODO - Do we need to count the effective degree of each
-			// singular vertex?
-			// Are there extra constraints here (like we can at most skip one
-			// position in the ordering, or at most one in a row?)
-			// If the label is completely the same, then we have effectively added
-			// a vertex (the quad could be thought of as split)
-			// If the label is the same direction but opposite orientation, then
-			// we have effectively removed a vertex (merging quads).
-			// In reality, performing either of these operations would create
-			// T-Junctions in the mesh
-			// We may want to constrain that singular corners are either normal,
-			// or in one of these two cases. The other cases would reverse the
-			// handedness. This may not be necessary, however, since the rest
-			// of the mesh might enforce consistency. If we strip down to just
-			// a singularity graph, however, these extra constraints would definitely
-			// be warranted.
-			// There may also be a desired constraint on the types of edges at which
-			// we allow merging and splitting due to the T-Junctions that they
-			// will create.
+			// Constrain that the order at a singular corner can't go "backwards"
+			// by 1. This looks like the the above constraint, except that loop/yarn are
+			// switched (going "backward") and the entire term is negated (prohibit that path)
+
+			// TODO - Constrain further - only allow doubling of loops.
+
+			auto orientation_check = (prev_is_out == is_out) == prev_is_loop; // == -> !=
+			auto direction_check = prev_is_loop != is_loop; // Don't need to add ! to both sides since it would cancel
+
+			auto no_yarn_double = !(!prev_is_loop->var && !is_loop->var);
+
+			constraints.push_back(
+				std::make_pair(
+					!(orientation_check && direction_check) && // Negate full expression
+					no_yarn_double,
+					"singular_corner_" + std::to_string(index)
+				)
+			);
+
 		}
 		return constraints;
 	}
@@ -254,52 +259,52 @@ namespace hlk {
 	{
 		geometry_optimizer.push();
 
-		std::vector<z3::expr> seam_costs;
-		int i = 0;
-		std::cout << "Num possible seams = " << seams.size();
-		for (auto& seam : seams) {
-			std::string cost_name = "seam_cost_" + std::to_string(i);
-			z3::expr s_cost = geometry_optimizer.context.int_const(cost_name.c_str());
-			seam_costs.push_back(s_cost);
-			geometry_optimizer.add_constraint((seam->var && s_cost == 1) || (!seam->var && s_cost == 0));
-			++i;
-		}
-
-		
-		for (auto& edge : edges) {
-			for (auto constraint : edge.get_constraints()) {
-				geometry_optimizer.add_constraint(constraint.first, constraint.second);
-			}
-		}
-		for (auto& side : sides) {
-			for (auto constraint : side.get_constraints()) {
-				geometry_optimizer.add_constraint(constraint.first, constraint.second);
-			}
-		}
+std::vector<z3::expr> seam_costs;
+int i = 0;
+std::cout << "Num possible seams = " << seams.size();
+for (auto& seam : seams) {
+	std::string cost_name = "seam_cost_" + std::to_string(i);
+	z3::expr s_cost = geometry_optimizer.context.int_const(cost_name.c_str());
+	seam_costs.push_back(s_cost);
+	geometry_optimizer.add_constraint((seam->var && s_cost == 1) || (!seam->var && s_cost == 0));
+	++i;
+}
 
 
+for (auto& edge : edges) {
+	for (auto constraint : edge.get_constraints()) {
+		geometry_optimizer.add_constraint(constraint.first, constraint.second);
+	}
+}
+for (auto& side : sides) {
+	for (auto constraint : side.get_constraints()) {
+		geometry_optimizer.add_constraint(constraint.first, constraint.second);
+	}
+}
 
-		z3::expr cost = geometry_optimizer.context.int_const("cst");
-		if (seam_costs.size() > 0) {
-			cost = seam_costs[0];
-			for (int i = 1; i < seam_costs.size(); ++i) {
-				cost = cost + seam_costs[i];
-			}
-		}
 
-		auto result = seam_costs.size() > 0 ? geometry_optimizer.minimize(cost, 15) : geometry_optimizer.solve();
 
-		if (result.has_result) {
-			geometry_optimizer.update_all_props(*result.result_model);
-			update_textures();
-		}
-		else {
-			// TODO - Get Information from the UNSAT core
-			std::cout << result.unsat_core << std::endl;
-		}
+z3::expr cost = geometry_optimizer.context.int_const("cst");
+if (seam_costs.size() > 0) {
+	cost = seam_costs[0];
+	for (int i = 1; i < seam_costs.size(); ++i) {
+		cost = cost + seam_costs[i];
+	}
+}
 
-		geometry_optimizer.pop();
-		return result.has_result;
+auto result = seam_costs.size() > 0 ? geometry_optimizer.minimize(cost, 15) : geometry_optimizer.solve();
+
+if (result.has_result) {
+	geometry_optimizer.update_all_props(*result.result_model);
+	update_textures();
+}
+else {
+	// TODO - Get Information from the UNSAT core
+	std::cout << result.unsat_core << std::endl;
+}
+
+geometry_optimizer.pop();
+return result.has_result;
 	}
 	void CoarseKnitMesh::copy_shaping(int origin_side, int dest_side)
 	{
@@ -342,6 +347,111 @@ namespace hlk {
 				seams[seam_id]->set(!seams[seam_id]->val);
 			}
 		}
+	}
+	void CoarseKnitMesh::split_seams(int vertex_a, int vertex_b)
+	{
+		// Since split_seams doesn't do anything if a seam doesn't
+		// contain a vertex, try to split all the seams
+		std::vector<int> split_vtcs{ vertex_a, vertex_b };
+		for (int i = 0; i < seams.size(); ++i) {
+			split_seam(i, split_vtcs);
+		}
+	}
+	void CoarseKnitMesh::split_seam(int seam, std::vector<int> vertices)
+	{
+		auto& s_edges = seam_edges[seam];
+		
+		if (s_edges.size() <= 1) return; // Single edge seams cannot be split
+
+		auto edge_has_vertex = [&](int v, int edge_id)->bool {
+			return side_u(edges_to_sides(edge_id, 0)) == v ||
+				side_v(edges_to_sides(edge_id, 0)) == v;
+		};
+
+		std::vector<int> split_points;
+		for (int v : vertices) {
+			int i = 0;
+			for (i = 1; i < s_edges.size(); ++i) {
+				if (edge_has_vertex(v, s_edges[i])) break;
+			}
+			if (i < s_edges.size()) {
+				if (edge_has_vertex(v, s_edges[(i + 1) % s_edges.size()])) {
+					i = (i + 1) % s_edges.size();
+				}
+				split_points.push_back(i);
+			}
+		}
+
+		if (split_points.size() == 0) return; // Nothing to do if vertices aren't in the seam
+
+		// Sort and deduplicate split points list
+		std::sort(split_points.begin(), split_points.end());
+		split_points.erase(std::unique(split_points.begin(), split_points.end()), split_points.end());
+
+		// Check if the seam is a loop: if so, we need a seam between the last and first split_point, otherwise
+		// we need seams extending to the endpoints of the original seam
+		bool is_circular = false;
+		auto front = s_edges.front();
+		auto back = s_edges.back();
+		int front_side = edges_to_sides(front, 0);
+		if (edge_has_vertex(side_u(front_side), back) || edge_has_vertex(side_v(front_side), back)) {
+			is_circular = true;
+		}
+
+		// Find all the new seams
+		std::vector<std::vector<int>> new_seams;
+		if (is_circular) {
+			for (int i = 0; i < split_points.size(); ++i) {
+				int start = split_points[i];
+				int end = split_points[(i + 1) % split_points.size()];
+				std::vector<int> new_seam;
+				for (int e = start; e != end; ++e) {
+					new_seam.push_back(s_edges[e]);
+				}
+				new_seams.push_back(new_seam);
+			}
+		}
+		else {
+			if (split_points[0] > 0) {
+				std::vector<int> new_seam;
+				for (int i = 0; i < split_points[0]; ++i) {
+					new_seam.push_back(s_edges[i]);
+				}
+				new_seams.push_back(new_seam);
+			}
+			for (int i = 0; i < split_points.size() - 1; ++i) {
+				int start = split_points[i];
+				int end = split_points[(i + 1) % split_points.size()];
+				std::vector<int> new_seam;
+				for (int e = start; e != end; ++e) {
+					new_seam.push_back(s_edges[e]);
+				}
+				new_seams.push_back(new_seam);
+			}
+			if (split_points.back() < s_edges.size() - 1) {
+				std::vector<int> new_seam;
+				for (int e = split_points.back(); e < s_edges.size(); ++e) {
+					new_seam.push_back(s_edges[e]);
+				}
+				new_seams.push_back(new_seam);
+			}
+		}
+
+		// If there is only one new seam, there's nothing to do
+		if (new_seams.size() <= 1) return;
+
+		// Swap the old seam for the first new seam, then add all of the new ones
+		seam_edges[seam] = new_seams[0];
+		for (int i = 1; i < new_seams.size(); ++i) {
+			int new_seam_id = seams.size();
+			seams.emplace_back(geometry_optimizer.get_bool_prop(nth_label("seam", new_seam_id)));
+			seam_edges.push_back(new_seams[i]);
+			for (int e : new_seams[i]) {
+				edges[e].seam = new_seam_id;
+			}
+		}
+
+
 	}
 	void CoarseKnitMesh::toggle_orientation(int side)
 	{

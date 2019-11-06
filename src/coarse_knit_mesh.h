@@ -75,6 +75,9 @@ namespace hlk {
 	struct CoarseKnitMesh : LabeledQuadMesh {
 		
 		std::vector<std::shared_ptr<BoolProp>> seams;
+		// Edges in a seam
+		// Will always be ordered 
+		std::vector<std::vector<int>> seam_edges;
 		std::vector<std::vector<int>> size_lines;
 		std::vector<std::vector<int>> symmetries;
 
@@ -94,7 +97,8 @@ namespace hlk {
 		//void join_seam(int side_a, int side_b);
 
 		// Split any seams in the seam list that cross this vertex
-		//void split_seams(int vertex);
+		void split_seams(int vertex_a, int vertex_b);
+		void split_seam(int seam, std::vector<int> vertices);
 
 		// Direction = Loop / Yarn
 		// Orientation = In / Out
