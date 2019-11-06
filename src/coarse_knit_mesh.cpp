@@ -56,6 +56,8 @@ namespace hlk {
 			edges.emplace_back(geometry_optimizer, topology_optimizer, i, this);
 		}
 
+		vertex_in_seam.resize(n, false);
+
 		/*	
 		From Motorcycle Graphs Paper:
 
@@ -83,12 +85,22 @@ namespace hlk {
 				if (is_singularity[side_v(separatrix.back())]) {
 					if (!is_boundary_side[side]) {
 						int sep_seam = edges[sides_to_edges[side]].seam;
+						bool new_seam = false;
 						if (sep_seam == -1) {
+							new_seam = true;
 							sep_seam = seams.size();
 							seams.emplace_back(geometry_optimizer.get_bool_prop(nth_label("seam", sep_seam)));
 						}
+						std::vector<int> s_edges;
 						for (int seam_side : separatrix) {
-							edges[sides_to_edges[seam_side]].seam = sep_seam;
+							int e = sides_to_edges[seam_side];
+							edges[e].seam = sep_seam;
+							s_edges.push_back(e);
+							vertex_in_seam[side_u(seam_side)] = true;
+							vertex_in_seam[side_v(seam_side)] = true;
+						}
+						if (new_seam) {
+							seam_edges.push_back(s_edges);
 						}
 					}
 				}
@@ -347,6 +359,23 @@ return result.has_result;
 				seams[seam_id]->set(!seams[seam_id]->val);
 			}
 		}
+	}
+	void CoarseKnitMesh::add_seam(std::vector<int> seam_sides)
+	{
+		for (auto side : seam_sides) {
+			assert(sides_to_edges[side] >= 0);
+			assert(edges[sides_to_edges[side]].seam < 0);
+		}
+		int seam_id = seams.size();
+		seams.emplace_back(geometry_optimizer.get_bool_prop(nth_label("seam", seam_id)));
+		std::vector<int> new_seam;
+		for (auto side : seam_sides) {
+			int e = sides_to_edges[side];
+			edges[e].seam = seam_id;
+			new_seam.push_back(e);
+		}
+		seam_edges.push_back(new_seam);
+
 	}
 	void CoarseKnitMesh::split_seams(int vertex_a, int vertex_b)
 	{

@@ -81,14 +81,72 @@ namespace hlk {
 
 			if (auto_solve) {
 				bool sat = M.optimize_geometry();
-				update_mesh();
+
 				if (!sat) {
 					std::cout << "UNSAT!" << std::endl;
 				}
 				// TODO - Handle invalid constraints
 			}
-
+			update_mesh();
 			return true;
+		}
+		else {
+
+			if (current_tool == SEAMER) {
+				int fid;
+				Eigen::Vector3f bc;
+				if (pick_face(fid, bc)) {
+					int side = fid;
+					int edge = M.sides_to_edges[side];
+					if (edge >= 0 && M.edges[edge].seam >= 0) {
+						M.toggle_seam(side);
+						if (auto_solve) {
+							bool sat = M.optimize_geometry();
+							update_mesh();
+							if (!sat) {
+								std::cout << "UNSAT!" << std::endl;
+							}
+							// TODO - Handle invalid constraints
+						}
+						update_mesh();	
+					}
+					else {
+
+						int closest_vertex;
+						bc.maxCoeff(&closest_vertex);
+						// Find the outgoing side from the closest vertex,
+						// or -1 if non-quad vertex or boundary
+						int side = -1;
+						if (closest_vertex == 0) {
+							side = fid;
+						}
+						if (closest_vertex == 1) {
+							side = M.flip_side(fid);
+						}
+						if (side >= 0) {
+							//if (M.vertex_in_seam[M.F_t(fid, closest_vertex)]) {
+								//side = M.flip_side(fid);
+							//}
+							if (side >= 0) {
+								M.update_textures();
+								auto loop = M.side_loop(side);
+								int end = 0;
+								std::vector<int> new_seam_sides;
+								for (end = 0; end < loop.size(); ++end) {
+									new_seam_sides.push_back(end);
+									if (M.vertex_in_seam[M.side_v(loop[end])]) {
+										break;
+									}
+								}
+								new_seam_sides = loop;
+								M.add_seam(new_seam_sides);
+								update_mesh();
+							}
+						}
+					}
+				}
+			}
+
 		}
 
 		return false;
@@ -125,27 +183,52 @@ namespace hlk {
 			int fid;
 			Eigen::Vector3f bc;
 			if (pick_face(fid, bc)) {
-				int closest_vertex;
-				bc.maxCoeff(&closest_vertex);
-				// Find the outgoing side from the closest vertex,
-				// or -1 if non-quad vertex or boundary
-				int side = -1;
-				if (closest_vertex == 0) {
-					side = fid;
-				}
-				if (closest_vertex == 1) {
-					side = M.flip_side(fid);
-				}
-				if (side >= 0) {
+
+				int edge = M.sides_to_edges[fid];
+				if (edge >= 0 && M.edges[edge].seam >= 0) {
 					M.update_textures();
-					auto loop = M.side_loop(side);
-					for (int s : loop) {
-						int e = M.sides_to_edges[s];
-						if (e >= 0) {
-							M.set_glyph(M.edge_slots[e], glyphs::SEAM, color::RED);
-						}
+					int seam_id = M.edges[edge].seam;
+					for (int e : M.seam_edges[seam_id]) {
+						M.set_glyph(M.edge_slots[e], glyphs::SOLID_LINE, color::ORANGE);
 					}
 					update_mesh();
+				}
+				else {
+
+					int closest_vertex;
+					bc.maxCoeff(&closest_vertex);
+					// Find the outgoing side from the closest vertex,
+					// or -1 if non-quad vertex or boundary
+					int side = -1;
+					if (closest_vertex == 0) {
+						side = fid;
+					}
+					if (closest_vertex == 1) {
+						side = M.flip_side(fid);
+					}
+					if (side >= 0) {
+						if (M.vertex_in_seam[M.F_t(fid, closest_vertex)]) {
+							side = M.flip_side(fid);
+						}
+						if (side >= 0) {
+							M.update_textures();
+							auto loop = M.side_loop(side);
+							int end = 0;
+							for (end = 0; end < loop.size(); ++end) {
+								if (M.vertex_in_seam[M.side_v(loop[end])]) {
+									break;
+								}
+							}
+							for (int i = 0; i < loop.size(); ++i) {
+								int s = loop[i];
+								int e = M.sides_to_edges[s];
+								if (e >= 0) {
+									M.set_glyph(M.edge_slots[e], glyphs::SEAM, color::RED);
+								}
+							}
+							update_mesh();
+						}
+					}
 				}
 			}
 		}

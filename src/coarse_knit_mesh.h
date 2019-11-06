@@ -78,6 +78,7 @@ namespace hlk {
 		// Edges in a seam
 		// Will always be ordered 
 		std::vector<std::vector<int>> seam_edges;
+		std::vector<bool> vertex_in_seam;
 		std::vector<std::vector<int>> size_lines;
 		std::vector<std::vector<int>> symmetries;
 
@@ -95,6 +96,8 @@ namespace hlk {
 		void seam_on(int side);
 		void toggle_seam(int side);
 		//void join_seam(int side_a, int side_b);
+
+		void add_seam(std::vector<int> sides);
 
 		// Split any seams in the seam list that cross this vertex
 		void split_seams(int vertex_a, int vertex_b);
