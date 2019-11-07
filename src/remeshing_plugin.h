@@ -21,10 +21,10 @@ public:
         in_path = input_path;
         out_path = output_path;
 
-        click_threshold = 0.05f;
+        click_threshold = 0.1f;
         soft_constraint_strength = 0.5f;
         gradient_size = 50.0f;
-        stiffness = 5.0f;
+        stiffen_iter = 0;
 
         show_axis = false;
         show_stitches = false;
@@ -41,7 +41,6 @@ public:
 
         geodesic_label = false;
         existing_edge_label = false;
-        existing_point_label = true;
         multi_points_drawing = true;
 
         viewing_mode = ViewingMode::MESH_ONLY;
@@ -52,8 +51,7 @@ public:
     }
 	~RemeshingMenu() {
 		clear();
-		for (auto& temp : temps)
-		{
+		for (auto& temp : temps) {
 			remove(temp.mesh.c_str());
 			remove(temp.face.c_str());
 			remove(temp.edge.c_str());
@@ -73,14 +71,14 @@ public:
     bool mouse_up(int button, int modifier);
     bool mouse_scroll(float delta_y);
 
-//private:
+    //////////// UTILITY METHODS ////////////
     void clear();
 
     void setup_mesh();
     void get_mesh_information();
     bool model_loaded() { return V.rows() > 0 && F.rows() > 0; }
     void construct_half_edge(std::vector<int>& half_edges);
-    void update_polyhedron_tree(const std::vector<int>& face_refs);
+    void update_polyhedron_tree(const std::vector<int>& face_refs = std::vector<int>());
     void apply_subdivision();
 
     void assign_vector(int face_id, Eigen::Vector3d n);
@@ -98,6 +96,7 @@ public:
     void symmetry_split_mesh(std::vector<int> axes, int start, int end);
     void symmetry_split_mesh(std::vector<int> axes, const std::vector<Eigen::Vector3d>& feature_points_save);
     void symmetry_split_mesh(const std::vector<Eigen::Vector3d>& feature_points_save);
+    void cut_along_seams();
 
     void set_mesh_overlays(const int mesh_id, const bool wireframe = true, const bool overlay = true, const bool fill = true);
     void stylize_tri_mesh(const Eigen::MatrixXd& colors);
@@ -149,7 +148,7 @@ public:
 
     // numbers...
     float soft_constraint_strength;
-    float stiffness;
+    int stiffen_iter;
     float gradient_size;
     float yarn_size;
     float loop_size;
@@ -169,10 +168,8 @@ public:
     bool geodesic_label;
     
     // directional faces
-	// TODO(HAISEN): build a new data structure for this...
     std::vector<FaceVector> face_vectors;
     std::vector<SplitEdge> split_edges;
-    std::vector<bool> points_vectors;
     std::vector<int> split_points;
 
 	// loops data
@@ -263,7 +260,7 @@ public:
 
     bool show_axis, show_stitches, multi_points_drawing;
 
-    bool existing_point_label, existing_edge_label;
+    bool existing_edge_label;
 
     int mouse_key;
     double mouse_x, mouse_y;

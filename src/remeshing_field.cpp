@@ -6,7 +6,6 @@
 #include <igl/boundary_loop.h>
 #include <igl/copyleft/comiso/frame_field.h>
 #include <igl/copyleft/comiso/nrosy.h>
-#include <igl/edge_topology.h>
 #include <igl/frame_to_cross_field.h>
 #include <igl/frame_field_deformer.h>
 #include <igl/local_basis.h>
@@ -33,7 +32,6 @@ void RemeshingMenu::reset_face_vectors() {
         fv.assigned[1] = false;
         face_vectors.push_back(fv);
     }
-    points_vectors = std::vector<bool>(V.rows(), false);
 }
 
 void RemeshingMenu::reset_field() {
@@ -50,6 +48,7 @@ void RemeshingMenu::reset_field() {
         fv.assigned[1] = false;
         face_vectors.push_back(fv);
     }
+    split_edges.clear();
     setup_boundary();
     interpolate_field();
 }
@@ -377,11 +376,20 @@ void RemeshingMenu::interpolate_field() {
 
 void RemeshingMenu::generate_integer_grid() {
 
-    if (miq_mode == MIQMode::CROSS) {
-        std::vector<std::vector<int>> boundary_loops;
-        igl::boundary_loop(F, boundary_loops);
+    if (miq_mode == MIQMode::POLYVECTOR) {
+        Meshing::polyvector_parametrize(
+            V, F, rosy, EV, EF, FE,
+            rawField, combedField,
+            matching, combedMatching,
+            effort, combedEffort,
+            singVertices, singIndices,
+            VMeshCut, FMeshCut, cutUV,
+            1. / gradient_size,
+            isInteger
+        );
+
+    } else {
         std::vector<std::vector<int>> hard_edges;
-        std::vector<int> vertices_to_round;
 
         Eigen::MatrixXi TT, TTi;
         igl::triangle_triangle_adjacency(F, TT, TTi);
@@ -409,43 +417,15 @@ void RemeshingMenu::generate_integer_grid() {
             }
         }
 
-        assert(points_vectors.size() == V.rows());
-        for (int v = 0; v < V.rows(); ++v) {
-            if (points_vectors[v]) {
-                vertices_to_round.push_back(v);
-            }
-        }
-
         Meshing::cross_field_miq(direction_field[1],
-            V,
+            (miq_mode == MIQMode::CROSS ? V : V_deformed),
             F,
-            vertices_to_round,
             hard_edges,
             gradient_size,
-            stiffness,
+            stiffen_iter,
             V_uv,
-            F_uv);
-
-    } else if (miq_mode == MIQMode::FRAME) {
-        Meshing::frame_field_miq(X1_deformed,
-            X2_deformed,
-            V_deformed,
-            F,
-            gradient_size,
-            stiffness,
-            V_uv,
-            F_uv);
-
-    } else { // miq_mode == MIQMode::POLYVECTOR
-        Meshing::polyvector_parametrize(
-            V, F, rosy, EV, EF, FE,
-            rawField, combedField,
-            matching, combedMatching,
-            effort, combedEffort,
-            singVertices, singIndices,
-            VMeshCut, FMeshCut, cutUV, 
-            1. / gradient_size, 
-            isInteger);
+            F_uv
+        );
     }
     
     has_integer_grid = true;
@@ -472,7 +452,7 @@ void RemeshingMenu::reduce_curl() {
         curl, singVertices, singIndices,
         curlMax);
     if (miq_mode == MIQMode::CROSS) {
-        direction_field[1] = rawField.block(0, 0, F.rows(), 3);
+        direction_field[1] = combedField.block(0, 0, F.rows(), 3);
     }
 }
 

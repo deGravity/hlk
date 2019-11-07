@@ -21,19 +21,11 @@ public:
         Eigen::MatrixXd& VMeshCut, Eigen::MatrixXi& FMeshCut,
         Eigen::MatrixXd& cutUV, double lengthRatio = 0.1, bool isInteger = true);
 
-    static void frame_field_miq(
-        const Eigen::MatrixXd& X1, /* deformed first representative */
-        const Eigen::MatrixXd& X2, /* deformed second representative */
-        const Eigen::MatrixXd& V_deformed, const Eigen::MatrixXi& F,
-        double gradient_size, double stiffness,
-        Eigen::MatrixXd& UV, Eigen::MatrixXi& FUV);
-
     static void cross_field_miq(
-        const Eigen::MatrixXd& R, /* N-Rosy field */
+        const Eigen::MatrixXd& X1, /* direction field */
         const Eigen::MatrixXd& V, const Eigen::MatrixXi& F,
-        const std::vector<int>& vertices_to_round, 
         const std::vector<std::vector<int>>& hard_edges,
-        double gradient_size, double stiffness,
+        double gradient_size, int stiffen_iter,
         Eigen::MatrixXd& UV, Eigen::MatrixXi& FUV);
 
     static void init_curl(

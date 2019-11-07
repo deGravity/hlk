@@ -74,16 +74,14 @@ enum MIQMode {
     POLYVECTOR
 };
 
-struct CTRLZSL
-{
+struct CTRLZSL {
 	bool ctrl = false;
 	bool z = false;
 	bool s = false;
 	bool l = false;
 };
 
-struct TEMPDATA
-{
+struct TEMPDATA {
 	std::string mesh;
 	std::string face;
 	std::string edge;

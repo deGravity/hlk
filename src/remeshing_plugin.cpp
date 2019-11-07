@@ -1,14 +1,18 @@
 #include <directional/glyph_lines_raw.h>
+#include <directional/read_raw_field.h>
 #include <directional/seam_lines.h>
 #include <directional/singularity_spheres.h>
 #include <directional/visualization_schemes.h>
+#include <directional/write_raw_field.h>
 #include <igl/adjacency_list.h>
 #include <igl/avg_edge_length.h>
 #include <igl/barycenter.h>
 #include <igl/copyleft/cgal/mesh_to_polyhedron.h>
+#include <igl/cut_mesh.h>
 #include <igl/doublearea.h>
 #include <igl/edges.h>
 #include <igl/edge_topology.h>
+#include <igl/file_dialog_open.h>
 #include <igl/file_dialog_save.h>
 #include <igl/jet.h>
 #include <igl/local_basis.h>
@@ -21,7 +25,6 @@
 #include <igl/project.h>
 #include <igl/read_triangle_mesh.h>
 #include <igl/remove_unreferenced.h>
-#include <igl/triangle_triangle_adjacency.h>
 #include <igl/unproject_onto_mesh.h>
 #include <igl/unproject_ray.h>
 #include <igl/vertex_triangle_adjacency.h>
@@ -43,10 +46,8 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
     _viewer->data().point_size = 0.5f;
     _viewer->core().camera_zoom = 2.f;
 
-
 	// This function is called every time a keyboard button is pressed
-	auto key_down = [&](igl::opengl::glfw::Viewer & viewer, unsigned char key, int modifier)
-	{
+	auto key_down = [&](igl::opengl::glfw::Viewer & viewer, unsigned char key, int modifier) {
 		if ((unsigned int)key == 85) czsl.ctrl = true;
 		if ((unsigned int)key == 90) czsl.z = true;
 		if ((unsigned int)key == 83) czsl.s = true;
@@ -54,11 +55,8 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
 		if (czsl.ctrl && czsl.s) viewer.open_dialog_save_mesh();
 		if (czsl.ctrl && czsl.l) viewer.open_dialog_load_mesh();
 
-		if (czsl.ctrl && czsl.z)
-		{
-			//load();
-			if (temps.size() > 1)
-			{
+		if (czsl.ctrl && czsl.z) {
+			if (temps.size() > 1) {
 				load(temps[temps.size()-2].mesh);
 				remove(temps.back().edge.c_str());
 				remove(temps.back().face.c_str());
@@ -70,8 +68,7 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
 		return false;
 	};
 
-	auto key_up = [&](igl::opengl::glfw::Viewer & viewer, unsigned char key, int modifier)
-	{
+	auto key_up = [&](igl::opengl::glfw::Viewer & viewer, unsigned char key, int modifier) {
 		if ((unsigned int)key == 85) czsl.ctrl = false;
 		if ((unsigned int)key == 90) czsl.z = false;
 		if ((unsigned int)key == 83) czsl.s = false;
@@ -108,6 +105,21 @@ void RemeshingMenu::draw_viewer_menu() {
         ImGui::SameLine(0, p);
         if (ImGui::Button("Save##Mesh", ImVec2((w - p) / 2.f, 0))) {
             viewer->open_dialog_save_mesh();
+        }
+        if (ImGui::Button("Load Field##Mesh", ImVec2((w - p) / 2.f, 0))) {
+            std::string fname = igl::file_dialog_open();
+            if (fname.length() == 0) return;
+            directional::read_raw_field(fname, rosy, rawField);
+            has_direction_field = true;
+            has_curl = false;
+            viewing_mode = ViewingMode::MESH_FIELD;
+            update_visualization();
+        }
+        ImGui::SameLine(0, p);
+        if (ImGui::Button("Save Field##Mesh", ImVec2((w - p) / 2.f, 0))) {
+            std::string fname = igl::file_dialog_save();
+            if (fname.length() == 0) return;
+            directional::write_raw_field(fname, combedField);
         }
         if (ImGui::Button("Clear Loops##Mesh", ImVec2((w - p) / 2.f, 0))) {
             clear_loops();
@@ -146,9 +158,9 @@ void RemeshingMenu::draw_viewer_menu() {
             ImGui::Checkbox("Show Axis", &show_axis);
             ImGui::Checkbox("Symmetrize N-RoSy", &symmetrize_nrosy);
             // Add threshold values.
-            // ImGui::DragFloat("Click Threshold", &click_threshold, 0.05f, 0.01f, 0.5f);
+            ImGui::DragFloat("Click Threshold", &click_threshold, 0.05f, 0.01f, 0.5f);
             ImGui::DragFloat("Soft Weight", &soft_constraint_strength, 0.0f, 0.0f, 1.0f);
-            // ImGui::DragFloat("Stiffness", &stiffness, 0.1f, 0.0f, 10.0f);
+            ImGui::DragInt("# Iter of Stiffening", &stiffen_iter, 1, 0, 10);
             ImGui::DragFloat("Gradient Size", &gradient_size, 1.0f, 0.0f, 150.0f);
             ImGui::PopItemWidth();
             ImGui::Text("===Field Operations===");
@@ -385,7 +397,6 @@ void RemeshingMenu::setup_mesh() {
     viewer->data().set_mesh(V, F);
     get_mesh_information();
     draw_a_point(mesh_center, 1);
-
 }
 
 bool RemeshingMenu::load(std::string filename) {
@@ -394,15 +405,14 @@ bool RemeshingMenu::load(std::string filename) {
     Eigen::MatrixXd tempV;
     Eigen::MatrixXi tempF;
     igl::read_triangle_mesh(filename, tempV, tempF);
-    Eigen::VectorXi tmp1, tmp2; // Usused, needed for static igl on clang
+    Eigen::VectorXi tmp1, tmp2; // Unused, needed for static igl on clang
     igl::remove_unreferenced(tempV, tempF, V, F, tmp1, tmp2);
     if (V.rows() <= 3 || F.rows() <= 1) {
         std::cerr << "Fail to load file " << filename << "...\n";
         return false;
     }
 	setup_mesh();
-    std::vector<int> face_refs; 
-    update_polyhedron_tree(face_refs);
+    update_polyhedron_tree();
     reset_face_vectors();
     load_temp_data(filename);
  
@@ -532,7 +542,6 @@ void RemeshingMenu::clear() {
 	std::vector<Eigen::Vector3d>().swap(feature_points);
     std::vector<int>().swap(feature_face_ids);
     std::vector<int>().swap(loop_feature_face_ids);
-    std::vector<bool>().swap(points_vectors);
 	// directional faces
 	std::vector<FaceVector>().swap(face_vectors);
 	std::vector<SplitEdge>().swap(split_edges);
@@ -711,22 +720,7 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
     bool intersects = igl::unproject_onto_mesh(Eigen::Vector2f(x, y), viewer->core().view,
         viewer->core().proj, viewer->core().viewport, V, F, fid, bc);
 
-    if (button == 1 && mouse_d < 2) { // mid and distance small
-        if (intersects) {
-            const Eigen::RowVector3d intersection =
-                V.row(F(fid, 0)) * bc(0) + V.row(F(fid, 1)) * bc(1) + V.row(F(fid, 2)) * bc(2);
-            double d0 = (V.row(F(fid, 0)) - intersection).norm();
-            double d1 = (V.row(F(fid, 1)) - intersection).norm();
-            double d2 = (V.row(F(fid, 2)) - intersection).norm();
-
-            if (existing_point_label) {
-                if (d0 < mesh_edge_size * click_threshold) points_vectors[F(fid, 0)] = !points_vectors[F(fid, 0)];
-                if (d1 < mesh_edge_size * click_threshold) points_vectors[F(fid, 1)] = !points_vectors[F(fid, 1)];
-                if (d2 < mesh_edge_size * click_threshold) points_vectors[F(fid, 2)] = !points_vectors[F(fid, 2)];
-            }
-        }
-
-    } else if ((button == 2 || button == 1) && alt_on && !shift_on && !ctrl_on) { // loop
+    if ((button == 2 || button == 1) && alt_on && !shift_on && !ctrl_on) { // loop
 		if (feature_points.size() > 2) {
 			auto n = face_vectors[loop_feature_face_ids[0]].normal;
             Eigen::Vector3d a = feature_points.back() - feature_points.front();
@@ -784,37 +778,33 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
 					if (!geodesic_label) { // src point
 						geodesic_point = intersection;
 						geodesic_index = -1;
-						if (existing_point_label) {
-							if (d0 < mesh_edge_size * click_threshold) {
-								geodesic_point = V.row(F(fid, 0));
-								geodesic_index = F(fid, 0);
-							}
-							if (d1 < mesh_edge_size * click_threshold) {
-								geodesic_point = V.row(F(fid, 1));
-								geodesic_index = F(fid, 1);
-							}
-							if (d2 < mesh_edge_size * click_threshold) {
-								geodesic_point = V.row(F(fid, 2));
-								geodesic_index = F(fid, 2);
-							}
+						if (d0 < mesh_edge_size * click_threshold) {
+							geodesic_point = V.row(F(fid, 0));
+							geodesic_index = F(fid, 0);
+						}
+						if (d1 < mesh_edge_size * click_threshold) {
+							geodesic_point = V.row(F(fid, 1));
+							geodesic_index = F(fid, 1);
+						}
+						if (d2 < mesh_edge_size * click_threshold) {
+							geodesic_point = V.row(F(fid, 2));
+							geodesic_index = F(fid, 2);
 						}
 						geodesic_label = true;
 					} else { // dst point
 						Eigen::Vector3d geodesic_point_1 = intersection;
 						int geodesic_index_1 = -1;
-						if (existing_point_label) {
-							if (d0 < mesh_edge_size * click_threshold) {
-								geodesic_point_1 = V.row(F(fid, 0));
-								geodesic_index_1 = F(fid, 0);
-							}
-							if (d1 < mesh_edge_size * click_threshold) {
-								geodesic_point_1 = V.row(F(fid, 1));
-								geodesic_index_1 = F(fid, 1);
-							}
-							if (d2 < mesh_edge_size * click_threshold) {
-								geodesic_point_1 = V.row(F(fid, 2));
-								geodesic_index_1 = F(fid, 2);
-							}
+						if (d0 < mesh_edge_size * click_threshold) {
+							geodesic_point_1 = V.row(F(fid, 0));
+							geodesic_index_1 = F(fid, 0);
+						}
+						if (d1 < mesh_edge_size * click_threshold) {
+							geodesic_point_1 = V.row(F(fid, 1));
+							geodesic_index_1 = F(fid, 1);
+						}
+						if (d2 < mesh_edge_size * click_threshold) {
+							geodesic_point_1 = V.row(F(fid, 2));
+							geodesic_index_1 = F(fid, 2);
 						}
 						geodesic_label = false;
 						//////////////////////////////////////////////////
@@ -852,6 +842,7 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
                 if (existing_edge_label && geodesic_path.size() >= 2) { geodesic_split_mesh(); }
                 else { split_mesh(); }
                 symmetry_split_mesh(feature_points_save);
+                cut_along_seams();
                 should_redraw = true;
             }
         }
@@ -1399,13 +1390,6 @@ void RemeshingMenu::split_mesh() {
     face_vectors.clear();
     face_vectors = new_face_vectors;
     new_face_vectors.clear();
-
-    // update points vectors
-    std::vector<bool> new_points_vectors = std::vector<bool>(V.rows(), false);
-    for (int i = 0; i < points_vectors.size(); i++) { new_points_vectors[i] = points_vectors[i]; }
-    points_vectors.clear();
-    points_vectors = new_points_vectors;
-    new_points_vectors.clear();
 }
 
 void RemeshingMenu::geodesic_split_mesh() {
@@ -1590,6 +1574,39 @@ void RemeshingMenu::symmetry_split_mesh(const std::vector<Eigen::Vector3d> & fea
 	}
 }
 
+void RemeshingMenu::cut_along_seams() {
+    std::vector<std::vector<int>> VF, VI;
+    igl::vertex_triangle_adjacency(V.rows(), F, VF, VI);
+
+    Eigen::MatrixXi seams(F.rows(), 3);
+    seams.setZero();
+    for (const SplitEdge& se : split_edges) {
+        int v0 = se.index_0;
+        int v1 = se.index_1;
+        for (int i = 0; i < VF[v0].size(); ++i) {
+            int f = VF[v0][i];
+            int idx = VI[v0][i];
+            assert(F(f, idx) == v0);
+            if (F(f, (idx + 1) % 3) == v1) {
+                seams(f, idx) = 1;
+                continue;
+            }
+        }
+    }
+
+    Eigen::MatrixXd NV;
+    Eigen::MatrixXi NF;
+    igl::cut_mesh(V, F, seams, NV, NF);
+    V = NV;
+    F = NF;
+    setup_mesh();
+    update_polyhedron_tree();
+    reset_face_vectors();
+    setup_boundary();
+    interpolate_field();
+    update_visualization();
+}
+
 ///////////////////////////////// DRAW IMPLS /////////////////////////////////
 //TODO: remove unnecessary drawing (use underlying_loop_edges to debug?)
 void RemeshingMenu::update_drawing() {
@@ -1660,11 +1677,6 @@ void RemeshingMenu::update_drawing() {
         Eigen::Vector3d s = v_0 + split_edges[i].normal * mesh_size * 0.001;
         Eigen::Vector3d t = v_1 + split_edges[i].normal * mesh_size * 0.001;
         draw_a_segment(s, t, 1);
-    }
-
-    // draw points
-    for (int i = 0; i < points_vectors.size(); i++) {
-        if (points_vectors[i]) { draw_a_point(V.row(i), 0); }
     }
 
 	if (geodesic_label) { draw_a_point(geodesic_point, 0); }
@@ -1830,6 +1842,15 @@ void RemeshingMenu::update_visualization() {
         set_mesh_overlays(1, false);
         if (viewing_mode == ViewingMode::MESH_QUAD)
             set_mesh_overlays(viewer->selected_data_index);
+
+        // draw split edges
+        for (int i = 0; i < split_edges.size(); i++) {
+            Eigen::Vector3d v_0 = V.row(split_edges[i].index_0);
+            Eigen::Vector3d v_1 = V.row(split_edges[i].index_1);
+            Eigen::Vector3d s = v_0 + split_edges[i].normal * mesh_size * 0.001;
+            Eigen::Vector3d t = v_1 + split_edges[i].normal * mesh_size * 0.001;
+            draw_a_segment(s, t, 1);
+        }
         break;
     }
 
@@ -1942,8 +1963,7 @@ void RemeshingMenu::apply_subdivision() {
     V = NV;
     F = NF;
     setup_mesh();
-    std::vector<int> face_refs;
-    update_polyhedron_tree(face_refs);
+    update_polyhedron_tree();
     reset_face_vectors();
     setup_boundary();
     interpolate_field();
@@ -2052,7 +2072,6 @@ void RemeshingMenu::draw_segments(const std::vector<Eigen::Vector3d>& segments, 
 	if (segments.size() >= 2) {
 		for (int i = 0; i < segments.size() - 1; i++)
 			draw_a_segment(segments[i], segments[i + 1], color_index,face_dis);
-		// if (loop) draw_a_segment(segments[0], segments[segments.size() - 1], color_index);
 	}
 }
 
@@ -2125,19 +2144,15 @@ std::vector<int> RemeshingMenu::symmetry_axes() {
 	return symmetries;
 }
 
-void RemeshingMenu::save_ctrlz()
-{
-	if (temps.size() < 20)
-	{
-		auto get_edge_face_path = [](const std::string & filename, std::string & mesh_path_temp, std::string & face_path_temp, std::string & edge_path_temp)
-		{
+void RemeshingMenu::save_ctrlz() {
+	if (temps.size() < 20) {
+		auto get_edge_face_path = [](const std::string & filename, std::string & mesh_path_temp, std::string & face_path_temp, std::string & edge_path_temp) {
 			std::size_t found = filename.find(".obj");
 			if (found != std::string::npos) {
 				face_path_temp = filename.substr(0, found) + "_temp.face";
 				edge_path_temp = filename.substr(0, found) + "_temp.edge";
 				mesh_path_temp = filename;
-			}
-			else {
+			} else {
 				face_path_temp = filename + "_temp.face";
 				edge_path_temp = filename + "_temp.edge";
 				mesh_path_temp = filename + ".obj";
@@ -2151,14 +2166,12 @@ void RemeshingMenu::save_ctrlz()
 		TEMPDATA temp = { mesh_path_temp, face_path_temp, edge_path_temp };
 		temps.emplace_back(temp);
 		save(filename);
-	}
-	else
-	{
+
+	} else {
 		remove(temps[0].mesh.c_str());
 		remove(temps[0].face.c_str());
 		remove(temps[0].edge.c_str());
-		for (int i = 1; i < temps.size(); i++)
-		{
+		for (int i = 1; i < temps.size(); i++) {
 			rename(temps[i].mesh.c_str(), temps[i - 1].mesh.c_str());
 			rename(temps[i].face.c_str(), temps[i - 1].face.c_str());
 			rename(temps[i].edge.c_str(), temps[i - 1].edge.c_str());

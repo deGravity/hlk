@@ -46,98 +46,35 @@ void Meshing::polyvector_parametrize(
     std::cout << "[meshing] Done!\n";
 }
 
-void Meshing::frame_field_miq(const Eigen::MatrixXd& X1, const Eigen::MatrixXd& X2,
-    const Eigen::MatrixXd& V_deformed, const Eigen::MatrixXi& F,
-    double gradient_size, double stiffness, 
+void Meshing::cross_field_miq(const Eigen::MatrixXd& X1,
+    const Eigen::MatrixXd& V, const Eigen::MatrixXi& F,
+    const std::vector<std::vector<int>>& hard_edges,
+    double gradient_size, int stiffen_iter,
     Eigen::MatrixXd& UV, Eigen::MatrixXi& FUV) {
 
-    // Global seamless parametrization
-    igl::copyleft::comiso::miq(V_deformed,
+    // Find the orthogonal field
+    Eigen::MatrixXd B1, B2, B3;
+    igl::local_basis(V, F, B1, B2, B3);
+    Eigen::MatrixXd X2 = igl::rotate_vectors(X1, Eigen::VectorXd::Constant(1, igl::PI / 2), B1, B2);
+
+    // Global parametrization
+    igl::copyleft::comiso::miq(
+        V,
         F,
         X1,
         X2,
         UV,
         FUV,
         gradient_size,
-        stiffness,
-        false
-    );
-}
-
-void Meshing::cross_field_miq(const Eigen::MatrixXd& R,
-    const Eigen::MatrixXd& V, const Eigen::MatrixXi& F,
-    const std::vector<int>& vertices_to_round, 
-    const std::vector<std::vector<int>>& hard_edges,
-    double gradient_size, double stiffness,
-    Eigen::MatrixXd& UV, Eigen::MatrixXi& FUV) {
-
-    // Cross field
-    Eigen::MatrixXd X1, X2;
-
-    // Bisector field
-    Eigen::MatrixXd BIS1, BIS2;
-
-    // Combed Bisector
-    Eigen::MatrixXd BIS1_combed, BIS2_combed;
-
-    // Per-corner, integener mismatches
-    Eigen::Matrix<int, Eigen::Dynamic, 3> MMatch;
-
-    // Field singularities
-    Eigen::Matrix<int, Eigen::Dynamic, 1> isSingularity, singularityIndex;
-
-    // Per corner seams
-    Eigen::Matrix<int, Eigen::Dynamic, 3> Seams;
-
-    // Combed field
-    Eigen::MatrixXd X1_combed, X2_combed;
-
-    // N-Rosy
-    X1 = R;
-
-    // Find the orthogonal vector
-    Eigen::MatrixXd B1, B2, B3;
-    igl::local_basis(V, F, B1, B2, B3);
-    X2 = igl::rotate_vectors(X1, Eigen::VectorXd::Constant(1, igl::PI / 2), B1, B2);
-
-    // Always work on the bisectors, it is more general
-    igl::compute_frame_field_bisectors(V, F, X1, X2, BIS1, BIS2);
-
-    // Comb the field, implicitly defining the seams
-    igl::comb_cross_field(V, F, BIS1, BIS2, BIS1_combed, BIS2_combed);
-
-    // Find the integer mismatches
-    igl::cross_field_mismatch(V, F, BIS1_combed, BIS2_combed, true, MMatch);
-
-    // Find the singularities
-    igl::find_cross_field_singularities(V, F, MMatch, isSingularity, singularityIndex);
-
-    // Cut the mesh, duplicating all vertices on the seams
-    igl::cut_mesh_from_singularities(V, F, MMatch, Seams);
-
-    // Comb the frame-field accordingly
-    igl::comb_frame_field(V, F, X1, X2, BIS1_combed, BIS2_combed, X1_combed, X2_combed);
-
-    // Global parametrization
-    igl::copyleft::comiso::miq(
-        V,
-        F,
-        X1_combed,
-        X2_combed,
-        MMatch,
-        isSingularity,
-        Seams,
-        UV,
-        FUV,
-        gradient_size,
-        stiffness,
-        false, // direct round
-        0,     // iter
-        5,     // local iter
-        true,  // do round = seamless
+        5.0,   // stiffness, reserved but unused
+        false, // direct round, default to the greedy rounding proposed in the MIQ paper
+        stiffen_iter,
+        5,     // local # iter of integer rounding
+        true,  // do round = isInteger in Directional's parameterize()
         true,  // singularity round
-        vertices_to_round,
-        hard_edges);
+        std::vector<int>(), // vertices to round, none other than singularities
+        hard_edges
+    );
 }
 
 // Solver data (needed for precomputation)
