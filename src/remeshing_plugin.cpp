@@ -194,10 +194,6 @@ void RemeshingMenu::draw_viewer_menu() {
                     miq_mode = MIQMode::CROSS; interpolate_field();
                     viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
                 }
-                /*if (ImGui::Button("Interpolate Frame Field", ImVec2(w - p, 0))) {
-                    miq_mode = MIQMode::FRAME; interpolate_field();
-                    viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
-                }*/
                 if (ImGui::Button("Interpolate Polyvector Field", ImVec2(w - p, 0))) {
                     miq_mode = MIQMode::POLYVECTOR; interpolate_field(); 
                     viewing_mode = ViewingMode::MESH_FIELD; update_visualization();
@@ -216,14 +212,6 @@ void RemeshingMenu::draw_viewer_menu() {
                     reduce_curl();
                     if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD)
                         update_visualization();
-                }
-                if (miq_mode == MIQMode::FRAME) {
-                    if (ImGui::Button("Save Deformed Mesh", ImVec2(w - p, 0))) {
-                        std::string fname = igl::file_dialog_save();
-                        if (fname.length() > 0) {
-                            igl::writeOBJ(fname, V_deformed, F);
-                        }
-                    }
                 }
             }
             // Quad controls
@@ -280,29 +268,12 @@ void RemeshingMenu::draw_viewer_menu() {
         if (ImGui::RadioButton("Mesh Only", viewing_mode == ViewingMode::MESH_ONLY)) {
             viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
         }
-        if (miq_mode == MIQMode::FRAME) {
-            if (ImGui::RadioButton("Frame Field", viewing_mode == ViewingMode::FRAME_FIELD)) {
-                viewing_mode = ViewingMode::FRAME_FIELD; update_visualization();
-            }
-            if (ImGui::RadioButton("Deformed Frame Field", viewing_mode == ViewingMode::DEFORMED_FRAME_FIELD)) {
-                viewing_mode = ViewingMode::DEFORMED_FRAME_FIELD; update_visualization();
-            }
-            if (ImGui::RadioButton("Deformed Cross Field", viewing_mode == ViewingMode::DEFORMED_CROSS_FIELD)) {
-                viewing_mode = ViewingMode::DEFORMED_CROSS_FIELD; update_visualization();
-            }
-            if (has_integer_grid) {
-                if (ImGui::RadioButton("Deformed Quad", viewing_mode == ViewingMode::DEFORMED_QUAD)) {
-                    viewing_mode = ViewingMode::DEFORMED_QUAD; update_visualization();
-                }
-            }
-        } else {
-            if (ImGui::RadioButton("Mesh+Field", viewing_mode == ViewingMode::MESH_FIELD)) {
-                viewing_mode = ViewingMode::MESH_FIELD; update_visualization();
-            }
-            ImGui::SameLine(0, p);
-            if (ImGui::RadioButton("Mesh+Curl", viewing_mode == ViewingMode::MESH_CURL)) {
-                viewing_mode = ViewingMode::MESH_CURL; update_visualization();
-            }
+        if (ImGui::RadioButton("Mesh+Field", viewing_mode == ViewingMode::MESH_FIELD)) {
+            viewing_mode = ViewingMode::MESH_FIELD; update_visualization();
+        }
+        ImGui::SameLine(0, p);
+        if (ImGui::RadioButton("Mesh+Curl", viewing_mode == ViewingMode::MESH_CURL)) {
+            viewing_mode = ViewingMode::MESH_CURL; update_visualization();
         }
         if (is_quad_meshed) {
             if (ImGui::RadioButton("Mesh+Quad", viewing_mode == ViewingMode::MESH_QUAD)) {
@@ -747,6 +718,8 @@ bool RemeshingMenu::load_workspace(std::string filename) {
     igl::deserialize(loop_update_polylines, "loop_update_polylines", filename);
     igl::deserialize(loop_path, "loop_path", filename);
     igl::deserialize(loop_feature_face_ids, "loop_feature_face_ids", filename);
+
+    line_texture(texture_R, texture_G, texture_B);
 
     update_visualization();
 
@@ -2031,47 +2004,6 @@ void RemeshingMenu::update_visualization() {
             Eigen::Vector3d s = v_0 + split_edges[i].normal * mesh_size * 0.001;
             Eigen::Vector3d t = v_1 + split_edges[i].normal * mesh_size * 0.001;
             draw_a_segment(s, t, 1);
-        }
-        break;
-    }
-
-    case ViewingMode::FRAME_FIELD:
-    {
-        Eigen::MatrixXd C1, C2;
-        Eigen::VectorXd K1 = FF1.rowwise().norm();
-        Eigen::VectorXd K2 = FF2.rowwise().norm();
-        igl::jet(K1, true, C1);
-        igl::jet(K2, true, C2);
-        set_mesh_overlays(viewer->selected_data_index);
-        viewer->data().add_edges(B - global_scale * FF1, B + global_scale * FF1, C1);
-        viewer->data().add_edges(B - global_scale * FF2, B + global_scale * FF2, C2);
-        break;
-    }
-
-    case ViewingMode::DEFORMED_FRAME_FIELD:
-    case ViewingMode::DEFORMED_CROSS_FIELD:
-    case ViewingMode::DEFORMED_QUAD:
-    {
-        viewer->data_list[2].clear();
-        viewer->data_list[2].set_mesh(V_deformed, F);
-        viewer->data_list[2].show_texture = false;
-        viewer->data_list[2].set_colors(directional::default_mesh_color());
-        set_mesh_overlays(2);
-
-        if (viewing_mode == ViewingMode::DEFORMED_FRAME_FIELD) {
-            viewer->data_list[2].add_edges(B_deformed - global_scale * FF1_deformed, B_deformed + global_scale * FF1_deformed, Eigen::RowVector3d(1, 0, 0));
-            viewer->data_list[2].add_edges(B_deformed - global_scale * FF2_deformed, B_deformed + global_scale * FF2_deformed, Eigen::RowVector3d(0, 0, 1));
-
-        } else if (viewing_mode == ViewingMode::DEFORMED_CROSS_FIELD) {
-            viewer->data_list[2].add_edges(B_deformed - global_scale * X1_deformed, B_deformed + global_scale * X1_deformed, Eigen::RowVector3d(1, 0, 0));
-            viewer->data_list[2].add_edges(B_deformed - global_scale * X2_deformed, B_deformed + global_scale * X2_deformed, Eigen::RowVector3d(0, 0, 1));
-        
-        } else if (viewing_mode == ViewingMode::DEFORMED_QUAD) {
-            // Deformed with quad texture
-            viewer->data_list[2].set_texture(texture_R, texture_B, texture_G);
-            viewer->data_list[2].set_uv(V_uv, F_uv);
-            viewer->data_list[2].show_texture = true;
-            viewer->data_list[2].show_lines = false;
         }
         break;
     }

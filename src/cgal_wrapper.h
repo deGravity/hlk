@@ -18,7 +18,6 @@
 
 namespace hlk {
 
-//typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef CGAL::Simple_cartesian<double> K;
 typedef K::Point_2 Point_2;
 typedef K::Segment_2 Segment_2;
@@ -30,7 +29,6 @@ typedef K::Segment_3 Segment_3;
 typedef K::Plane_3 Plane_3;
 
 typedef CGAL::Polyhedron_3<CGAL::Simple_cartesian<double>, CGAL::Polyhedron_items_with_id_3, CGAL::HalfedgeDS_default, std::allocator<int> > Polyhedron_3;
-//typedef CGAL::Polyhedron_3<K, CGAL::Polyhedron_items_with_id_3> Polyhedron_3;
 typedef Polyhedron_3::Facet_iterator Poly_facet_iterator;
 typedef Polyhedron_3::Point_3 Poly_point_3;
 typedef Polyhedron_3::HalfedgeDS Poly3_HalfedgeDS;

@@ -55,11 +55,7 @@ enum ViewingMode {
     MESH_CURL,
     MESH_FIELD,
     MESH_QUAD,
-    QUAD_ONLY,
-    FRAME_FIELD,
-    DEFORMED_FRAME_FIELD,
-    DEFORMED_CROSS_FIELD,
-    DEFORMED_QUAD
+    QUAD_ONLY
 };
 
 enum DrawingMode {
@@ -69,7 +65,6 @@ enum DrawingMode {
 
 enum MIQMode {
     CROSS,
-    FRAME,
     POLYVECTOR
 };
 

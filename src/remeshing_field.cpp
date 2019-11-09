@@ -4,10 +4,7 @@
 #include <igl/AABB.h>
 #include <igl/barycenter.h>
 #include <igl/boundary_loop.h>
-#include <igl/copyleft/comiso/frame_field.h>
 #include <igl/copyleft/comiso/nrosy.h>
-#include <igl/frame_to_cross_field.h>
-#include <igl/frame_field_deformer.h>
 #include <igl/local_basis.h>
 #include <igl/principal_curvature.h>
 #include <igl/rotate_vectors.h>
@@ -286,66 +283,9 @@ void RemeshingMenu::interpolate_field() {
 
         viewing_mode = ViewingMode::MESH_FIELD;
 
-    } else {
+    } else { // miq_mode == MIQMode::CROSS
 
-        if (miq_mode == MIQMode::CROSS) {
-            interpolate_cross_field(S);
-
-        } else {
-            // Set up frame field constraints. (SOFT ONLY!!)
-            std::vector<int> soft_constrained_faces;
-            std::vector<Eigen::MatrixXd> c1, c2;
-            for (FaceVector& fv : face_vectors) {
-                if (fv.assigned[0] && fv.assigned[1]) {
-                    soft_constrained_faces.push_back(fv.face_id);
-                    c1.push_back(fv.frame[0]);
-                    c2.push_back(fv.frame[1]);
-                }
-            }
-            b.resize(soft_constrained_faces.size()); b.setZero();
-            bc1.resize(c1.size(), 3); bc1.setZero();
-            bc2.resize(c2.size(), 3); bc2.setZero();
-            for (int i = 0; i < soft_constrained_faces.size(); ++i) { b(i) = soft_constrained_faces[i]; }
-            for (int i = 0; i < c1.size(); ++i) { bc1.row(i) = c1[i]; }
-            for (int i = 0; i < c2.size(); ++i) { bc2.row(i) = c2[i]; }
-
-            // Interpolate the frame field.
-            igl::copyleft::comiso::frame_field(V, F, b, bc1, bc2, FF1, FF2);
-
-            // Deform the mesh to transform the frame field in a cross field
-            igl::frame_field_deformer(V, F, FF1, FF2, V_deformed, FF1_deformed, FF2_deformed);
-
-            // Compute face barycenters deformed mesh
-            igl::barycenter(V_deformed, F, B_deformed);
-
-            // Find the closest cross field to the deformed frame field
-            igl::frame_to_cross_field(V_deformed, F, FF1_deformed, FF2_deformed, X1_deformed);
-
-            // Find a smooth cross field that interpolates the deformed constraints
-            Eigen::MatrixXd bc_x(b.size(), 3);
-            for (unsigned i = 0; i < b.size(); ++i)
-                bc_x.row(i) = X1_deformed.row(b(i));
-
-            igl::copyleft::comiso::nrosy(
-                V,
-                F,
-                b,
-                bc_x,
-                Eigen::VectorXi(),
-                Eigen::VectorXd(),
-                Eigen::MatrixXd(),
-                rosy,
-                soft_constraint_strength,
-                X1_deformed,
-                S);
-            direction_field[1] = X1_deformed;
-
-            // The other representative of the cross field is simply rotated by 90 degrees
-            igl::local_basis(V_deformed, F, B1, B2, B3);
-            X2_deformed =
-                igl::rotate_vectors(X1_deformed, Eigen::VectorXd::Constant(1, igl::PI / 2), B1, B2);
-        }
-
+        interpolate_cross_field(S);
         directional::representative_to_raw(V, F, direction_field[1], rosy, rawField);
 
         int s_count = 0;
@@ -406,8 +346,9 @@ void RemeshingMenu::generate_integer_grid() {
             }
         }
 
-        Meshing::cross_field_miq(direction_field[1],
-            (miq_mode == MIQMode::CROSS ? V : V_deformed),
+        Meshing::cross_field_miq(
+            direction_field[1],
+            V,
             F,
             hard_edges,
             gradient_size,

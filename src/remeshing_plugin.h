@@ -195,7 +195,32 @@ public:
     std::vector<std::unordered_set<int>> igl_v_faces;
     std::vector<std::vector<double>> graph_adj;
 
+    // line textures
+    Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> texture_R, texture_G, texture_B;
+
+    // triangle mesh data
+    Eigen::MatrixXd V, B;
+    Eigen::MatrixXi F;
+    double global_scale;  // Scale for visualizing the fields
+    // Global parametrization
+    Eigen::MatrixXd V_uv;
+    Eigen::MatrixXi F_uv;
+    // Local basis
+    Eigen::MatrixXd B1, B2, B3;
+
+    // quad mesh data
+    QuadMesh quad_mesh;
+
+    // cross field data
     std::vector<Eigen::MatrixXd> direction_field; // size 2, using stl for serialization
+
+    // polyvector field data
+    Eigen::MatrixXcd polyvector_field;
+    Eigen::VectorXi p_b;
+    Eigen::MatrixXd p_bc;
+    Eigen::MatrixXd VMeshCut;
+    Eigen::MatrixXi FMeshCut;
+    Eigen::MatrixXd cutUV;
 
     // curl reduction data
     Eigen::MatrixXi FField, FSings, FSeams;
@@ -211,40 +236,6 @@ public:
     double curlMax, curlMaxOrig;
     Eigen::VectorXi c_b, c_blevel;
     Eigen::MatrixXd c_bc;
-
-    // quad mesh data
-    QuadMesh quad_mesh;
-    // line textures
-    Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> texture_R, texture_G, texture_B;
-
-    // frame field data
-    Eigen::MatrixXd V, B;
-    Eigen::MatrixXi F;
-    double global_scale;  // Scale for visualizing the fields
-    // Input frame field constraints
-    Eigen::VectorXi b;
-    Eigen::MatrixXd bc1, bc2;
-    // Interpolated frame field
-    Eigen::MatrixXd FF1, FF2;
-    // Deformed mesh
-    Eigen::MatrixXd V_deformed, B_deformed;
-    // Frame field on deformed
-    Eigen::MatrixXd FF1_deformed, FF2_deformed;
-    // Cross field on deformed
-    Eigen::MatrixXd X1_deformed, X2_deformed;
-    // Global parametrization
-    Eigen::MatrixXd V_uv;
-    Eigen::MatrixXi F_uv;
-    // Local basis
-    Eigen::MatrixXd B1, B2, B3;
-
-    // polyvector field data
-    Eigen::MatrixXcd polyvector_field;
-    Eigen::VectorXi p_b;
-    Eigen::MatrixXd p_bc;
-    Eigen::MatrixXd VMeshCut;
-    Eigen::MatrixXi FMeshCut;
-    Eigen::MatrixXd cutUV;
 
     /////////////////// UI ///////////////////
     std::string in_path, out_path, input_model;
