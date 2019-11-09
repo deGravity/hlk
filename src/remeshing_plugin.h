@@ -48,14 +48,10 @@ public:
         miq_mode = MIQMode::CROSS;
         cardinal = Cardinal::N;
         line_texture(texture_R, texture_G, texture_B);
+        direction_field = { Eigen::MatrixXd(), Eigen::MatrixXd() };
     }
 	~RemeshingMenu() {
 		clear();
-		for (auto& temp : temps) {
-			remove(temp.mesh.c_str());
-			remove(temp.face.c_str());
-			remove(temp.edge.c_str());
-		}
 	};
 
     void init(igl::opengl::glfw::Viewer* _viewer);
@@ -63,6 +59,11 @@ public:
     bool load(std::string filename);
     bool save(std::string filename);
     void load_temp_data(std::string filename);
+
+    void shutdown();
+    bool load_workspace(std::string filename);
+    bool save_workspace(std::string filename);
+
     void set_input_model(std::string filename) { input_model = filename; }
 
     /////////// CORE UI CALLBACKS ///////////
@@ -150,7 +151,6 @@ public:
     float soft_constraint_strength;
     int stiffen_iter;
     float gradient_size;
-    float yarn_size;
     float loop_size;
     float click_threshold; // a certain percentage of mesh edge size
     double mesh_size;
@@ -170,7 +170,6 @@ public:
     // directional faces
     std::vector<FaceVector> face_vectors;
     std::vector<SplitEdge> split_edges;
-    std::vector<int> split_points;
 
 	// loops data
 	std::vector<TM_Node> loop_gi_nodes;
@@ -196,7 +195,7 @@ public:
     std::vector<std::unordered_set<int>> igl_v_faces;
     std::vector<std::vector<double>> graph_adj;
 
-    Eigen::MatrixXd direction_field[2];
+    std::vector<Eigen::MatrixXd> direction_field; // size 2, using stl for serialization
 
     // curl reduction data
     Eigen::MatrixXi FField, FSings, FSeams;

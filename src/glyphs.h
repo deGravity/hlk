@@ -1,5 +1,6 @@
 #pragma once
-#include<Eigen/Core>
+
+#include <Eigen/Core>
 
 namespace hlk {
 namespace glyphs {

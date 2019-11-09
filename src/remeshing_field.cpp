@@ -20,21 +20,6 @@
 namespace hlk {
 
 void RemeshingMenu::reset_face_vectors() {
-    for (int i = 0; i < F.rows(); i++) {
-        FaceVector fv;
-        fv.face_id = i;
-        Eigen::Vector3d v0 = V.row(F.row(i)[0]);
-        Eigen::Vector3d v1 = V.row(F.row(i)[1]);
-        Eigen::Vector3d v2 = V.row(F.row(i)[2]);
-        fv.center = (v0 + v1 + v2) / 3.0;
-        fv.normal = (v1 - v0).cross(v2 - v0).normalized();
-        fv.assigned[0] = false;
-        fv.assigned[1] = false;
-        face_vectors.push_back(fv);
-    }
-}
-
-void RemeshingMenu::reset_field() {
     face_vectors.clear();
     for (int i = 0; i < F.rows(); i++) {
         FaceVector fv;
@@ -44,10 +29,14 @@ void RemeshingMenu::reset_field() {
         Eigen::Vector3d v2 = V.row(F.row(i)[2]);
         fv.center = (v0 + v1 + v2) / 3.0;
         fv.normal = (v1 - v0).cross(v2 - v0).normalized();
-        fv.assigned[0] = false;
-        fv.assigned[1] = false;
+        fv.assigned = { false, false };
+        fv.frame = { Eigen::Vector3d(), Eigen::Vector3d() };
         face_vectors.push_back(fv);
     }
+}
+
+void RemeshingMenu::reset_field() {
+    reset_face_vectors();
     split_edges.clear();
     setup_boundary();
     interpolate_field();

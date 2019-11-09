@@ -110,3 +110,30 @@ namespace hlk {
 	};
 
 }
+
+#include <igl/serialize.h>
+
+SERIALIZE_TYPE(hlk::QuadMesh,
+    SERIALIZE_MEMBER(V)
+    SERIALIZE_MEMBER(F_q)
+    SERIALIZE_MEMBER(n)
+    SERIALIZE_MEMBER(m)
+    SERIALIZE_MEMBER(e)
+    SERIALIZE_MEMBER(F_t)
+    SERIALIZE_MEMBER(sides_to_edges)
+    SERIALIZE_MEMBER(edges_to_sides)
+    SERIALIZE_MEMBER(unique_sides)
+    SERIALIZE_MEMBER(TT)
+    SERIALIZE_MEMBER(TTi)
+    SERIALIZE_MEMBER(VF)
+    SERIALIZE_MEMBER(VI)
+    SERIALIZE_MEMBER(valence)
+    SERIALIZE_MEMBER(is_boundary_side)
+    SERIALIZE_MEMBER(is_singularity)
+    SERIALIZE_MEMBER(singular_vertices)
+    SERIALIZE_MEMBER(singular_quads)
+    SERIALIZE_MEMBER(is_border_vertex)
+    SERIALIZE_MEMBER(boundary_edges)
+    SERIALIZE_MEMBER(boundary_sides)
+    SERIALIZE_MEMBER(boundary_quads)
+)

@@ -36,8 +36,8 @@ struct FaceVector {
     int face_id = -1;
     bool is_hard = false;
     
-    bool assigned[2];
-    Eigen::Vector3d frame[2];
+    std::vector<bool> assigned; // size 2, using stl for serialization
+    std::vector<Eigen::Vector3d> frame; // size 2, using stl for serialization
 	Eigen::Vector3d base_vector; // perpendicular to frame[1]
 
     Eigen::Vector3d center;
@@ -56,7 +56,6 @@ enum ViewingMode {
     MESH_FIELD,
     MESH_QUAD,
     QUAD_ONLY,
-    QUAD_INTERACT,
     FRAME_FIELD,
     DEFORMED_FRAME_FIELD,
     DEFORMED_CROSS_FIELD,
@@ -120,3 +119,21 @@ std::vector<Eigen::Vector3d> UniformSampling(
 	const int sample_nb);
 
 }
+
+#include <igl/serialize.h>
+
+SERIALIZE_TYPE(hlk::FaceVector,
+    SERIALIZE_MEMBER(face_id)
+    SERIALIZE_MEMBER(is_hard)
+    SERIALIZE_MEMBER(assigned)
+    SERIALIZE_MEMBER(frame)
+    SERIALIZE_MEMBER(base_vector)
+    SERIALIZE_MEMBER(center)
+    SERIALIZE_MEMBER(normal)
+)
+
+SERIALIZE_TYPE(hlk::SplitEdge,
+    SERIALIZE_MEMBER(index_0)
+    SERIALIZE_MEMBER(index_1)
+    SERIALIZE_MEMBER(normal)
+)

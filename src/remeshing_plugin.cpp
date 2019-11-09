@@ -98,6 +98,19 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
 void RemeshingMenu::draw_viewer_menu() {
     float w = ImGui::GetContentRegionAvailWidth();
     float p = ImGui::GetStyle().FramePadding.x;
+    if (ImGui::CollapsingHeader("Workspace", ImGuiTreeNodeFlags_DefaultOpen)) {
+        if (ImGui::Button("Load##Workspace", ImVec2((w - p) / 2.f, 0))) {
+            std::string fname = igl::file_dialog_open();
+            if (fname.length() == 0) return;
+            load_workspace(fname);
+        }
+        ImGui::SameLine(0, p);
+        if (ImGui::Button("Save##Workspace", ImVec2((w - p) / 2.f, 0))) {
+            std::string fname = igl::file_dialog_save();
+            if (fname.length() == 0) return;
+            save_workspace(fname);
+        }
+    }
     if (ImGui::CollapsingHeader("Mesh", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (ImGui::Button("Load##Mesh", ImVec2((w - p) / 2.f, 0))) {
             viewer->open_dialog_load_mesh();
@@ -119,7 +132,12 @@ void RemeshingMenu::draw_viewer_menu() {
         if (ImGui::Button("Save Field##Mesh", ImVec2((w - p) / 2.f, 0))) {
             std::string fname = igl::file_dialog_save();
             if (fname.length() == 0) return;
-            directional::write_raw_field(fname, combedField);
+            if (miq_mode == MIQMode::POLYVECTOR) {
+                directional::write_raw_field(fname, combedField);
+            } else {
+                directional::representative_to_raw(V, F, direction_field[1], rosy, rawField);
+                directional::write_raw_field(fname, rawField);
+            }
         }
         if (ImGui::Button("Clear Loops##Mesh", ImVec2((w - p) / 2.f, 0))) {
             clear_loops();
@@ -154,9 +172,9 @@ void RemeshingMenu::draw_viewer_menu() {
             } else {
                 symmetry_mode_yz = false;
             }
-
-            ImGui::Checkbox("Show Axis", &show_axis);
             ImGui::Checkbox("Symmetrize N-RoSy", &symmetrize_nrosy);
+            ImGui::Checkbox("Show Axis", &show_axis);
+            ImGui::Checkbox("Multi Points", &multi_points_drawing);
             // Add threshold values.
             ImGui::DragFloat("Click Threshold", &click_threshold, 0.05f, 0.01f, 0.5f);
             ImGui::DragFloat("Soft Weight", &soft_constraint_strength, 0.0f, 0.0f, 1.0f);
@@ -176,10 +194,10 @@ void RemeshingMenu::draw_viewer_menu() {
                     miq_mode = MIQMode::CROSS; interpolate_field();
                     viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
                 }
-                //if (ImGui::Button("Interpolate Frame Field", ImVec2(w - p, 0))) {
-                //    miq_mode = MIQMode::FRAME; interpolate_field();
-                //    viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
-                //}
+                /*if (ImGui::Button("Interpolate Frame Field", ImVec2(w - p, 0))) {
+                    miq_mode = MIQMode::FRAME; interpolate_field();
+                    viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
+                }*/
                 if (ImGui::Button("Interpolate Polyvector Field", ImVec2(w - p, 0))) {
                     miq_mode = MIQMode::POLYVECTOR; interpolate_field(); 
                     viewing_mode = ViewingMode::MESH_FIELD; update_visualization();
@@ -293,10 +311,6 @@ void RemeshingMenu::draw_viewer_menu() {
             ImGui::SameLine(0, p);
             if (ImGui::RadioButton("Quad Only", viewing_mode == ViewingMode::QUAD_ONLY)) {
                 viewing_mode = ViewingMode::QUAD_ONLY; update_visualization();
-            }
-            if (ImGui::RadioButton("Interact with Quads", viewing_mode == ViewingMode::QUAD_INTERACT)) {
-                viewing_mode = ViewingMode::QUAD_ONLY; update_visualization(); 
-                viewing_mode = ViewingMode::QUAD_INTERACT;
             }
         }
     }
@@ -466,12 +480,15 @@ void RemeshingMenu::load_temp_data(std::string filename) {
         int face_id;
 		ifs >> face_id;
 		auto& face = face_vectors[face_id];
-        ifs >> face.is_hard >> face.assigned[0] >> face.assigned[1]
+        bool assigned0, assigned1;
+        ifs >> face.is_hard >> assigned0 >> assigned1
             >> face.frame[0][0] >> face.frame[0][1] >> face.frame[0][2]
 			>> face.frame[1][0] >> face.frame[1][1] >> face.frame[1][2]
 			>> face.base_vector[0] >> face.base_vector[1] >> face.base_vector[2]
 			>> face.center[0] >> face.center[1] >> face.center[2]
             >> face.normal[0] >> face.normal[1] >> face.normal[2];
+        face.assigned[0] = assigned0;
+        face.assigned[1] = assigned1;
     }
     ifs.clear();
     ifs.close();
@@ -550,7 +567,6 @@ void RemeshingMenu::clear() {
 	igl_polyhedron.clear();
 	igl_tree.clear();
 	std::vector<std::unordered_set<int>>().swap(igl_v_faces);
-	std::vector<int>().swap(split_points);
 	std::vector<std::vector<double>>().swap(graph_adj);
     clear_loops();
     // reset values
@@ -570,6 +586,171 @@ void RemeshingMenu::clear() {
     drawing_mode = DrawingMode::WALE;
     miq_mode = MIQMode::CROSS;
     cardinal = Cardinal::N;
+    direction_field = { Eigen::MatrixXd(), Eigen::MatrixXd() };
+    // remove ctrl+z saves.
+    for (auto& temp : temps) {
+        remove(temp.mesh.c_str());
+        remove(temp.face.c_str());
+        remove(temp.edge.c_str());
+    }
+}
+
+/////////////////////////// STATE SERIALIZATION ////////////////////////////
+void RemeshingMenu::shutdown() {
+    std::string fname = igl::file_dialog_save();
+    if (fname.length() == 0) return;
+    if (save_workspace(fname)) {
+        std::cout << "all work saved.\n";
+    } else {
+        std::cout << "failed to save state...\n";
+    }
+}
+
+// equivalent to serialize().
+bool RemeshingMenu::save_workspace(std::string filename) {
+    igl::serialize(has_direction_field, "has_direction_field", filename);
+    igl::serialize(has_curl, "has_curl", filename);
+    igl::serialize(has_integer_grid, "has_integer_grid", filename);
+    igl::serialize(is_quad_meshed, "is_quad_meshed", filename);
+    igl::serialize(should_redraw, "should_redraw", filename);
+    igl::serialize(isInteger, "isInteger", filename);
+    igl::serialize(show_axis, "show_axis", filename);
+    igl::serialize(multi_points_drawing, "multi_points_drawing", filename);
+    igl::serialize(existing_edge_label, "existing_edge_label", filename);
+    igl::serialize(geodesic_label, "geodesic_label", filename);
+
+    igl::serialize(rosy, "rosy", filename);
+    igl::serialize(stiffen_iter, "stiffen_iter", filename);
+    igl::serialize(geodesic_index, "geodesic_index", filename);
+    igl::serialize(loop_start_index, "loop_start_index", filename);
+    igl::serialize(loop_end_index, "loop_end_index", filename);
+
+    igl::serialize(cardinal, "cardinal", filename);
+    igl::serialize(miq_mode, "miq_mode", filename);
+    igl::serialize(drawing_mode, "drawing_mode", filename);
+    igl::serialize(viewing_mode, "viewing_mode", filename);
+
+    igl::serialize(click_threshold, "click_threshold", filename);
+    igl::serialize(gradient_size, "gradient_size", filename);
+    igl::serialize(soft_constraint_strength, "soft_constraint_strength", filename);
+    igl::serialize(loop_size, "loop_size", filename);
+
+    igl::serialize(in_path, "in_path", filename);
+    igl::serialize(out_path, "out_path", filename);
+
+    igl::serialize(V, "V", filename);
+    igl::serialize(F, "F", filename);
+    igl::serialize(V_uv, "V_uv", filename);
+    igl::serialize(F_uv, "F_uv", filename);
+    igl::serialize(VMeshCut, "VMeshCut", filename);
+    igl::serialize(FMeshCut, "FMeshCut", filename);
+    igl::serialize(cutUV, "cutUV", filename);
+
+    igl::serialize(direction_field, "direction_field", filename);
+    igl::serialize(rawField, "rawField", filename);
+    igl::serialize(c_b, "c_b", filename);
+    igl::serialize(c_blevel, "c_blevel", filename);
+    igl::serialize(c_bc, "c_bc", filename);
+    igl::serialize(polyvector_field, "polyvector_field", filename);
+    igl::serialize(p_b, "p_b", filename);
+    igl::serialize(p_bc, "p_bc", filename);
+
+    if (is_quad_meshed) {
+        igl::serialize(quad_mesh, "quad_mesh", filename);
+    }
+
+    igl::serialize(feature_points, "feature_points", filename);
+    igl::serialize(feature_face_ids, "feature_face_ids", filename);
+    igl::serialize(geodesic_point, "geodesic_point", filename);
+    igl::serialize(geodesic_path, "geodesic_path", filename);
+    igl::serialize(face_vectors, "face_vectors", filename);
+    igl::serialize(split_edges, "split_edges", filename);
+
+    igl::serialize(loop_points, "loop_points", filename);
+    igl::serialize(loop_de_points, "loop_de_points", filename);
+    igl::serialize(loop_polylines, "loop_polylines", filename);
+    igl::serialize(loop_update_polylines, "loop_update_polylines", filename);
+    igl::serialize(loop_path, "loop_path", filename);
+    igl::serialize(loop_feature_face_ids, "loop_feature_face_ids", filename);
+
+    return true;
+}
+
+// equivalent to deserialize().
+bool RemeshingMenu::load_workspace(std::string filename) {
+    clear();
+
+    igl::deserialize(has_direction_field, "has_direction_field", filename);
+    igl::deserialize(has_curl, "has_curl", filename);
+    igl::deserialize(has_integer_grid, "has_integer_grid", filename);
+    igl::deserialize(is_quad_meshed, "is_quad_meshed", filename);
+    igl::deserialize(should_redraw, "should_redraw", filename);
+    igl::deserialize(isInteger, "isInteger", filename);
+    igl::deserialize(show_axis, "show_axis", filename);
+    igl::deserialize(multi_points_drawing, "multi_points_drawing", filename);
+    igl::deserialize(existing_edge_label, "existing_edge_label", filename);
+    igl::deserialize(geodesic_label, "geodesic_label", filename);
+
+    igl::deserialize(rosy, "rosy", filename);
+    igl::deserialize(stiffen_iter, "stiffen_iter", filename);
+    igl::deserialize(geodesic_index, "geodesic_index", filename);
+    igl::deserialize(loop_start_index, "loop_start_index", filename);
+    igl::deserialize(loop_end_index, "loop_end_index", filename);
+
+    igl::deserialize(cardinal, "cardinal", filename);
+    igl::deserialize(miq_mode, "miq_mode", filename);
+    igl::deserialize(drawing_mode, "drawing_mode", filename);
+    igl::deserialize(viewing_mode, "viewing_mode", filename);
+
+    igl::deserialize(click_threshold, "click_threshold", filename);
+    igl::deserialize(gradient_size, "gradient_size", filename);
+    igl::deserialize(soft_constraint_strength, "soft_constraint_strength", filename);
+    igl::deserialize(loop_size, "loop_size", filename);
+
+    igl::deserialize(in_path, "in_path", filename);
+    igl::deserialize(out_path, "out_path", filename);
+
+    igl::deserialize(V, "V", filename);
+    igl::deserialize(F, "F", filename);
+    igl::deserialize(V_uv, "V_uv", filename);
+    igl::deserialize(F_uv, "F_uv", filename);
+    igl::deserialize(VMeshCut, "VMeshCut", filename);
+    igl::deserialize(FMeshCut, "FMeshCut", filename);
+    igl::deserialize(cutUV, "cutUV", filename);
+
+    setup_mesh();
+    update_polyhedron_tree();
+
+    igl::deserialize(direction_field, "direction_field", filename);
+    igl::deserialize(rawField, "rawField", filename);
+    igl::deserialize(c_b, "c_b", filename);
+    igl::deserialize(c_blevel, "c_blevel", filename);
+    igl::deserialize(c_bc, "c_bc", filename);
+    igl::deserialize(polyvector_field, "polyvector_field", filename);
+    igl::deserialize(p_b, "p_b", filename);
+    igl::deserialize(p_bc, "p_bc", filename);
+
+    if (is_quad_meshed) {
+        igl::deserialize(quad_mesh, "quad_mesh", filename);
+    }
+
+    igl::deserialize(feature_points, "feature_points", filename);
+    igl::deserialize(feature_face_ids, "feature_face_ids", filename);
+    igl::deserialize(geodesic_point, "geodesic_point", filename);
+    igl::deserialize(geodesic_path, "geodesic_path", filename);
+    igl::deserialize(face_vectors, "face_vectors", filename);
+    igl::deserialize(split_edges, "split_edges", filename);
+
+    igl::deserialize(loop_points, "loop_points", filename);
+    igl::deserialize(loop_de_points, "loop_de_points", filename);
+    igl::deserialize(loop_polylines, "loop_polylines", filename);
+    igl::deserialize(loop_update_polylines, "loop_update_polylines", filename);
+    igl::deserialize(loop_path, "loop_path", filename);
+    igl::deserialize(loop_feature_face_ids, "loop_feature_face_ids", filename);
+
+    update_visualization();
+
+    return true;
 }
 
 ////////////////////////////// UI MAIN LOGIC ///////////////////////////////
@@ -1377,9 +1558,9 @@ void RemeshingMenu::split_mesh() {
         Eigen::Vector3d v_2 = V.row(F.row(i)[2]);
         fv.center = (v_0 + v_1 + v_2) / 3.0;
         fv.normal = (v_1 - v_0).cross(v_2 - v_0).normalized();
+        fv.assigned = { false, false };
+        fv.frame = { Eigen::Vector3d(), Eigen::Vector3d() };
         new_face_vectors.push_back(fv);
-        fv.assigned[0] = false;
-        fv.assigned[1] = false;
     }
     for (int i = 0; i < face_refs.size(); i = i + 2) {
         int new_face_index = face_refs[i];
@@ -1601,7 +1782,7 @@ void RemeshingMenu::cut_along_seams() {
     F = NF;
     setup_mesh();
     update_polyhedron_tree();
-    reset_face_vectors();
+    reset_face_vectors(); // TODO: instead of resetting, keep track of old face vectors
     setup_boundary();
     interpolate_field();
     update_visualization();
@@ -1934,25 +2115,28 @@ void RemeshingMenu::update_polyhedron_tree(const std::vector<int>& face_refs) {
 		graph_adj[index_1][index_0] = d;
 	}
 	///////////////////////////////////////
-	std::vector<FaceVector> new_face_vectors(viewer->data().F.rows(), FaceVector());
-	for (int i = 0; i < face_refs.size(); i = i + 2) {
-		int new_face_index = face_refs[i];
-		int old_face_index = face_refs[i + 1];
-		new_face_vectors[new_face_index] = face_vectors[old_face_index];
-		new_face_vectors[new_face_index].face_id = new_face_index;
-	}
-	for (int i = 0; i < viewer->data().F.rows(); i++) {
-		auto& fv = new_face_vectors[i];
-		if (fv.face_id < 0) {
-			fv.face_id = i;
-			Eigen::Vector3d v_0 = viewer->data().V.row(viewer->data().F.row(i)[0]);
-			Eigen::Vector3d v_1 = viewer->data().V.row(viewer->data().F.row(i)[1]);
-			Eigen::Vector3d v_2 = viewer->data().V.row(viewer->data().F.row(i)[2]);
-			fv.center = (v_0 + v_1 + v_2) / 3.0;
-			fv.normal = (v_1 - v_0).cross(v_2 - v_0).normalized();
-		}
-	}
-	face_vectors = new_face_vectors;
+    if (!face_refs.empty()) {
+        std::vector<FaceVector> new_face_vectors(viewer->data().F.rows(), FaceVector());
+        for (int i = 0; i < face_refs.size(); i = i + 2) {
+            int new_face_index = face_refs[i];
+            int old_face_index = face_refs[i + 1];
+            new_face_vectors[new_face_index] = face_vectors[old_face_index];
+            new_face_vectors[new_face_index].face_id = new_face_index;
+        }
+        for (int i = 0; i < viewer->data().F.rows(); i++) {
+            auto& fv = new_face_vectors[i];
+            if (fv.face_id < 0) {
+                fv.face_id = i;
+                Eigen::Vector3d v_0 = viewer->data().V.row(viewer->data().F.row(i)[0]);
+                Eigen::Vector3d v_1 = viewer->data().V.row(viewer->data().F.row(i)[1]);
+                Eigen::Vector3d v_2 = viewer->data().V.row(viewer->data().F.row(i)[2]);
+                fv.center = (v_0 + v_1 + v_2) / 3.0;
+                fv.normal = (v_1 - v_0).cross(v_2 - v_0).normalized();
+            }
+        }
+        face_vectors = new_face_vectors;
+    }
+    ///////////////////////////////////////
 	update_loop_graph();
 }
 

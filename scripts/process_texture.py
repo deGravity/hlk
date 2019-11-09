@@ -35,7 +35,8 @@ def process_texture(name):
 
 def write_header(f, name):
     f.write('#pragma once\n')
-    f.write('#include<Eigen/Core>\n')
+    f.write('\n')
+    f.write('#include <Eigen/Core>\n')
     f.write('\n')
     f.write('namespace hlk {\n')
     f.write(f'namespace {name} {{\n')
@@ -43,6 +44,7 @@ def write_header(f, name):
 def write_footer(f):
     f.write('}\n')
     f.write('}\n')
+    f.write('\n')
 
 def write_mat(f, name, mat):
     (h, w) = mat.shape

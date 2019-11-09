@@ -18,8 +18,7 @@ namespace hlk {
 		KNIT_OUT
 	};
 
-	enum ShapingType
-	{
+	enum ShapingType {
 		NONE,
 		IN_SIDE,
 		OUT_SIDE,
