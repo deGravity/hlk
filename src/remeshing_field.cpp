@@ -386,17 +386,45 @@ void RemeshingMenu::reduce_curl() {
     }
 }
 
+void RemeshingMenu::init_quad_seams() {
+    if (!is_quad_meshed) { return; }
+
+    igl::AABB<Eigen::MatrixXd, 3> aabb_tree;
+    aabb_tree.init(quad_mesh.V, quad_mesh.F_t);
+
+    quad_mesh.is_seam_edge.clear();
+    quad_mesh.is_seam_edge = std::vector<bool>(quad_mesh.e, false);
+    for (const SplitEdge& se : split_edges) {
+        Eigen::Vector3d v0 = V.row(se.index_0);
+        Eigen::Vector3d v1 = V.row(se.index_1);
+        Eigen::Vector3d edge = v1 - v0;
+        Eigen::Vector3d nudge_dir = edge.cross(se.normal);
+
+        Eigen::Vector3d nudged_midpoint = (v0 + v1) / 2. + 0.001 * mesh_size * nudge_dir;
+        int fid;
+        Eigen::RowVector3d C;
+        aabb_tree.squared_distance(quad_mesh.V, quad_mesh.F_t, nudged_midpoint, fid, C);
+        quad_mesh.is_seam_edge[fid] = true;
+        if (quad_mesh.flip_side(fid) > 0) {
+            quad_mesh.is_seam_edge[quad_mesh.flip_side(fid)] = true;
+        }
+    }
+}
+
 void RemeshingMenu::quad_helix_finding() {
     if (!is_quad_meshed) { return; }
 
     std::unordered_set<int> longest_helix;
     if (!quad_mesh.helix_free(longest_helix, cardinal)) {
+        std::cout << "[remeshing] there exists a helix somewhere... highlighted in green.\n";
         Eigen::MatrixXd interactive_colors(quad_mesh.m * 4, 3);
         interactive_colors.setOnes();
         for (auto iter = longest_helix.begin(); iter != longest_helix.end(); ++iter) {
             interactive_colors.row((*iter)) = Eigen::RowVector3d(0.8, 1., 0.6);
         }
         stylize_quad_mesh(interactive_colors);
+    } else {
+        std::cout << "[remeshing] helix free!\n";
     }
 }
 

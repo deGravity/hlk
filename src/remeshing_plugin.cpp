@@ -4,6 +4,7 @@
 #include <directional/singularity_spheres.h>
 #include <directional/visualization_schemes.h>
 #include <directional/write_raw_field.h>
+#include <igl/AABB.h>
 #include <igl/adjacency_list.h>
 #include <igl/avg_edge_length.h>
 #include <igl/barycenter.h>
@@ -229,6 +230,7 @@ void RemeshingMenu::draw_viewer_menu() {
                         extract_quad_mesh(V, F, V_uv, F_uv, quad_mesh);
                     }
                     is_quad_meshed = true;
+                    init_quad_seams();
                     viewing_mode = ViewingMode::QUAD_ONLY;
                     update_visualization();
                 }
@@ -1837,14 +1839,13 @@ void RemeshingMenu::update_drawing() {
 
     if (has_direction_field) { draw_direction_field(); }
 
-//#ifdef HAISEN
-	//start end point
+	// loop's start & end points
 	if (loop_start_index >= 0) 
 		draw_a_point(loop_gi_nodes[loop_start_index].m, 1, 0.01);
 	if (loop_end_index >= 0) 
-		draw_a_point(loop_gi_nodes[loop_end_index].m, 2,0.01);
+		draw_a_point(loop_gi_nodes[loop_end_index].m, 2, 0.01);
 
-	//loop_path
+	// loop path
 	if (loop_path.size() >= 2) 
 		draw_segments(loop_path,1,0.01);
 
@@ -1855,7 +1856,6 @@ void RemeshingMenu::update_drawing() {
 		draw_segments(line, 0, 0.00);
 	for (auto& line : loop_update_polylines)
 		draw_segments(line, 2, 0.00);
-//#endif
 }
 
 void RemeshingMenu::draw_direction_field() {
@@ -1930,6 +1930,29 @@ void RemeshingMenu::stylize_quad_mesh(const Eigen::MatrixXd& colors) {
     viewer->data_list[1].set_colors(colors);
     viewer->data_list[1].set_texture(texture_R, texture_B, texture_G);
     viewer->data_list[1].show_texture = true;
+
+    if (split_edges.empty()) return;
+
+    igl::AABB<Eigen::MatrixXd, 3> aabb_tree;
+    aabb_tree.init(quad_mesh.V, quad_mesh.F_t);
+
+    for (const SplitEdge& se : split_edges) {
+        Eigen::Vector3d v0 = V.row(se.index_0);
+        Eigen::Vector3d v1 = V.row(se.index_1);
+        Eigen::Vector3d edge = v1 - v0;
+        Eigen::Vector3d nudge_dir = edge.cross(se.normal);
+
+        Eigen::Vector3d nudged_midpoint = (v0 + v1) / 2. + 0.001 * mesh_size * nudge_dir;
+        int fid;
+        Eigen::RowVector3d C;
+        aabb_tree.squared_distance(quad_mesh.V, quad_mesh.F_t, nudged_midpoint, fid, C);
+
+        Eigen::Vector3d qv0 = quad_mesh.V.row(quad_mesh.side_u(fid));
+        qv0 += se.normal * mesh_size * 0.005;
+        Eigen::Vector3d qv1 = quad_mesh.V.row(quad_mesh.side_v(fid));
+        qv1 += se.normal * mesh_size * 0.005;
+        draw_a_segment(qv0, qv1, 1, -1., 1);
+    }
 }
 
 void RemeshingMenu::update_visualization() {
@@ -1996,15 +2019,6 @@ void RemeshingMenu::update_visualization() {
         set_mesh_overlays(1, false);
         if (viewing_mode == ViewingMode::MESH_QUAD)
             set_mesh_overlays(viewer->selected_data_index);
-
-        // draw split edges
-        for (int i = 0; i < split_edges.size(); i++) {
-            Eigen::Vector3d v_0 = V.row(split_edges[i].index_0);
-            Eigen::Vector3d v_1 = V.row(split_edges[i].index_1);
-            Eigen::Vector3d s = v_0 + split_edges[i].normal * mesh_size * 0.001;
-            Eigen::Vector3d t = v_1 + split_edges[i].normal * mesh_size * 0.001;
-            draw_a_segment(s, t, 1);
-        }
         break;
     }
     }
@@ -2157,8 +2171,11 @@ void RemeshingMenu::get_mesh_information() {
     mesh_center[2] = (maximal_vector[2] + minimal_vector[2]) / 2.0;
 }
 
-void RemeshingMenu::draw_a_segment(const Eigen::Vector3d v0, const Eigen::Vector3d v1, const int color_index, const double face_dis) {
-	Eigen::MatrixXd vec0;
+void RemeshingMenu::draw_a_segment(
+    const Eigen::Vector3d v0, const Eigen::Vector3d v1,
+    const int color_index, const double face_dis, const int data_index) {
+
+    Eigen::MatrixXd vec0;
 	vec0.resize(1, 3);
 	vec0.row(0) = v0;
 	Eigen::MatrixXd vec1;
@@ -2181,13 +2198,13 @@ void RemeshingMenu::draw_a_segment(const Eigen::Vector3d v0, const Eigen::Vector
     case 3:
         color = { 0.9, 0.5, 0.1 }; break; // orange
     }
-    viewer->data().add_edges(vec0, vec1, color);
+    viewer->data_list[data_index].add_edges(vec0, vec1, color);
 }
 
 void RemeshingMenu::draw_segments(const std::vector<Eigen::Vector3d>& segments, const int color_index, const double face_dis) {
 	if (segments.size() >= 2) {
 		for (int i = 0; i < segments.size() - 1; i++)
-			draw_a_segment(segments[i], segments[i + 1], color_index,face_dis);
+			draw_a_segment(segments[i], segments[i + 1], color_index, face_dis);
 	}
 }
 

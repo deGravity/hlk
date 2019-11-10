@@ -64,17 +64,14 @@ namespace hlk {
 
 		std::vector<int> valence;
 
-		// is_border_vertex
-		// is_boundary_edge
-		// is_irregular_vertex
-		std::vector<bool> is_boundary_side;
 		std::vector<bool> is_singularity;
         std::vector<int> singular_vertices;
+        std::vector<bool> is_seam_edge;
         std::vector<int> singular_quads;
-        // edges or unique_edge_map
 
 		// boundary information
-		std::vector<bool> is_border_vertex;
+        std::vector<bool> is_boundary_side;
+        std::vector<bool> is_border_vertex;
 		Eigen::MatrixXi boundary_edges; // vertex pairs
 		Eigen::VectorXi boundary_sides; // indices
 		Eigen::VectorXi boundary_quads; // indices
@@ -85,8 +82,8 @@ namespace hlk {
 		int quad(int side); // Get the quad a side belongs to
 		int nth_side(int quad, int index);
 		int side_u(int side); // src vertex of a side
-		int side_v(int side); // dst vertex of a side
-		int flip_side(int side); // Get the side opposite between quads, or -1 if a border
+        int side_v(int side); // dst vertex of a side
+        int flip_side(int side); // Get the side opposite between quads, or -1 if a border
 		int next_side(int side); // Get the next side (CCW) in a quad
 		int prev_side(int side); // Get the prev side (CW) in a quad
 		int opposite_side(int side); // Get the side opposite across a quad
@@ -128,10 +125,11 @@ SERIALIZE_TYPE(hlk::QuadMesh,
     SERIALIZE_MEMBER(VF)
     SERIALIZE_MEMBER(VI)
     SERIALIZE_MEMBER(valence)
-    SERIALIZE_MEMBER(is_boundary_side)
     SERIALIZE_MEMBER(is_singularity)
     SERIALIZE_MEMBER(singular_vertices)
+    SERIALIZE_MEMBER(is_seam_edge)
     SERIALIZE_MEMBER(singular_quads)
+    SERIALIZE_MEMBER(is_boundary_side)
     SERIALIZE_MEMBER(is_border_vertex)
     SERIALIZE_MEMBER(boundary_edges)
     SERIALIZE_MEMBER(boundary_sides)

@@ -106,7 +106,8 @@ public:
     void update_drawing();
     void draw_direction_field();
 
-	void draw_a_segment(const Eigen::Vector3d v0, const Eigen::Vector3d v1, const int color_index, const double face_dis = -1.);
+	void draw_a_segment(const Eigen::Vector3d v0, const Eigen::Vector3d v1, 
+        const int color_index, const double face_dis = -1., const int data_index = 0);
 	void draw_segments(const std::vector<Eigen::Vector3d>& segments, const int color_index, const double face_dis = -1.);
     void draw_a_point(const Eigen::Vector3d v, const int color_index, const double face_dis = -1.);
     void draw_points(const std::vector<Eigen::Vector3d>& vecs, const int color_index, const double face_dis = -1.);
@@ -126,6 +127,7 @@ public:
     void generate_integer_grid();
     void init_curl();
     void reduce_curl();
+    void init_quad_seams();
     void quad_helix_finding();
 
     // loops - impl in remeshing_loops.cpp

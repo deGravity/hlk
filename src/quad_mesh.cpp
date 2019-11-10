@@ -238,7 +238,7 @@ namespace hlk {
                 face_directions[hes[idx]] = (Cardinal)((c + idx) % 4);
             }
             int opp_he = opposite_side(curr_he);
-            if (flip_side(opp_he) < 0) break;
+            if (flip_side(opp_he) < 0 || is_seam_edge[opp_he]) break;
             curr_he = flip_side(opp_he);
             if (visited_hes.find(curr_he) != visited_hes.end()) {
                 return face_directions[curr_he] == c;
@@ -264,7 +264,7 @@ namespace hlk {
                 ortho_visited.emplace(hes[idx]);
             }
             int opp_he = opposite_side(curr_he);
-            if (flip_side(opp_he) < 0) break;
+            if (flip_side(opp_he) < 0 || is_seam_edge[opp_he]) break;
 
             curr_he = flip_side(opp_he);
             if (ortho_visited.find(curr_he) != ortho_visited.end()) break;
@@ -303,7 +303,7 @@ namespace hlk {
                     face_directions[hes[idx]] = (Cardinal)((c + idx) % 4);
                 }
                 int opp_he = opposite_side(curr_he);
-                if (flip_side(opp_he) < 0) break;
+                if (flip_side(opp_he) < 0 || is_seam_edge[opp_he]) break;
 
                 if (count > nskip) {
                     std::unordered_set<int> ortho_visited;
