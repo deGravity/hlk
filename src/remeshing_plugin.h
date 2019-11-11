@@ -49,6 +49,11 @@ public:
         cardinal = Cardinal::N;
         line_texture(texture_R, texture_G, texture_B);
         direction_field = { Eigen::MatrixXd(), Eigen::MatrixXd() };
+
+        currCycle = 0;
+        N = rosy; // degree of field
+        globalRotation = 0.;
+        singularitySelect = false;
     }
 	~RemeshingMenu() {
 		clear();
@@ -117,6 +122,7 @@ public:
     std::vector<int> symmetry_axes();
 
     // field - impl in remeshing_field.cpp
+    bool save_raw_field();
     void reset_face_vectors();
     void reset_field();
     void init_curvature_field();
@@ -129,6 +135,7 @@ public:
     void reduce_curl();
     void init_quad_seams();
     void quad_helix_finding();
+    void setup_basis_cycles();
 
     // loops - impl in remeshing_loops.cpp
     void clear_loops();
@@ -238,6 +245,21 @@ public:
     double curlMax, curlMaxOrig;
     Eigen::VectorXi c_b, c_blevel;
     Eigen::MatrixXd c_bc;
+
+    // trivial connections data
+    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > ldltSolver;
+    Eigen::VectorXi cycleIndices;
+    Eigen::VectorXd cycleCurvature;
+    Eigen::SparseMatrix<double> basisCycles;
+    Eigen::VectorXi vertex2cycle, innerEdges;
+    Eigen::MatrixXd CMesh, BC, FN;
+    Eigen::VectorXd rotationField;
+    std::vector<std::vector<int>> cycleFaces;
+    int eulerChar, numGenerators, numBoundaries;
+    int currCycle;
+    int N; // degree of field
+    double globalRotation;
+    bool singularitySelect;
 
     /////////////////// UI ///////////////////
     std::string in_path, out_path, input_model;

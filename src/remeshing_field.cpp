@@ -1,10 +1,14 @@
+#include <directional/dual_cycles.h>
+#include <directional/index_prescription.h>
 #include <directional/representative_to_raw.h>
 #include <directional/polyvector_field.h>
 #include <directional/polyvector_to_raw.h>
+#include <directional/write_raw_field.h>
 #include <igl/AABB.h>
 #include <igl/barycenter.h>
 #include <igl/boundary_loop.h>
 #include <igl/copyleft/comiso/nrosy.h>
+#include <igl/file_dialog_save.h>
 #include <igl/local_basis.h>
 #include <igl/principal_curvature.h>
 #include <igl/rotate_vectors.h>
@@ -15,6 +19,18 @@
 #include "remeshing_plugin.h"
 
 namespace hlk {
+
+bool RemeshingMenu::save_raw_field() {
+    std::string fname = igl::file_dialog_save();
+    if (fname.length() == 0) return false;
+    if (miq_mode == MIQMode::POLYVECTOR) {
+        return directional::write_raw_field(fname, combedField);
+    } else {
+        directional::representative_to_raw(V, F, direction_field[1], rosy, rawField);
+        return directional::write_raw_field(fname, rawField);
+    }
+    return true;
+}
 
 void RemeshingMenu::reset_face_vectors() {
     face_vectors.clear();
@@ -425,6 +441,43 @@ void RemeshingMenu::quad_helix_finding() {
         stylize_quad_mesh(interactive_colors);
     } else {
         std::cout << "[remeshing] helix free!\n";
+    }
+}
+
+void RemeshingMenu::setup_basis_cycles() {
+    if (!has_curl) init_curl();
+
+    directional::dual_cycles(V, F, EV, EF, basisCycles, cycleCurvature, vertex2cycle, innerEdges);
+    cycleIndices = Eigen::VectorXi::Constant(basisCycles.rows(), 0);
+
+    //loading singularities
+    //Eigen::VectorXi singVertices, singIndices;
+    //directional::read_singularities(TUTORIAL_SHARED_PATH "/fertility.sings", N, singVertices, singIndices);
+
+    for (int i = 0; i < singVertices.size(); i++)
+        cycleIndices(vertex2cycle(singVertices(i))) = singIndices(i);
+
+    std::vector<std::vector<int>> boundaryLoops;
+    igl::boundary_loop(F, boundaryLoops);
+    numBoundaries = boundaryLoops.size();
+    eulerChar = V.rows() - EV.rows() + F.rows();
+    numGenerators = 2 - eulerChar - boundaryLoops.size();
+
+    std::cout << "Euler characteristic: " << eulerChar << std::endl;
+    std::cout << "#generators: " << numGenerators << std::endl;
+    std::cout << "#boundaries: " << numBoundaries << std::endl;
+
+    //collecting cycle faces for visualization
+    cycleFaces.resize(basisCycles.rows());
+    for (int k = 0; k < basisCycles.outerSize(); ++k) {
+        for (Eigen::SparseMatrix<double>::InnerIterator it(basisCycles, k); it; ++it) {
+            int f1 = EF(innerEdges(it.col()), 0);
+            int f2 = EF(innerEdges(it.col()), 1);
+            if (f1 != -1)
+                cycleFaces[it.row()].push_back(f1);
+            if (f2 != -1)
+                cycleFaces[it.row()].push_back(f2);
+        }
     }
 }
 

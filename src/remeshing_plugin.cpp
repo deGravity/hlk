@@ -49,13 +49,48 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
 
 	// This function is called every time a keyboard button is pressed
 	auto key_down = [&](igl::opengl::glfw::Viewer & viewer, unsigned char key, int modifier) {
-		if ((unsigned int)key == 85) czsl.ctrl = true;
-		if ((unsigned int)key == 90) czsl.z = true;
-		if ((unsigned int)key == 83) czsl.s = true;
-		if ((unsigned int)key == 76) czsl.l = true;
-		if (czsl.ctrl && czsl.s) viewer.open_dialog_save_mesh();
-		if (czsl.ctrl && czsl.l) viewer.open_dialog_load_mesh();
+        if ((unsigned int)key == 85) czsl.ctrl = true;
+        else if ((unsigned int)key == 90) czsl.z = true;
+        else if ((unsigned int)key == 83) czsl.s = true;
+        else if ((unsigned int)key == 76) czsl.l = true;
+        else if (key == '0') singularitySelect = true;
+        else if (key == 'W') {
+            if (save_raw_field()) {
+                std::cout << "Saved raw field.\n";
+            } else {
+                std::cout << "Unable to save raw field. Error: " << errno << "\n";
+            }
+        } else {
+            if (key == '1') {
+                globalRotation += 0.314;
+            } else if (key == '-' || key == '_') {
+                cycleIndices(currCycle)--;
+            } else if (key == '+' || key == '=') {
+                cycleIndices(currCycle)++;
+            } else if (key == 'B') {
+                if (numBoundaries) {
+                    // loop through the boundary cycles.
+                    if (currCycle >= basisCycles.rows() - numBoundaries - numGenerators && currCycle < basisCycles.rows() - numGenerators - 1) {
+                        currCycle++;
+                    } else {
+                        currCycle = basisCycles.rows() - numBoundaries - numGenerators;
+                    }
+                }
+            } else if (key == 'G') {
+                if (numGenerators) {
+                    // loop through the generators cycles.
+                    if (currCycle >= basisCycles.rows() - numGenerators && currCycle < basisCycles.rows() - 1) {
+                        currCycle++;
+                    } else {
+                        currCycle = basisCycles.rows() - numGenerators;
+                    }
+                }
+            }
+            update_visualization();
+        }
 
+		if (czsl.ctrl && czsl.s) viewer.open_dialog_save_mesh();
+		if (czsl.ctrl && czsl.l) viewer.open_dialog_load_mesh();\
 		if (czsl.ctrl && czsl.z) {
 			if (temps.size() > 1) {
 				load(temps[temps.size()-2].mesh);
@@ -70,10 +105,11 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
 	};
 
 	auto key_up = [&](igl::opengl::glfw::Viewer & viewer, unsigned char key, int modifier) {
-		if ((unsigned int)key == 85) czsl.ctrl = false;
-		if ((unsigned int)key == 90) czsl.z = false;
-		if ((unsigned int)key == 83) czsl.s = false;
-		if ((unsigned int)key == 76) czsl.l = false;
+        if ((unsigned int)key == 85) czsl.ctrl = false;
+        else if ((unsigned int)key == 90) czsl.z = false;
+        else if ((unsigned int)key == 83) czsl.s = false;
+        else if ((unsigned int)key == 76) czsl.l = false;
+        else if (key == '0') singularitySelect = false;
 		return false;
 	};
 
@@ -131,14 +167,7 @@ void RemeshingMenu::draw_viewer_menu() {
         }
         ImGui::SameLine(0, p);
         if (ImGui::Button("Save Field##Mesh", ImVec2((w - p) / 2.f, 0))) {
-            std::string fname = igl::file_dialog_save();
-            if (fname.length() == 0) return;
-            if (miq_mode == MIQMode::POLYVECTOR) {
-                directional::write_raw_field(fname, combedField);
-            } else {
-                directional::representative_to_raw(V, F, direction_field[1], rosy, rawField);
-                directional::write_raw_field(fname, rawField);
-            }
+            save_raw_field();
         }
         if (ImGui::Button("Clear Loops##Mesh", ImVec2((w - p) / 2.f, 0))) {
             clear_loops();
@@ -183,10 +212,10 @@ void RemeshingMenu::draw_viewer_menu() {
             ImGui::DragFloat("Gradient Size", &gradient_size, 1.0f, 0.0f, 150.0f);
             ImGui::PopItemWidth();
             ImGui::Text("===Field Operations===");
-            if (ImGui::Button("Initialize field from principal curvatures", ImVec2(w - p, 0))) {
+            /*if (ImGui::Button("Initialize field from principal curvatures", ImVec2(w - p, 0))) {
                 init_curvature_field();
                 viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
-            }
+            }*/
             // Direction field controls
             if (has_direction_field) {
                 // drawing mode options.
@@ -405,7 +434,8 @@ bool RemeshingMenu::load(std::string filename) {
  
     // Set up the field.
     setup_boundary();
-    interpolate_field();    
+    interpolate_field();
+    setup_basis_cycles();
     
     // Other viewing settings
     viewer->core().align_camera_center(V, F);
@@ -414,11 +444,10 @@ bool RemeshingMenu::load(std::string filename) {
     viewer->data().set_face_based(true);
 
     // Set up multiple meshes for visualization.
-    viewer->append_mesh(); // quad mesh        = 1
-    viewer->append_mesh(); // deformed mesh    = 2
-    viewer->append_mesh(); // raw field mesh   = 3
-    viewer->append_mesh(); // singularity mesh = 4
-    viewer->append_mesh(); // seam mesh        = 5
+    viewer->append_mesh(); // raw field mesh   = 1
+    viewer->append_mesh(); // singularity mesh = 2
+    viewer->append_mesh(); // seam mesh        = 3
+    viewer->append_mesh(); // quad mesh        = 4
     viewer->selected_data_index = 0;
     update_visualization();
 
@@ -876,7 +905,15 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
     bool intersects = igl::unproject_onto_mesh(Eigen::Vector2f(x, y), viewer->core().view,
         viewer->core().proj, viewer->core().viewport, V, F, fid, bc);
 
-    if ((button == 2 || button == 1) && alt_on && !shift_on && !ctrl_on) { // loop
+    if (button == 0 && singularitySelect) { // trivial connections: select singularity
+        Eigen::Vector3d::Index maxCol;
+        bc.maxCoeff(&maxCol);
+        int currVertex = F(fid, maxCol);
+        currCycle = vertex2cycle(currVertex);
+        update_visualization(); // TODO: make update_visualization() do the right thing when working on singularities
+        return true; // LOOKHERE: should I return false or true?
+
+    } else if ((button == 2 || button == 1) && alt_on && !shift_on && !ctrl_on) { // loop
 		if (feature_points.size() > 2) {
 			auto n = face_vectors[loop_feature_face_ids[0]].normal;
             Eigen::Vector3d a = feature_points.back() - feature_points.front();
@@ -1760,6 +1797,7 @@ void RemeshingMenu::cut_along_seams() {
     reset_face_vectors(); // TODO: instead of resetting, keep track of old face vectors
     setup_boundary();
     interpolate_field();
+    setup_basis_cycles();
     update_visualization();
 }
 
@@ -1924,12 +1962,12 @@ void RemeshingMenu::stylize_quad_mesh(const Eigen::MatrixXd& colors) {
         TUV.row(i) = Eigen::Vector3i(0, 1, 2);
     }
 
-    viewer->data_list[1].clear();
-    viewer->data_list[1].set_mesh(verts, faces);
-    viewer->data_list[1].set_uv(TC, TUV);
-    viewer->data_list[1].set_colors(colors);
-    viewer->data_list[1].set_texture(texture_R, texture_B, texture_G);
-    viewer->data_list[1].show_texture = true;
+    viewer->data_list[4].clear();
+    viewer->data_list[4].set_mesh(verts, faces);
+    viewer->data_list[4].set_uv(TC, TUV);
+    viewer->data_list[4].set_colors(colors);
+    viewer->data_list[4].set_texture(texture_R, texture_B, texture_G);
+    viewer->data_list[4].show_texture = true;
 
     if (split_edges.empty()) return;
 
@@ -1951,7 +1989,7 @@ void RemeshingMenu::stylize_quad_mesh(const Eigen::MatrixXd& colors) {
         qv0 += se.normal * mesh_size * 0.005;
         Eigen::Vector3d qv1 = quad_mesh.V.row(quad_mesh.side_v(fid));
         qv1 += se.normal * mesh_size * 0.005;
-        draw_a_segment(qv0, qv1, 1, -1., 1);
+        draw_a_segment(qv0, qv1, 1, -1., 4);
     }
 }
 
@@ -1979,28 +2017,28 @@ void RemeshingMenu::update_visualization() {
         directional::glyph_lines_raw(
             V, F, combedField, directional::indexed_glyph_colors(combedField),
             VField, FField, CField, 2.0);
-        viewer->data_list[3].clear();
-        viewer->data_list[3].set_mesh(VField, FField);
-        viewer->data_list[3].set_colors(CField);
-        set_mesh_overlays(3, false);
+        viewer->data_list[1].clear();
+        viewer->data_list[1].set_mesh(VField, FField);
+        viewer->data_list[1].set_colors(CField);
+        set_mesh_overlays(1, false);
 
         // singularity mesh
         directional::singularity_spheres(
             V, F, rosy, singVertices, singIndices,
             VSings, FSings, CSings, 1.5);
-        viewer->data_list[4].clear();
-        viewer->data_list[4].set_mesh(VSings, FSings);
-        viewer->data_list[4].set_colors(CSings);
-        set_mesh_overlays(4, false);
+        viewer->data_list[2].clear();
+        viewer->data_list[2].set_mesh(VSings, FSings);
+        viewer->data_list[2].set_colors(CSings);
+        set_mesh_overlays(2, false);
 
         // seam mesh
         directional::seam_lines(
             V, F, EV, combedMatching,
             VSeams, FSeams, CSeams, 2.0);
-        viewer->data_list[5].clear();
-        viewer->data_list[5].set_mesh(VSeams, FSeams);
-        viewer->data_list[5].set_colors(CSeams);
-        set_mesh_overlays(5, false);
+        viewer->data_list[3].clear();
+        viewer->data_list[3].set_mesh(VSeams, FSeams);
+        viewer->data_list[3].set_colors(CSeams);
+        set_mesh_overlays(3, false);
     }
 
     case ViewingMode::MESH_ONLY:
@@ -2097,6 +2135,7 @@ void RemeshingMenu::apply_subdivision() {
     reset_face_vectors();
     setup_boundary();
     interpolate_field();
+    setup_basis_cycles();
     update_visualization();
 }
 

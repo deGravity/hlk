@@ -71,21 +71,22 @@ int main(int argc, char* argv[]) {
 
     if (args.size() > 1 || help || ((output_path.empty() || input_path.empty()) && args.size() == 0)) {
         std::cout << "Syntax: " << argv[0] << " [options] <input mesh / point cloud / application state snapshot>\n";
-        std::cout << "Options:\n";
-        std::cout << "   -i, --input_path       Writes to the specified PLY/OBJ file path which is the input for libQEx\n";
-        std::cout << "   -o, --output_path      Writes to the specified PLY/OBJ file path which is the output for libQEx\n";
-        std::cout << "   -r, --rosy <number>    Specifies the orientation symmetry type (2, 4, or 6)\n";
-        std::cout << "   -m, --input_model      Specifies the input model that we want to preload into the UI\n";
-        std::cout << "   -h, --help             Display this message\n";
+        std::cout << "Options:\n"
+                     "   -i, --input_path       Writes to the specified PLY/OBJ file path which is the input for libQEx\n"
+                     "   -o, --output_path      Writes to the specified PLY/OBJ file path which is the output for libQEx\n"
+                     "   -r, --rosy <number>    Specifies the orientation symmetry type (2, 4, or 6)\n"
+                     "   -m, --input_model      Specifies the input model that we want to preload into the UI\n"
+                     "   -h, --help             Display this message\n";
         return -1;
     }
 
-    if (args.size() == 0) { std::cout << "Running in GUI mode.\n"; }
+    if (args.size() == 0) std::cout << "Running in GUI mode.\n";
 
     int mode;
-    std::cout << "Choose an Interface\n"
-              << "1) Remeshing\n"
-              << "2) Labeling\n";
+    std::cout << 
+        "Choose an Interface\n"
+        "1) Remeshing\n"
+        "2) Labeling\n";
 
 #ifdef HAISEN
     mode = 1;
@@ -96,6 +97,14 @@ int main(int argc, char* argv[]) {
     igl::opengl::glfw::Viewer viewer;
     if (mode == 1) {
         RemeshingMenu remeshing_menu(rosy, input_path, output_path);
+        std::cout <<
+            "  The field will appear if indices are correct\n"
+            "  0+left key Select vertex cycle\n"
+            "  B          Loop through boundary cycles\n"
+            "  G          Loop through generator cycles\n"
+            "  +          Increase index of current cycle\n"
+            "  -          Decrease index  of current cycle\n"
+            "  1          rotate field globally\n";
         try {
             if (!input_model.empty()) {
                 remeshing_menu.set_input_model(input_model);
