@@ -13,6 +13,7 @@ namespace hlk {
 		bool purl[2];
 		bool fixed;
 		Eigen::RowVector3d pos;
+		std::vector<std::shared_ptr<KnitGraphNode>> neighbors;
 
 	};
 
