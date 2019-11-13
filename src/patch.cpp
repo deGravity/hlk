@@ -140,9 +140,11 @@ namespace hlk {
 		auto attach = [&](int i1, int j1, int i2, int j2, bool is_out, bool is_loop) {
 			auto& A = nodes(i1, j1);
 			auto& B = nodes(i2, j2);
-			auto& src = right_is_out ? A : B;
-			auto& dst = right_is_out ? B : A;
-		}
+			auto& src = is_out ? A : B;
+			auto& dst = is_out ? B : A;
+
+
+		};
 
 		for (int i = 0; i < full_chart.rows() - 1; ++i) {
 			for (int j = 0; j < full_chart.cols() - 1; ++j) {
