@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
 
     if (args.size() == 0) std::cout << "Running in GUI mode.\n";
 
-    int mode;
+    int mode = 1;
     std::cout << 
         "Choose an Interface\n"
         "1) Remeshing\n"
@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
 #ifdef HAISEN
     mode = 1;
 #else
-    std::cin >> mode;
+    //std::cin >> mode;
 #endif
 
     igl::opengl::glfw::Viewer viewer;
@@ -99,12 +99,12 @@ int main(int argc, char* argv[]) {
         RemeshingMenu remeshing_menu(rosy, input_path, output_path);
         std::cout <<
             "  The field will appear if indices are correct\n"
-            "  0+left key Select vertex cycle\n"
-            "  B          Loop through boundary cycles\n"
-            "  G          Loop through generator cycles\n"
-            "  +          Increase index of current cycle\n"
-            "  -          Decrease index  of current cycle\n"
-            "  1          rotate field globally\n";
+            "  0+left key  Select vertex cycle\n"
+            "  B           Loop through boundary cycles\n"
+            "  G           Loop through generator cycles\n"
+            "  +           Increase index of current cycle\n"
+            "  -           Decrease index  of current cycle\n"
+            "  1           Rotate field globally\n";
         try {
             if (!input_model.empty()) {
                 remeshing_menu.set_input_model(input_model);
@@ -113,7 +113,11 @@ int main(int argc, char* argv[]) {
             viewer.launch();
         } catch (const std::runtime_error & e) {
             std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
-            remeshing_menu.shutdown();
+            if (remeshing_menu.save_workspace()) {
+                std::cout << "all work saved.\n";
+            } else {
+                std::cout << "failed to save state...\n";
+            }
             return -1;
         }
     } else {

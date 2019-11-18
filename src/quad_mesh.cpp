@@ -294,6 +294,7 @@ namespace hlk {
             std::unordered_set<int> visited;
             bool found = false;
             int count = 0;
+            int curr_he_save = curr_he;
 
             while (true) {
                 int quad_face = quad(curr_he);
@@ -323,7 +324,7 @@ namespace hlk {
 
             if (found) {
                 std::unordered_set<int> curr_helix;
-                int he = curr_he;
+                int he = curr_he_save;
                 while (true) {
                     int quad_face = quad(he);
                     for (const int he : sides(quad_face)) {

@@ -54,6 +54,7 @@ enum ViewingMode {
     MESH_ONLY,
     MESH_CURL,
     MESH_FIELD,
+    MESH_SING,
     MESH_QUAD,
     QUAD_ONLY
 };

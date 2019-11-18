@@ -1,6 +1,7 @@
 #include <directional/dual_cycles.h>
 #include <directional/index_prescription.h>
 #include <directional/representative_to_raw.h>
+#include <directional/rotation_to_representative.h>
 #include <directional/polyvector_field.h>
 #include <directional/polyvector_to_raw.h>
 #include <directional/write_raw_field.h>
@@ -302,6 +303,7 @@ void RemeshingMenu::interpolate_field() {
     } else { // miq_mode == MIQMode::CROSS
 
         interpolate_cross_field(S);
+        update_vectors_from_field();
         directional::representative_to_raw(V, F, direction_field[1], rosy, rawField);
 
         int s_count = 0;
@@ -325,8 +327,7 @@ void RemeshingMenu::generate_integer_grid() {
         Meshing::polyvector_parametrize(
             V, F, rosy, EV, EF, FE,
             rawField, combedField,
-            matching, combedMatching,
-            effort, combedEffort,
+            combedMatching, combedEffort,
             singVertices, singIndices,
             VMeshCut, FMeshCut, cutUV,
             1. / gradient_size,
@@ -382,8 +383,7 @@ void RemeshingMenu::init_curl() {
         V, F, rosy, EV, EF, FE,
         c_b, c_bc, c_blevel,
         rawField, combedField,
-        matching, combedMatching,
-        effort, combedEffort,
+        combedMatching, combedEffort,
         curl, singVertices, singIndices,
         AE2F, curlMax, curlMaxOrig);
     has_curl = true;
@@ -393,8 +393,7 @@ void RemeshingMenu::reduce_curl() {
     Meshing::reduce_curl(
         V, F, rosy, EV, EF, FE,
         rawField, combedField,
-        matching, combedMatching,
-        effort, combedEffort,
+        combedMatching, combedEffort,
         curl, singVertices, singIndices,
         curlMax);
     if (miq_mode == MIQMode::CROSS) {
@@ -445,14 +444,13 @@ void RemeshingMenu::quad_helix_finding() {
 }
 
 void RemeshingMenu::setup_basis_cycles() {
-    if (!has_curl) init_curl();
-
     directional::dual_cycles(V, F, EV, EF, basisCycles, cycleCurvature, vertex2cycle, innerEdges);
     cycleIndices = Eigen::VectorXi::Constant(basisCycles.rows(), 0);
 
-    //loading singularities
-    //Eigen::VectorXi singVertices, singIndices;
-    //directional::read_singularities(TUTORIAL_SHARED_PATH "/fertility.sings", N, singVertices, singIndices);
+    if (singVertices.size() == 0 || singIndices.size() == 0) { init_curl(); }
+    // TODO: figure out whether loading singularities is necessary/whether curl's singularity is good enough
+    // Eigen::VectorXi singVertices, singIndices;
+    // directional::read_singularities(TUTORIAL_SHARED_PATH "/fertility.sings", N, singVertices, singIndices);
 
     for (int i = 0; i < singVertices.size(); i++)
         cycleIndices(vertex2cycle(singVertices(i))) = singIndices(i);
@@ -478,6 +476,65 @@ void RemeshingMenu::setup_basis_cycles() {
             if (f2 != -1)
                 cycleFaces[it.row()].push_back(f2);
         }
+    }
+}
+
+void RemeshingMenu::compute_target_curvature() {
+    // the difference in the angle representation of edge i from EF(i,0) to EF(i,1)
+    Eigen::VectorXd edgeParallelAngleChange(basisCycles.cols());
+    for (int i = 0; i < innerEdges.rows(); i++) {
+        int currEdge = innerEdges(i);
+        Eigen::RowVectorXd edgeVectors = (V.row(EV(currEdge, 1)) - V.row(EV(currEdge, 0))).normalized();
+        // instead of local basis, use the cross field
+        double x1 = edgeVectors.dot(face_vectors[EF(currEdge, 0)].base_vector);
+        double y1 = edgeVectors.dot(face_vectors[EF(currEdge, 0)].frame[1]);
+        double x2 = edgeVectors.dot(face_vectors[EF(currEdge, 1)].base_vector);
+        double y2 = edgeVectors.dot(face_vectors[EF(currEdge, 1)].frame[1]);
+        edgeParallelAngleChange(i) = atan2(y2, x2) - atan2(y1, x1);
+    }
+    targetCurvature = basisCycles * edgeParallelAngleChange;
+    for (int i = 0; i < targetCurvature.size(); i++) {
+        while (targetCurvature(i) >= M_PI) targetCurvature(i) -= 2.0 * M_PI;
+        while (targetCurvature(i) < -M_PI) targetCurvature(i) += 2.0 * M_PI;
+    }
+}
+
+void RemeshingMenu::update_raw_field() {
+    int sum = round(cycleIndices.head(cycleIndices.size() - numGenerators).sum());
+    if (eulerChar * N != sum) {
+        std::cout << "Warning: All non-generator singularities should add up to N * the Euler characteristic." << std::endl;
+        std::cout << "Total indices: " << sum << "/" << N << std::endl;
+        std::cout << "Expected: " << eulerChar * N << "/" << N << std::endl;
+    }
+
+    compute_target_curvature();
+    Eigen::VectorXd rotationAngles;
+    double linfError;
+    directional::index_prescription(
+        V, F, EV, innerEdges, basisCycles, targetCurvature,
+        cycleCurvature, cycleIndices, ldltSolver, N, field_guidance_weight,
+        rotationAngles, linfError);
+    std::cout << "Index prescription linfError: " << linfError << std::endl;
+
+    Eigen::MatrixXd representative;
+    directional::rotation_to_representative(V, F, EV, EF, rotationAngles, N, globalRotation, representative);
+    directional::representative_to_raw(V, F, representative, N, rawField);
+}
+
+void RemeshingMenu::update_singularities() {
+    // TODO: look here if singularities don't work out
+    std::vector<int> singVerticesList, singIndicesList;
+    for (int i = 0; i < V.rows(); i++) {
+        if (cycleIndices(vertex2cycle(i))) {
+            singVerticesList.push_back(i);
+            singIndicesList.push_back(cycleIndices(vertex2cycle(i)));
+        }
+    }
+    singVertices.resize(singVerticesList.size());
+    singIndices.resize(singIndicesList.size());
+    for (int i = 0; i < singVerticesList.size(); i++) {
+        singVertices(i) = singVerticesList[i];
+        singIndices(i) = singIndicesList[i];
     }
 }
 

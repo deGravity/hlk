@@ -63,6 +63,7 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
         } else {
             if (key == '1') {
                 globalRotation += 0.314;
+                update_raw_field();
             } else if (key == '-' || key == '_') {
                 cycleIndices(currCycle)--;
             } else if (key == '+' || key == '=') {
@@ -86,11 +87,12 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
                     }
                 }
             }
-            update_visualization();
+            viewing_mode = ViewingMode::MESH_SING;
+            update_visualization(key);
         }
 
 		if (czsl.ctrl && czsl.s) viewer.open_dialog_save_mesh();
-		if (czsl.ctrl && czsl.l) viewer.open_dialog_load_mesh();\
+		if (czsl.ctrl && czsl.l) viewer.open_dialog_load_mesh();
 		if (czsl.ctrl && czsl.z) {
 			if (temps.size() > 1) {
 				load(temps[temps.size()-2].mesh);
@@ -137,15 +139,11 @@ void RemeshingMenu::draw_viewer_menu() {
     float p = ImGui::GetStyle().FramePadding.x;
     if (ImGui::CollapsingHeader("Workspace", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (ImGui::Button("Load##Workspace", ImVec2((w - p) / 2.f, 0))) {
-            std::string fname = igl::file_dialog_open();
-            if (fname.length() == 0) return;
-            load_workspace(fname);
+            load_workspace();
         }
         ImGui::SameLine(0, p);
         if (ImGui::Button("Save##Workspace", ImVec2((w - p) / 2.f, 0))) {
-            std::string fname = igl::file_dialog_save();
-            if (fname.length() == 0) return;
-            save_workspace(fname);
+            save_workspace();
         }
     }
     if (ImGui::CollapsingHeader("Mesh", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -208,7 +206,8 @@ void RemeshingMenu::draw_viewer_menu() {
             // Add threshold values.
             ImGui::DragFloat("Click Threshold", &click_threshold, 0.05f, 0.01f, 0.5f);
             ImGui::DragFloat("Soft Weight", &soft_constraint_strength, 0.0f, 0.0f, 1.0f);
-            ImGui::DragInt("# Iter of Stiffening", &stiffen_iter, 1, 0, 10);
+            ImGui::DragFloat("Field Weight", &field_guidance_weight, 0.0f, 0.0f, 1.0f);
+            ImGui::DragInt("# Stiffening", &stiffen_iter, 1, 0, 10);
             ImGui::DragFloat("Gradient Size", &gradient_size, 1.0f, 0.0f, 150.0f);
             ImGui::PopItemWidth();
             ImGui::Text("===Field Operations===");
@@ -403,11 +402,6 @@ void RemeshingMenu::setup_mesh() {
 
     // Pass through the symmetrizer to find symmetries.
     symmetrizer = Symmetrizer(V, F);
-    // symmetrizer.symmetrize_geometry(V);
-    symmetry_mode_yz = symmetrizer.has_vertex_symmetry(0);
-    symmetry_mode_xz = symmetrizer.has_vertex_symmetry(1);
-    symmetry_mode_xy = symmetrizer.has_vertex_symmetry(2);
-    symmetrize_nrosy = symmetrizer.has_face_symmetry();
 
     viewer->data().clear();
     viewer->data().set_mesh(V, F);
@@ -451,7 +445,8 @@ bool RemeshingMenu::load(std::string filename) {
     viewer->selected_data_index = 0;
     update_visualization();
 
-	if(temps.empty()) save_ctrlz();
+	if (temps.empty()) save_ctrlz();
+
     return true;
 }
 
@@ -589,27 +584,15 @@ void RemeshingMenu::clear() {
     miq_mode = MIQMode::CROSS;
     cardinal = Cardinal::N;
     direction_field = { Eigen::MatrixXd(), Eigen::MatrixXd() };
-    // remove ctrl+z saves.
-    for (auto& temp : temps) {
-        remove(temp.mesh.c_str());
-        remove(temp.face.c_str());
-        remove(temp.edge.c_str());
-    }
 }
 
 /////////////////////////// STATE SERIALIZATION ////////////////////////////
-void RemeshingMenu::shutdown() {
-    std::string fname = igl::file_dialog_save();
-    if (fname.length() == 0) return;
-    if (save_workspace(fname)) {
-        std::cout << "all work saved.\n";
-    } else {
-        std::cout << "failed to save state...\n";
-    }
-}
 
 // equivalent to serialize().
-bool RemeshingMenu::save_workspace(std::string filename) {
+bool RemeshingMenu::save_workspace() {
+    std::string filename = igl::file_dialog_save();
+    if (filename.length() == 0) return false;
+
     igl::serialize(has_direction_field, "has_direction_field", filename);
     igl::serialize(has_curl, "has_curl", filename);
     igl::serialize(has_integer_grid, "has_integer_grid", filename);
@@ -679,7 +662,10 @@ bool RemeshingMenu::save_workspace(std::string filename) {
 }
 
 // equivalent to deserialize().
-bool RemeshingMenu::load_workspace(std::string filename) {
+bool RemeshingMenu::load_workspace() {
+    std::string filename = igl::file_dialog_open();
+    if (filename.length() == 0) return false;
+
     clear();
 
     igl::deserialize(has_direction_field, "has_direction_field", filename);
@@ -753,6 +739,8 @@ bool RemeshingMenu::load_workspace(std::string filename) {
     line_texture(texture_R, texture_G, texture_B);
 
     update_visualization();
+
+    if (temps.empty()) save_ctrlz();
 
     return true;
 }
@@ -884,9 +872,6 @@ bool RemeshingMenu::mouse_scroll(float delta_y) {
 	return false;
 }
 
-
-
-// TODO: remove alt_on/shift_on/ctrl_on
 bool RemeshingMenu::mouse_up(int button, int modifier) {
     if (igl::opengl::glfw::imgui::ImGuiMenu::mouse_up(button, modifier)) return true;
 
@@ -910,8 +895,8 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
         bc.maxCoeff(&maxCol);
         int currVertex = F(fid, maxCol);
         currCycle = vertex2cycle(currVertex);
-        update_visualization(); // TODO: make update_visualization() do the right thing when working on singularities
-        return true; // LOOKHERE: should I return false or true?
+        viewing_mode = ViewingMode::MESH_SING;
+        should_redraw = true;
 
     } else if ((button == 2 || button == 1) && alt_on && !shift_on && !ctrl_on) { // loop
 		if (feature_points.size() > 2) {
@@ -1993,7 +1978,7 @@ void RemeshingMenu::stylize_quad_mesh(const Eigen::MatrixXd& colors) {
     }
 }
 
-void RemeshingMenu::update_visualization() {
+void RemeshingMenu::update_visualization(unsigned char key) {
     for (const igl::opengl::ViewerData& data : viewer->data_list) {
         set_mesh_overlays(data.id, false, false, false);
     }
@@ -2006,6 +1991,37 @@ void RemeshingMenu::update_visualization() {
         Eigen::MatrixXd curlColors;
         igl::jet(currCurl, 0.0, curlMaxOrig, curlColors);
         stylize_tri_mesh(curlColors);
+        break;
+    }
+
+    case ViewingMode::MESH_SING:
+    {
+        if (key == 'B' || key == 'G') {
+            CMesh = directional::default_mesh_color().replicate(F.rows(), 1);
+            for (int i = 0; i < cycleFaces[currCycle].size(); i++)
+                CMesh.row(cycleFaces[currCycle][i]) << directional::selected_face_color();
+            stylize_tri_mesh(CMesh);
+        } else {
+            // raw field mesh
+            directional::glyph_lines_raw(
+                V, F, rawField, directional::default_glyph_color(),
+                VField, FField, CField, 2.5);
+            viewer->data_list[1].clear();
+            viewer->data_list[1].set_mesh(VField, FField);
+            viewer->data_list[1].set_colors(CField);
+            set_mesh_overlays(1, false);
+            if (key != '1') {
+                // singularity mesh
+                directional::singularity_spheres(
+                    V, F, N, singVertices, singIndices,
+                    VSings, FSings, CSings, 1.5);
+                viewer->data_list[2].clear();
+                viewer->data_list[2].set_mesh(VSings, FSings);
+                viewer->data_list[2].set_colors(CSings);
+                set_mesh_overlays(2, false);
+            }
+            stylize_tri_mesh(directional::default_mesh_color());
+        }
         break;
     }
 

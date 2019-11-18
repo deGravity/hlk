@@ -57,6 +57,12 @@ public:
     }
 	~RemeshingMenu() {
 		clear();
+        // remove ctrl+z saves.
+        for (auto& temp : temps) {
+            remove(temp.mesh.c_str());
+            remove(temp.face.c_str());
+            remove(temp.edge.c_str());
+        }
 	};
 
     void init(igl::opengl::glfw::Viewer* _viewer);
@@ -65,9 +71,8 @@ public:
     bool save(std::string filename);
     void load_temp_data(std::string filename);
 
-    void shutdown();
-    bool load_workspace(std::string filename);
-    bool save_workspace(std::string filename);
+    bool load_workspace();
+    bool save_workspace();
 
     void set_input_model(std::string filename) { input_model = filename; }
 
@@ -107,7 +112,7 @@ public:
     void set_mesh_overlays(const int mesh_id, const bool wireframe = true, const bool overlay = true, const bool fill = true);
     void stylize_tri_mesh(const Eigen::MatrixXd& colors);
     void stylize_quad_mesh(const Eigen::MatrixXd& colors);
-    void update_visualization();
+    void update_visualization(unsigned char key = '\0');
     void update_drawing();
     void draw_direction_field();
 
@@ -127,8 +132,8 @@ public:
     void reset_field();
     void init_curvature_field();
     void setup_boundary();
-    void update_vectors_from_field(int direction = 1);
     void interpolate_cross_field(Eigen::VectorXd& S, int direction = 1); // default wale interpolation
+    void update_vectors_from_field(int direction = 1);
     void interpolate_field();
     void generate_integer_grid();
     void init_curl();
@@ -136,6 +141,9 @@ public:
     void init_quad_seams();
     void quad_helix_finding();
     void setup_basis_cycles();
+    void compute_target_curvature();
+    void update_raw_field();
+    void update_singularities();
 
     // loops - impl in remeshing_loops.cpp
     void clear_loops();
@@ -158,6 +166,7 @@ public:
 
     // numbers...
     float soft_constraint_strength;
+    float field_guidance_weight;
     int stiffen_iter;
     float gradient_size;
     float loop_size;
@@ -237,8 +246,8 @@ public:
     Eigen::MatrixXd VField, VSings, VSeams;
     Eigen::MatrixXd CField, CSings, CSeams;
     Eigen::MatrixXd rawField, combedField;
-    Eigen::VectorXi matching, combedMatching;
-    Eigen::VectorXd effort, combedEffort;
+    Eigen::VectorXi combedMatching;
+    Eigen::VectorXd combedEffort;
     Eigen::VectorXd curl; // norm of curl per edge
     Eigen::VectorXi singVertices, singIndices;
     Eigen::SparseMatrix<double> AE2F; // averaging curl to faces for visualization
@@ -249,7 +258,7 @@ public:
     // trivial connections data
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > ldltSolver;
     Eigen::VectorXi cycleIndices;
-    Eigen::VectorXd cycleCurvature;
+    Eigen::VectorXd cycleCurvature, targetCurvature;
     Eigen::SparseMatrix<double> basisCycles;
     Eigen::VectorXi vertex2cycle, innerEdges;
     Eigen::MatrixXd CMesh, BC, FN;
