@@ -104,7 +104,11 @@ int main(int argc, char* argv[]) {
             viewer.launch();
         } catch (const std::runtime_error & e) {
             std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
-            remeshing_menu.shutdown();
+            if (remeshing_menu.save_workspace()) {
+                std::cout << "all work saved.\n";
+            } else {
+                std::cout << "failed to save state...\n";
+            }
             return -1;
         }
     } else {

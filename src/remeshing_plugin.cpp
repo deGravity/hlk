@@ -101,15 +101,11 @@ void RemeshingMenu::draw_viewer_menu() {
     float p = ImGui::GetStyle().FramePadding.x;
     if (ImGui::CollapsingHeader("Workspace", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (ImGui::Button("Load##Workspace", ImVec2((w - p) / 2.f, 0))) {
-            std::string fname = igl::file_dialog_open();
-            if (fname.length() == 0) return;
-            load_workspace(fname);
+            load_workspace();
         }
         ImGui::SameLine(0, p);
         if (ImGui::Button("Save##Workspace", ImVec2((w - p) / 2.f, 0))) {
-            std::string fname = igl::file_dialog_save();
-            if (fname.length() == 0) return;
-            save_workspace(fname);
+            save_workspace();
         }
     }
     if (ImGui::CollapsingHeader("Mesh", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -422,7 +418,7 @@ bool RemeshingMenu::load(std::string filename) {
     viewer->selected_data_index = 0;
     update_visualization();
 
-	if(temps.empty()) save_ctrlz();
+	if (temps.empty()) save_ctrlz();
     return true;
 }
 
@@ -560,27 +556,15 @@ void RemeshingMenu::clear() {
     miq_mode = MIQMode::CROSS;
     cardinal = Cardinal::N;
     direction_field = { Eigen::MatrixXd(), Eigen::MatrixXd() };
-    // remove ctrl+z saves.
-    for (auto& temp : temps) {
-        remove(temp.mesh.c_str());
-        remove(temp.face.c_str());
-        remove(temp.edge.c_str());
-    }
 }
 
 /////////////////////////// STATE SERIALIZATION ////////////////////////////
-void RemeshingMenu::shutdown() {
-    std::string fname = igl::file_dialog_save();
-    if (fname.length() == 0) return;
-    if (save_workspace(fname)) {
-        std::cout << "all work saved.\n";
-    } else {
-        std::cout << "failed to save state...\n";
-    }
-}
 
 // equivalent to serialize().
-bool RemeshingMenu::save_workspace(std::string filename) {
+bool RemeshingMenu::save_workspace() {
+    std::string filename = igl::file_dialog_save();
+    if (filename.length() == 0) return false;
+
     igl::serialize(has_direction_field, "has_direction_field", filename);
     igl::serialize(has_curl, "has_curl", filename);
     igl::serialize(has_integer_grid, "has_integer_grid", filename);
@@ -650,7 +634,10 @@ bool RemeshingMenu::save_workspace(std::string filename) {
 }
 
 // equivalent to deserialize().
-bool RemeshingMenu::load_workspace(std::string filename) {
+bool RemeshingMenu::load_workspace() {
+    std::string filename = igl::file_dialog_open();
+    if (filename.length() == 0) return false;
+
     clear();
 
     igl::deserialize(has_direction_field, "has_direction_field", filename);
@@ -724,6 +711,8 @@ bool RemeshingMenu::load_workspace(std::string filename) {
     line_texture(texture_R, texture_G, texture_B);
 
     update_visualization();
+
+    if (temps.empty()) save_ctrlz();
 
     return true;
 }

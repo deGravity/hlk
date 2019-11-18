@@ -286,6 +286,7 @@ void RemeshingMenu::interpolate_field() {
     } else { // miq_mode == MIQMode::CROSS
 
         interpolate_cross_field(S);
+        update_vectors_from_field();
         directional::representative_to_raw(V, F, direction_field[1], rosy, rawField);
 
         int s_count = 0;
@@ -309,12 +310,10 @@ void RemeshingMenu::generate_integer_grid() {
         Meshing::polyvector_parametrize(
             V, F, rosy, EV, EF, FE,
             rawField, combedField,
-            matching, combedMatching,
-            effort, combedEffort,
+            combedMatching, combedEffort,
             singVertices, singIndices,
             VMeshCut, FMeshCut, cutUV,
-            1. / gradient_size,
-            isInteger
+            1. / gradient_size, isInteger
         );
 
     } else {
@@ -366,8 +365,7 @@ void RemeshingMenu::init_curl() {
         V, F, rosy, EV, EF, FE,
         c_b, c_bc, c_blevel,
         rawField, combedField,
-        matching, combedMatching,
-        effort, combedEffort,
+        combedMatching, combedEffort,
         curl, singVertices, singIndices,
         AE2F, curlMax, curlMaxOrig);
     has_curl = true;
@@ -377,8 +375,7 @@ void RemeshingMenu::reduce_curl() {
     Meshing::reduce_curl(
         V, F, rosy, EV, EF, FE,
         rawField, combedField,
-        matching, combedMatching,
-        effort, combedEffort,
+        combedMatching, combedEffort,
         curl, singVertices, singIndices,
         curlMax);
     if (miq_mode == MIQMode::CROSS) {

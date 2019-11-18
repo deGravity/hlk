@@ -15,8 +15,7 @@ public:
         const Eigen::MatrixXd& VMeshWhole, const Eigen::MatrixXi& FMeshWhole, const int N,
         const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
         const Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
-        Eigen::VectorXi& matching, Eigen::VectorXi& combedMatching,
-        Eigen::VectorXd& effort, Eigen::VectorXd& combedEffort,
+        Eigen::VectorXi& combedMatching, Eigen::VectorXd& combedEffort,
         Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices,
         Eigen::MatrixXd& VMeshCut, Eigen::MatrixXi& FMeshCut,
         Eigen::MatrixXd& cutUV, double lengthRatio = 0.1, bool isInteger = true);
@@ -33,8 +32,7 @@ public:
         const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
         const Eigen::VectorXi& b, const Eigen::MatrixXd& bc, const Eigen::VectorXi& blevel,
         const Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
-        Eigen::VectorXi& matching, Eigen::VectorXi& combedMatching,
-        Eigen::VectorXd& effort, Eigen::VectorXd& combedEffort,
+        Eigen::VectorXi& combedMatching, Eigen::VectorXd& combedEffort,
         Eigen::VectorXd& curl, Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices,
         Eigen::SparseMatrix<double>& AE2F, double& curlMax, double& curlMaxOrig);
 
@@ -42,8 +40,7 @@ public:
         const Eigen::MatrixXd& VMesh, const Eigen::MatrixXi& FMesh, const int N,
         const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
         Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
-        Eigen::VectorXi& matching, Eigen::VectorXi& combedMatching,
-        Eigen::VectorXd& effort, Eigen::VectorXd& combedEffort,
+        Eigen::VectorXi& combedMatching, Eigen::VectorXd& combedEffort,
         Eigen::VectorXd& curl, Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices,
         double& curlMax);
 };

@@ -52,6 +52,12 @@ public:
     }
 	~RemeshingMenu() {
 		clear();
+        // remove ctrl+z saves.
+        for (auto& temp : temps) {
+            remove(temp.mesh.c_str());
+            remove(temp.face.c_str());
+            remove(temp.edge.c_str());
+        }
 	};
 
     void init(igl::opengl::glfw::Viewer* _viewer);
@@ -60,9 +66,8 @@ public:
     bool save(std::string filename);
     void load_temp_data(std::string filename);
 
-    void shutdown();
-    bool load_workspace(std::string filename);
-    bool save_workspace(std::string filename);
+    bool load_workspace();
+    bool save_workspace();
 
     void set_input_model(std::string filename) { input_model = filename; }
 
@@ -230,8 +235,8 @@ public:
     Eigen::MatrixXd VField, VSings, VSeams;
     Eigen::MatrixXd CField, CSings, CSeams;
     Eigen::MatrixXd rawField, combedField;
-    Eigen::VectorXi matching, combedMatching;
-    Eigen::VectorXd effort, combedEffort;
+    Eigen::VectorXi combedMatching;
+    Eigen::VectorXd combedEffort;
     Eigen::VectorXd curl; // norm of curl per edge
     Eigen::VectorXi singVertices, singIndices;
     Eigen::SparseMatrix<double> AE2F; // averaging curl to faces for visualization

@@ -26,13 +26,14 @@ void Meshing::polyvector_parametrize(
     const Eigen::MatrixXd& VMeshWhole, const Eigen::MatrixXi& FMeshWhole, const int N,
     const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
     const Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
-    Eigen::VectorXi& matching, Eigen::VectorXi& combedMatching,
-    Eigen::VectorXd& effort, Eigen::VectorXd& combedEffort,
+    Eigen::VectorXi& combedMatching, Eigen::VectorXd& combedEffort,
     Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices,
     Eigen::MatrixXd& VMeshCut, Eigen::MatrixXi& FMeshCut,
     Eigen::MatrixXd& cutUV, double gradientSize, bool isInteger) {
 
     // combing and cutting
+    Eigen::VectorXi matching;
+    Eigen::VectorXd effort;
     directional::principal_matching(VMeshWhole, FMeshWhole, EV, EF, FE, rawField, matching, effort);
     directional::effort_to_indices(VMeshWhole, FMeshWhole, EV, EF, effort, matching, N, singVertices, singIndices);
     directional::ParameterizationData pd;
@@ -87,11 +88,12 @@ void Meshing::init_curl(
     const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
     const Eigen::VectorXi& b, const Eigen::MatrixXd& bc, const Eigen::VectorXi& blevel,
     const Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
-    Eigen::VectorXi& matching, Eigen::VectorXi& combedMatching,
-    Eigen::VectorXd& effort, Eigen::VectorXd& combedEffort,
+    Eigen::VectorXi& combedMatching, Eigen::VectorXd& combedEffort,
     Eigen::VectorXd& curl, Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices,
     Eigen::SparseMatrix<double>& AE2F, double& curlMax, double& curlMaxOrig) {
 
+    Eigen::VectorXi matching;
+    Eigen::VectorXd effort;
     directional::curl_matching(VMesh, FMesh, EV, EF, FE, rawField, matching, effort, curl);
     directional::effort_to_indices(VMesh, FMesh, EV, EF, effort, matching, N, singVertices, singIndices);
     directional::combing(VMesh, FMesh, EV, EF, FE, rawField, matching, combedField);
@@ -106,8 +108,8 @@ void Meshing::init_curl(
     // creating the AE2F operator
     std::vector<Eigen::Triplet<double>> AE2FTriplets;
     for (int i = 0; i < EF.rows(); i++) {
-        if (EF(i,0) >= 0 && EF(i,0) < FMesh.rows()) AE2FTriplets.push_back(Eigen::Triplet<double>(EF(i,0), i, 1.0));
-        if (EF(i,1) >= 0 && EF(i,1) < FMesh.rows()) AE2FTriplets.push_back(Eigen::Triplet<double>(EF(i,1), i, 1.0));
+        if (EF(i, 0) >= 0 && EF(i, 0) < FMesh.rows()) AE2FTriplets.push_back(Eigen::Triplet<double>(EF(i, 0), i, 1.0));
+        if (EF(i, 1) >= 0 && EF(i, 1) < FMesh.rows()) AE2FTriplets.push_back(Eigen::Triplet<double>(EF(i, 1), i, 1.0));
     }
     AE2F.resize(FMesh.rows(), EF.rows());
     AE2F.setFromTriplets(AE2FTriplets.begin(), AE2FTriplets.end());
@@ -120,14 +122,13 @@ void Meshing::reduce_curl(
     const Eigen::MatrixXd& VMesh, const Eigen::MatrixXi& FMesh, const int N,
     const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
     Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
-    Eigen::VectorXi& matching, Eigen::VectorXi& combedMatching,
-    Eigen::VectorXd& effort, Eigen::VectorXd& combedEffort,
+    Eigen::VectorXi& combedMatching, Eigen::VectorXd& combedEffort,
     Eigen::VectorXd& curl, Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices,
     double& curlMax) {
-    
+
     Eigen::MatrixXd rawFieldNew, combedFieldNew;
-    Eigen::VectorXi matchingNew, combedMatchingNew;
-    Eigen::VectorXd effortNew, combedEffortNew;
+    Eigen::VectorXi matching, combedMatchingNew;
+    Eigen::VectorXd effort, combedEffortNew;
     Eigen::VectorXd curlNew;
     Eigen::VectorXi singVerticesNew, singIndicesNew;
     rawFieldNew = rawField;
@@ -139,18 +140,16 @@ void Meshing::reduce_curl(
     ++iter;
     params.wSmooth *= params.redFactor_wsmooth;
 
-    directional::curl_matching(VMesh, FMesh, EV, EF, FE, rawFieldNew, matchingNew, effortNew, curlNew);
-    directional::effort_to_indices(VMesh, FMesh, EV, EF, effortNew, matchingNew, N, singVerticesNew, singIndicesNew);
-    directional::combing(VMesh, FMesh, EV, EF, FE, rawFieldNew, matchingNew, combedFieldNew);
+    directional::curl_matching(VMesh, FMesh, EV, EF, FE, rawFieldNew, matching, effort, curlNew);
+    directional::effort_to_indices(VMesh, FMesh, EV, EF, effort, matching, N, singVerticesNew, singIndicesNew);
+    directional::combing(VMesh, FMesh, EV, EF, FE, rawFieldNew, matching, combedFieldNew);
     directional::curl_matching(VMesh, FMesh, EV, EF, FE, combedFieldNew, combedMatchingNew, combedEffortNew, curlNew);
     double curlMaxNew = curlNew.maxCoeff();
     if (curlMaxNew < curlMax) {
         std::cout << "curlMax optimized: " << curlMaxNew << "\n";
         rawField = rawFieldNew;
         combedField = combedFieldNew;
-        matching = matchingNew;
         combedMatching = combedMatchingNew;
-        effort = effortNew;
         combedEffort = combedEffortNew;
         curl = curlNew;
         singVertices = singVerticesNew;
