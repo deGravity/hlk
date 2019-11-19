@@ -335,6 +335,20 @@ namespace hlk {
                     he = flip_side(he);
                     if (he == curr_he) break;
                 }
+				curr_he_save = flip_side(curr_he_save);
+				if (curr_he_save >= 0) {
+					he = curr_he_save;
+					while (true) {
+						int quad_face = quad(he);
+						for (const int he : sides(quad_face)) {
+							curr_helix.emplace(he);
+						}
+						he = opposite_side(he);
+						if (flip_side(he) < 0) break;
+						he = flip_side(he);
+						if (he == curr_he_save) break;
+					}
+				}
                 if (helix.size() < curr_helix.size()) {
                     helix = curr_helix;
                     all_helices.insert(curr_helix.begin(), curr_helix.end());

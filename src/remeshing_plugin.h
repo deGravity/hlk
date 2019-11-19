@@ -261,8 +261,7 @@ public:
     Eigen::VectorXd cycleCurvature, targetCurvature;
     Eigen::SparseMatrix<double> basisCycles;
     Eigen::VectorXi vertex2cycle, innerEdges;
-    Eigen::MatrixXd CMesh, BC, FN;
-    Eigen::VectorXd rotationField;
+    Eigen::MatrixXd CMesh;
     std::vector<std::vector<int>> cycleFaces;
     int eulerChar, numGenerators, numBoundaries;
     int currCycle;

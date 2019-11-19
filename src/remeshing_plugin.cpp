@@ -658,6 +658,20 @@ bool RemeshingMenu::save_workspace() {
     igl::serialize(loop_path, "loop_path", filename);
     igl::serialize(loop_feature_face_ids, "loop_feature_face_ids", filename);
 
+    igl::serialize(cycleIndices, "cycleIndices", filename);
+    igl::serialize(cycleCurvature, "cycleCurvature", filename);
+    igl::serialize(targetCurvature, "targetCurvature", filename);
+    igl::serialize(basisCycles, "basisCycles", filename);
+    igl::serialize(vertex2cycle, "vertex2cycle", filename);
+    igl::serialize(innerEdges, "innerEdges", filename);
+    igl::serialize(cycleFaces, "cycleFaces", filename);
+    igl::serialize(eulerChar, "eulerChar", filename);
+    igl::serialize(numGenerators, "numGenerators", filename);
+    igl::serialize(numBoundaries, "numBoundaries", filename);
+    igl::serialize(currCycle, "currCycle", filename);
+    igl::serialize(N, "N", filename);
+    igl::serialize(globalRotation, "globalRotation", filename);
+
     return true;
 }
 
@@ -735,6 +749,20 @@ bool RemeshingMenu::load_workspace() {
     igl::deserialize(loop_update_polylines, "loop_update_polylines", filename);
     igl::deserialize(loop_path, "loop_path", filename);
     igl::deserialize(loop_feature_face_ids, "loop_feature_face_ids", filename);
+
+    igl::deserialize(cycleIndices, "cycleIndices", filename);
+    igl::deserialize(cycleCurvature, "cycleCurvature", filename);
+    igl::deserialize(targetCurvature, "targetCurvature", filename);
+    igl::deserialize(basisCycles, "basisCycles", filename);
+    igl::deserialize(vertex2cycle, "vertex2cycle", filename);
+    igl::deserialize(innerEdges, "innerEdges", filename);
+    igl::deserialize(cycleFaces, "cycleFaces", filename);
+    igl::deserialize(eulerChar, "eulerChar", filename);
+    igl::deserialize(numGenerators, "numGenerators", filename);
+    igl::deserialize(numBoundaries, "numBoundaries", filename);
+    igl::deserialize(currCycle, "currCycle", filename);
+    igl::deserialize(N, "N", filename);
+    igl::deserialize(globalRotation, "globalRotation", filename);
 
     line_texture(texture_R, texture_G, texture_B);
 
