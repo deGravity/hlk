@@ -37,7 +37,6 @@
 
 namespace hlk {
 
-
 void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
     igl::opengl::glfw::imgui::ImGuiMenu::init(_viewer);
 
@@ -124,6 +123,7 @@ void RemeshingMenu::draw_viewer_menu() {
             has_curl = false;
             viewing_mode = ViewingMode::MESH_FIELD;
             update_visualization();
+            save_ctrlz();
         }
         ImGui::SameLine(0, p);
         if (ImGui::Button("Save Field##Mesh", ImVec2((w - p) / 2.f, 0))) {
@@ -139,11 +139,13 @@ void RemeshingMenu::draw_viewer_menu() {
         if (ImGui::Button("Clear Loops##Mesh", ImVec2((w - p) / 2.f, 0))) {
             clear_loops();
             update_visualization();
+            save_ctrlz();
         }
         ImGui::SameLine(0, p);
         if (ImGui::Button("Reset Field##Mesh", ImVec2((w - p) / 2.f, 0))) {
             reset_field();
             update_visualization();
+            save_ctrlz();
         }
         if (ImGui::Button("Subdivide Mesh", ImVec2(w - p, 0))) {
             apply_subdivision();
@@ -175,15 +177,39 @@ void RemeshingMenu::draw_viewer_menu() {
             // Add threshold values.
             ImGui::DragFloat("Click Threshold", &click_threshold, 0.05f, 0.01f, 0.5f);
             ImGui::DragFloat("Soft Weight", &soft_constraint_strength, 0.0f, 0.0f, 1.0f);
-            ImGui::DragInt("# Iter of Stiffening", &stiffen_iter, 1, 0, 10);
+            ImGui::DragInt("# Stiffening", &stiffen_iter, 1, 0, 10);
             ImGui::DragFloat("Gradient Size", &gradient_size, 1.0f, 0.0f, 150.0f);
             ImGui::PopItemWidth();
-            ImGui::Text("===Field Operations===");
-            if (ImGui::Button("Initialize field from principal curvatures", ImVec2(w - p, 0))) {
-                init_curvature_field();
-                viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
+
+            ImGui::Text("===Seaming Operations===");
+            ImGui::Checkbox("Symmetrize Seaming Loops", &symmetrize_loops);
+            // seaming mode options.
+            ImGui::Text("Click to select the seaming mode.");
+            if (ImGui::RadioButton("Cut", seaming_mode == SeamingMode::CUT)) {
+                seaming_mode = SeamingMode::CUT;
             }
+            ImGui::SameLine(0, p);
+            if (ImGui::RadioButton("No Cut", seaming_mode == SeamingMode::NO_CUT)) {
+                seaming_mode = SeamingMode::NO_CUT;
+            }
+            if (!seams.empty()) {
+                if (ImGui::Button("Cut the last seam", ImVec2(w - p, 0))) {
+                    cut_along_seams();
+                    interpolate_field();
+                    viewing_mode = ViewingMode::MESH_ONLY;
+                    update_visualization();
+                    save_ctrlz();
+                }
+            }
+
             // Direction field controls
+            ImGui::Text("===Field Operations===");
+            /*if (ImGui::Button("Initialize field from principal curvatures", ImVec2(w - p, 0))) {
+                init_curvature_field();
+                viewing_mode = ViewingMode::MESH_ONLY;
+                update_visualization();
+                save_ctrlz();
+            }*/
             if (has_direction_field) {
                 // drawing mode options.
                 ImGui::Text("Click to select the type of field.");
@@ -199,16 +225,18 @@ void RemeshingMenu::draw_viewer_menu() {
                     generate_integer_grid();
                     viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
                 }
-                if (ImGui::Button("Init Curl", ImVec2((w - p) / 2.f, 0))) {
-                    init_curl();
-                    if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD)
-                        update_visualization();
-                }
-                ImGui::SameLine(0, p);
-                if (ImGui::Button("Reduce Curl", ImVec2((w - p) / 2.f, 0))) {
-                    reduce_curl();
-                    if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD)
-                        update_visualization();
+                if (miq_mode == MIQMode::POLYVECTOR) {
+                    if (ImGui::Button("Init Curl", ImVec2((w - p) / 2.f, 0))) {
+                        init_curl();
+                        if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD)
+                            update_visualization();
+                    }
+                    ImGui::SameLine(0, p);
+                    if (ImGui::Button("Reduce Curl", ImVec2((w - p) / 2.f, 0))) {
+                        reduce_curl();
+                        if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD)
+                            update_visualization();
+                    }
                 }
             }
             // Quad controls
@@ -396,7 +424,6 @@ bool RemeshingMenu::load(std::string filename) {
     }
 	setup_mesh();
     update_polyhedron_tree();
-    reset_face_vectors();
     load_temp_data(filename);
  
     // Set up the field.
@@ -462,14 +489,20 @@ void RemeshingMenu::load_temp_data(std::string filename) {
     ifs.clear();
     ifs.close();
 
-    split_edges.clear();
+    seams.clear();
     ifs.open(edge_path_temp);
     ifs >> nb;
     for (int i = 0; i < nb; i++) {
-        SplitEdge se;
-        ifs >> se.index_0 >> se.index_1 
-            >> se.normal[0] >> se.normal[1] >> se.normal[2];
-        split_edges.push_back(se);
+        int ne;
+        ifs >> ne;
+        std::vector<SplitEdge> seam;
+        for (int j = 0; j < ne; j++) {
+            SplitEdge se;
+            ifs >> se.index_0 >> se.index_1
+                >> se.normal[0] >> se.normal[1] >> se.normal[2];
+            seam.push_back(se);
+        }
+        seams.push_back(seam);
     }
     ifs.clear();
     ifs.close();
@@ -513,10 +546,13 @@ bool RemeshingMenu::save(std::string filename) {
 	face_file_temp.close();
 	// output edge_path_temp
 	std::ofstream edge_file_temp(edge_path_temp);
-	edge_file_temp << split_edges.size() << "\n";
-	for (int i = 0; i < split_edges.size(); i++) {
-		edge_file_temp << split_edges[i].index_0 << " " << split_edges[i].index_1 << " "
-			<< split_edges[i].normal[0] << " " << split_edges[i].normal[1] << " " << split_edges[i].normal[2] << "\n";
+	edge_file_temp << seams.size() << "\n";
+	for (int i = 0; i < seams.size(); i++) {
+        edge_file_temp << seams[i].size() << "\n";
+        for (int j = 0; j < seams[i].size(); j++) {
+            edge_file_temp << seams[i][j].index_0 << " " << seams[i][j].index_1 << " "
+                << seams[i][j].normal[0] << " " << seams[i][j].normal[1] << " " << seams[i][j].normal[2] << "\n";
+        }
 	}
 	edge_file_temp.clear();
 	edge_file_temp.close();
@@ -530,7 +566,7 @@ void RemeshingMenu::clear() {
     std::vector<int>().swap(loop_feature_face_ids);
 	// directional faces
 	std::vector<FaceVector>().swap(face_vectors);
-	std::vector<SplitEdge>().swap(split_edges);
+	std::vector<std::vector<SplitEdge>>().swap(seams);
 	// other geometry data
 	std::vector<int>().swap(geodesic_path);
 	igl_polyhedron.clear();
@@ -553,8 +589,8 @@ void RemeshingMenu::clear() {
     isInteger = true;
     viewing_mode = ViewingMode::MESH_ONLY;
     drawing_mode = DrawingMode::WALE;
+    seaming_mode = SeamingMode::NO_CUT;
     miq_mode = MIQMode::CROSS;
-    cardinal = Cardinal::N;
     direction_field = { Eigen::MatrixXd(), Eigen::MatrixXd() };
 }
 
@@ -573,6 +609,7 @@ bool RemeshingMenu::save_workspace() {
     igl::serialize(isInteger, "isInteger", filename);
     igl::serialize(show_axis, "show_axis", filename);
     igl::serialize(multi_points_drawing, "multi_points_drawing", filename);
+    igl::serialize(symmetrize_loops, "symmetrize_loops", filename);
     igl::serialize(existing_edge_label, "existing_edge_label", filename);
     igl::serialize(geodesic_label, "geodesic_label", filename);
 
@@ -582,10 +619,10 @@ bool RemeshingMenu::save_workspace() {
     igl::serialize(loop_start_index, "loop_start_index", filename);
     igl::serialize(loop_end_index, "loop_end_index", filename);
 
-    igl::serialize(cardinal, "cardinal", filename);
     igl::serialize(miq_mode, "miq_mode", filename);
     igl::serialize(drawing_mode, "drawing_mode", filename);
     igl::serialize(viewing_mode, "viewing_mode", filename);
+    igl::serialize(seaming_mode, "seaming_mode", filename);
 
     igl::serialize(click_threshold, "click_threshold", filename);
     igl::serialize(gradient_size, "gradient_size", filename);
@@ -621,7 +658,7 @@ bool RemeshingMenu::save_workspace() {
     igl::serialize(geodesic_point, "geodesic_point", filename);
     igl::serialize(geodesic_path, "geodesic_path", filename);
     igl::serialize(face_vectors, "face_vectors", filename);
-    igl::serialize(split_edges, "split_edges", filename);
+    igl::serialize(seams, "seams", filename);
 
     igl::serialize(loop_points, "loop_points", filename);
     igl::serialize(loop_de_points, "loop_de_points", filename);
@@ -648,6 +685,7 @@ bool RemeshingMenu::load_workspace() {
     igl::deserialize(isInteger, "isInteger", filename);
     igl::deserialize(show_axis, "show_axis", filename);
     igl::deserialize(multi_points_drawing, "multi_points_drawing", filename);
+    igl::deserialize(symmetrize_loops, "symmetrize_loops", filename);
     igl::deserialize(existing_edge_label, "existing_edge_label", filename);
     igl::deserialize(geodesic_label, "geodesic_label", filename);
 
@@ -657,10 +695,10 @@ bool RemeshingMenu::load_workspace() {
     igl::deserialize(loop_start_index, "loop_start_index", filename);
     igl::deserialize(loop_end_index, "loop_end_index", filename);
 
-    igl::deserialize(cardinal, "cardinal", filename);
     igl::deserialize(miq_mode, "miq_mode", filename);
     igl::deserialize(drawing_mode, "drawing_mode", filename);
     igl::deserialize(viewing_mode, "viewing_mode", filename);
+    igl::deserialize(seaming_mode, "seaming_mode", filename);
 
     igl::deserialize(click_threshold, "click_threshold", filename);
     igl::deserialize(gradient_size, "gradient_size", filename);
@@ -699,7 +737,7 @@ bool RemeshingMenu::load_workspace() {
     igl::deserialize(geodesic_point, "geodesic_point", filename);
     igl::deserialize(geodesic_path, "geodesic_path", filename);
     igl::deserialize(face_vectors, "face_vectors", filename);
-    igl::deserialize(split_edges, "split_edges", filename);
+    igl::deserialize(seams, "seams", filename);
 
     igl::deserialize(loop_points, "loop_points", filename);
     igl::deserialize(loop_de_points, "loop_de_points", filename);
@@ -844,9 +882,6 @@ bool RemeshingMenu::mouse_scroll(float delta_y) {
 	return false;
 }
 
-
-
-// TODO: remove alt_on/shift_on/ctrl_on
 bool RemeshingMenu::mouse_up(int button, int modifier) {
     if (igl::opengl::glfw::imgui::ImGuiMenu::mouse_up(button, modifier)) return true;
 
@@ -869,17 +904,21 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
 		if (feature_points.size() > 2) {
 			auto n = face_vectors[loop_feature_face_ids[0]].normal;
             Eigen::Vector3d a = feature_points.back() - feature_points.front();
-
-			if (button==2) {
+            int prev_size = loop_update_polylines.size();
+			if (button == 2) {
 				auto plane_n = a.cross(n).normalized();
 				auto plane_p = feature_points[0];
 				compute_elastic_loop_min_geodesic(plane_p, plane_n);
-				//compute_elastic_loop_field_align(plane_p, plane_n);
-				symmetry_elastic_loop(plane_p, plane_n);
-				should_redraw = true;
+                if (symmetrize_loops) symmetry_elastic_loop(plane_p, plane_n);
 			} else { // button == 1
-				compute_elastic_loop(feature_points.front(),a.normalized());
+				compute_elastic_loop(feature_points.front(), a.normalized());
 			}
+            // use the loop as feature points
+            for (int i = prev_size; i < loop_update_polylines.size(); ++i) {
+                feature_points = loop_update_polylines[i];
+                split_mesh();
+            }
+            should_redraw = true;
 		}
 		
 	} else if (button == 2 && ctrl_on && alt_on) { // ctrl+alt+right
@@ -987,7 +1026,6 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
                 if (existing_edge_label && geodesic_path.size() >= 2) { geodesic_split_mesh(); }
                 else { split_mesh(); }
                 symmetry_split_mesh(feature_points_save);
-                cut_along_seams();
                 should_redraw = true;
             }
         }
@@ -1008,6 +1046,9 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
     }
 
     if (should_redraw) {
+        if (seaming_mode == SeamingMode::CUT) {
+            cut_along_seams();
+        }
         interpolate_field();
         update_visualization();
 		save_ctrlz();
@@ -1319,6 +1360,8 @@ void RemeshingMenu::split_mesh() {
     // new faces
     std::vector<Eigen::Vector3i> new_faces;
     std::vector<int> face_refs;
+    // the current seam
+    std::vector<SplitEdge> seam;
     for (int i = 0; i < cutting_faces.size(); i++) {
         if (cutting_faces[i].size() == 0) {
             face_refs.push_back(new_faces.size());
@@ -1373,14 +1416,14 @@ void RemeshingMenu::split_mesh() {
                 double distance = (feature_points[0] - V.row(next_edge_index).transpose()).norm();
                 if (feature_face_ids[0] == i) {
                     if (distance < mesh_edge_size * click_threshold) {
-                        split_edges.push_back({ insert_v_index, next_edge_index, face_vectors[i].normal });
-                        split_existing_edges(existing_index_0, existing_index_1, insert_v_index);
+                        seam.push_back({ insert_v_index, next_edge_index, face_vectors[i].normal });
+                        split_existing_edges(existing_index_0, existing_index_1, insert_v_index, seam);
                     }
                 }
                 if (feature_face_ids[feature_face_ids.size() - 1] == i) {
                     if (distance < mesh_edge_size * click_threshold) {
-                        split_edges.push_back({ insert_v_index, next_edge_index, face_vectors[i].normal });
-                        split_existing_edges(existing_index_0, existing_index_1, insert_v_index);
+                        seam.push_back({ insert_v_index, next_edge_index, face_vectors[i].normal });
+                        split_existing_edges(existing_index_0, existing_index_1, insert_v_index, seam);
                     }
                 }
             }
@@ -1437,8 +1480,8 @@ void RemeshingMenu::split_mesh() {
                 new_faces.push_back(Eigen::Vector3i(insert_v_index_1, v_index_1, insert_v_index_0));
                 new_faces.push_back(Eigen::Vector3i(insert_v_index_0, v_index_1, v_index_2));
 
-                split_existing_edges(v_index_0, v_index_1, insert_v_index_1);
-                split_existing_edges(v_index_0, v_index_2, insert_v_index_0);
+                split_existing_edges(v_index_0, v_index_1, insert_v_index_1, seam);
+                split_existing_edges(v_index_0, v_index_2, insert_v_index_0, seam);
             }
 
             //B
@@ -1447,8 +1490,8 @@ void RemeshingMenu::split_mesh() {
                 new_faces.push_back(Eigen::Vector3i(insert_v_index_0, v_index_1, insert_v_index_1));
                 new_faces.push_back(Eigen::Vector3i(insert_v_index_1, v_index_1, v_index_2));
 
-                split_existing_edges(v_index_0, v_index_1, insert_v_index_0);
-                split_existing_edges(v_index_0, v_index_2, insert_v_index_1);
+                split_existing_edges(v_index_0, v_index_1, insert_v_index_0, seam);
+                split_existing_edges(v_index_0, v_index_2, insert_v_index_1, seam);
             }
 
             //C
@@ -1457,8 +1500,8 @@ void RemeshingMenu::split_mesh() {
                 new_faces.push_back(Eigen::Vector3i(v_index_0, insert_v_index_0, insert_v_index_1));
                 new_faces.push_back(Eigen::Vector3i(insert_v_index_1, insert_v_index_0, v_index_2));
 
-                split_existing_edges(v_index_0, v_index_2, insert_v_index_1);
-                split_existing_edges(v_index_1, v_index_2, insert_v_index_0);
+                split_existing_edges(v_index_0, v_index_2, insert_v_index_1, seam);
+                split_existing_edges(v_index_1, v_index_2, insert_v_index_0, seam);
             }
 
             //D
@@ -1467,8 +1510,8 @@ void RemeshingMenu::split_mesh() {
                 new_faces.push_back(Eigen::Vector3i(v_index_0, insert_v_index_1, insert_v_index_0));
                 new_faces.push_back(Eigen::Vector3i(insert_v_index_0, insert_v_index_1, v_index_2));
 
-                split_existing_edges(v_index_0, v_index_2, insert_v_index_0);
-                split_existing_edges(v_index_1, v_index_2, insert_v_index_1);
+                split_existing_edges(v_index_0, v_index_2, insert_v_index_0, seam);
+                split_existing_edges(v_index_1, v_index_2, insert_v_index_1, seam);
             }
 
             //E
@@ -1477,8 +1520,8 @@ void RemeshingMenu::split_mesh() {
                 new_faces.push_back(Eigen::Vector3i(insert_v_index_0, v_index_1, insert_v_index_1));
                 new_faces.push_back(Eigen::Vector3i(v_index_0, insert_v_index_1, v_index_2));
 
-                split_existing_edges(v_index_0, v_index_1, insert_v_index_0);
-                split_existing_edges(v_index_1, v_index_2, insert_v_index_1);
+                split_existing_edges(v_index_0, v_index_1, insert_v_index_0, seam);
+                split_existing_edges(v_index_1, v_index_2, insert_v_index_1, seam);
             }
 
             //F
@@ -1487,14 +1530,15 @@ void RemeshingMenu::split_mesh() {
                 new_faces.push_back(Eigen::Vector3i(insert_v_index_1, v_index_1, insert_v_index_0));
                 new_faces.push_back(Eigen::Vector3i(v_index_0, insert_v_index_0, v_index_2));
 
-                split_existing_edges(v_index_0, v_index_1, insert_v_index_1);
-                split_existing_edges(v_index_1, v_index_2, insert_v_index_0);
+                split_existing_edges(v_index_0, v_index_1, insert_v_index_1, seam);
+                split_existing_edges(v_index_1, v_index_2, insert_v_index_0, seam);
             }
 
-            split_edges.push_back({ insert_v_index_0, insert_v_index_1, face_vectors[i].normal });
+            seam.push_back({ insert_v_index_0, insert_v_index_1, face_vectors[i].normal });
         }
     }
 
+    seams.push_back(seam);
     ///////////////////////////////////////
 
     Eigen::MatrixX3d newV;
@@ -1509,58 +1553,34 @@ void RemeshingMenu::split_mesh() {
 
     setup_mesh();
     update_polyhedron_tree(face_refs);
-
-    ///////////////////////////////////////
-
-    // update face vectors
-    std::vector<FaceVector> new_face_vectors;
-    for (int i = 0; i < F.rows(); i++) {
-        FaceVector fv;
-        fv.face_id = i;
-        Eigen::Vector3d v_0 = V.row(F.row(i)[0]);
-        Eigen::Vector3d v_1 = V.row(F.row(i)[1]);
-        Eigen::Vector3d v_2 = V.row(F.row(i)[2]);
-        fv.center = (v_0 + v_1 + v_2) / 3.0;
-        fv.normal = (v_1 - v_0).cross(v_2 - v_0).normalized();
-        fv.assigned = { false, false };
-        fv.frame = { Eigen::Vector3d(), Eigen::Vector3d() };
-        new_face_vectors.push_back(fv);
-    }
-    for (int i = 0; i < face_refs.size(); i = i + 2) {
-        int new_face_index = face_refs[i];
-        int old_face_index = face_refs[i + 1];
-        new_face_vectors[new_face_index] = face_vectors[old_face_index];
-        new_face_vectors[new_face_index].face_id = new_face_index;
-    }
-    face_vectors.clear();
-    face_vectors = new_face_vectors;
-    new_face_vectors.clear();
 }
 
 void RemeshingMenu::geodesic_split_mesh() {
-	// point index => face
+    std::vector<SplitEdge> seam;
 	for (int i = 1; i < geodesic_path.size(); i++) {
+        // point index => face
 		int e_0 = geodesic_path[i - 1];
 		int e_1 = geodesic_path[i];
 		std::unordered_set<int> n_faces = neighbor_faces(igl_v_faces, e_0, e_1);
-		split_edges.push_back({ e_0, e_1, face_vectors[*(n_faces.begin())].normal });
+		seam.push_back({ e_0, e_1, face_vectors[*(n_faces.begin())].normal });
 	}
+    seams.push_back(seam);
 }
 
-void RemeshingMenu::split_existing_edges(int index_0, int index_1, int insert_index) {
+void RemeshingMenu::split_existing_edges(int index_0, int index_1, int insert_index, std::vector<SplitEdge>& seam) {
 	int index = -1;
-	for (int i = 0; i < split_edges.size(); i++) {
-		if ((split_edges[i].index_0 == index_0 && split_edges[i].index_1 == index_1) ||
-			(split_edges[i].index_1 == index_0 && split_edges[i].index_0 == index_1)) {
+	for (int i = 0; i < seam.size(); i++) {
+		if ((seam[i].index_0 == index_0 && seam[i].index_1 == index_1) ||
+			(seam[i].index_1 == index_0 && seam[i].index_0 == index_1)) {
 			index = i;
 			break;
 		}
 	}
 	if (index >= 0) { // perform the split
-		SplitEdge edge = split_edges[index];
-		split_edges.erase(split_edges.begin() + index);
-		split_edges.push_back({ index_0, insert_index, edge.normal });
-		split_edges.push_back({ index_1, insert_index, edge.normal });
+		SplitEdge edge = seam[index];
+		seam.erase(seam.begin() + index);
+		seam.push_back({ index_0, insert_index, edge.normal });
+		seam.push_back({ index_1, insert_index, edge.normal });
 	}
 }
 
@@ -1719,41 +1739,45 @@ void RemeshingMenu::symmetry_split_mesh(const std::vector<Eigen::Vector3d> & fea
 	}
 }
 
+// Reference:
+// https://github.com/libigl/libigl/blob/master/tests/include/igl/cut_to_disk.cpp#L18-L54
 void RemeshingMenu::cut_along_seams() {
-    std::vector<std::vector<int>> VF, VI;
-    igl::vertex_triangle_adjacency(V.rows(), F, VF, VI);
-
-    Eigen::MatrixXi seams(F.rows(), 3);
-    seams.setZero();
-    for (const SplitEdge& se : split_edges) {
-        int v0 = se.index_0;
-        int v1 = se.index_1;
-        for (int i = 0; i < VF[v0].size(); ++i) {
-            int f = VF[v0][i];
-            int idx = VI[v0][i];
-            assert(F(f, idx) == v0);
-            if (F(f, (idx + 1) % 3) == v1) {
-                seams(f, idx) = 1;
-                continue;
-            }
+    std::set<std::array<int, 2>> cut_edges;
+    for (const SplitEdge& se : seams[seams.size() - 1]) {
+        std::array<int, 2> e { se.index_0, se.index_1 };
+        if (e[0] > e[1]) {
+            std::swap(e[0], e[1]);
         }
+        cut_edges.insert(e);
+    }
+    seams.erase(seams.begin() + seams.size() - 1);
+
+    const size_t num_faces = F.rows();
+    Eigen::MatrixXi cut_mask(num_faces, 3);
+    cut_mask.setZero();
+    for (size_t i = 0; i < num_faces; i++) {
+        std::array<int, 2> e0{ F(i, 0), F(i, 1) };
+        std::array<int, 2> e1{ F(i, 1), F(i, 2) };
+        std::array<int, 2> e2{ F(i, 2), F(i, 0) };
+        if (e0[0] > e0[1]) std::swap(e0[0], e0[1]);
+        if (e1[0] > e1[1]) std::swap(e1[0], e1[1]);
+        if (e2[0] > e2[1]) std::swap(e2[0], e2[1]);
+        if (cut_edges.find(e0) != cut_edges.end()) { cut_mask(i, 0) = 1; }
+        if (cut_edges.find(e1) != cut_edges.end()) { cut_mask(i, 1) = 1; }
+        if (cut_edges.find(e2) != cut_edges.end()) { cut_mask(i, 2) = 1; }
     }
 
     Eigen::MatrixXd NV;
     Eigen::MatrixXi NF;
-    igl::cut_mesh(V, F, seams, NV, NF);
+    igl::cut_mesh(V, F, cut_mask, NV, NF);
     V = NV;
     F = NF;
     setup_mesh();
-    update_polyhedron_tree();
-    reset_face_vectors(); // TODO: instead of resetting, keep track of old face vectors
+    update_polyhedron_tree(std::vector<int>(), true); // is seam cutting, don't reset face vectors
     setup_boundary();
-    interpolate_field();
-    update_visualization();
 }
 
 ///////////////////////////////// DRAW IMPLS /////////////////////////////////
-//TODO: remove unnecessary drawing (use underlying_loop_edges to debug?)
 void RemeshingMenu::update_drawing() {
 #ifdef HAISEN1
 	for (auto& node : loop_gi_nodes) {
@@ -1815,13 +1839,15 @@ void RemeshingMenu::update_drawing() {
         }
     }
 
-	// draw split edges
-    for (int i = 0; i < split_edges.size(); i++) {
-        Eigen::Vector3d v_0 = V.row(split_edges[i].index_0);
-        Eigen::Vector3d v_1 = V.row(split_edges[i].index_1);
-        Eigen::Vector3d s = v_0 + split_edges[i].normal * mesh_size * 0.001;
-        Eigen::Vector3d t = v_1 + split_edges[i].normal * mesh_size * 0.001;
-        draw_a_segment(s, t, 1);
+	// draw seams
+    for (const std::vector<SplitEdge>& seam : seams) {
+        for (int i = 0; i < seam.size(); i++) {
+            Eigen::Vector3d v_0 = V.row(seam[i].index_0);
+            Eigen::Vector3d v_1 = V.row(seam[i].index_1);
+            Eigen::Vector3d s = v_0 + seam[i].normal * mesh_size * 0.001;
+            Eigen::Vector3d t = v_1 + seam[i].normal * mesh_size * 0.001;
+            draw_a_segment(s, t, 1);
+        }
     }
 
 	if (geodesic_label) { draw_a_point(geodesic_point, 0); }
@@ -1841,7 +1867,7 @@ void RemeshingMenu::update_drawing() {
 	draw_points(loop_points, 1, 0.00);
 	draw_points(loop_de_points, 0, 0.00);
 
-	for (auto &line: loop_polylines)
+	for (auto& line : loop_polylines)
 		draw_segments(line, 0, 0.00);
 	for (auto& line : loop_update_polylines)
 		draw_segments(line, 2, 0.00);
@@ -1920,27 +1946,29 @@ void RemeshingMenu::stylize_quad_mesh(const Eigen::MatrixXd& colors) {
     viewer->data_list[1].set_texture(texture_R, texture_B, texture_G);
     viewer->data_list[1].show_texture = true;
 
-    if (split_edges.empty()) return;
+    if (seams.empty()) return;
 
     igl::AABB<Eigen::MatrixXd, 3> aabb_tree;
     aabb_tree.init(quad_mesh.V, quad_mesh.F_t);
 
-    for (const SplitEdge& se : split_edges) {
-        Eigen::Vector3d v0 = V.row(se.index_0);
-        Eigen::Vector3d v1 = V.row(se.index_1);
-        Eigen::Vector3d edge = v1 - v0;
-        Eigen::Vector3d nudge_dir = edge.cross(se.normal);
+    for (const std::vector<SplitEdge>& seam : seams) {
+        for (const SplitEdge& se : seam) {
+            Eigen::Vector3d v0 = V.row(se.index_0);
+            Eigen::Vector3d v1 = V.row(se.index_1);
+            Eigen::Vector3d edge = v1 - v0;
+            Eigen::Vector3d nudge_dir = edge.cross(se.normal);
 
-        Eigen::Vector3d nudged_midpoint = (v0 + v1) / 2. + 0.001 * mesh_size * nudge_dir;
-        int fid;
-        Eigen::RowVector3d C;
-        aabb_tree.squared_distance(quad_mesh.V, quad_mesh.F_t, nudged_midpoint, fid, C);
+            Eigen::Vector3d nudged_midpoint = (v0 + v1) / 2. + 0.001 * mesh_size * nudge_dir;
+            int fid;
+            Eigen::RowVector3d C;
+            aabb_tree.squared_distance(quad_mesh.V, quad_mesh.F_t, nudged_midpoint, fid, C);
 
-        Eigen::Vector3d qv0 = quad_mesh.V.row(quad_mesh.side_u(fid));
-        qv0 += se.normal * mesh_size * 0.005;
-        Eigen::Vector3d qv1 = quad_mesh.V.row(quad_mesh.side_v(fid));
-        qv1 += se.normal * mesh_size * 0.005;
-        draw_a_segment(qv0, qv1, 1, -1., 1);
+            Eigen::Vector3d qv0 = quad_mesh.V.row(quad_mesh.side_u(fid));
+            qv0 += se.normal * mesh_size * 0.005;
+            Eigen::Vector3d qv1 = quad_mesh.V.row(quad_mesh.side_v(fid));
+            qv1 += se.normal * mesh_size * 0.005;
+            draw_a_segment(qv0, qv1, 1, -1., 1);
+        }
     }
 }
 
@@ -2014,7 +2042,7 @@ void RemeshingMenu::update_visualization() {
 }
 
 /////////////////////////////////////////////////////////////////////////////
-void RemeshingMenu::update_polyhedron_tree(const std::vector<int>& face_refs) {
+void RemeshingMenu::update_polyhedron_tree(const std::vector<int>& face_refs, bool is_seam_cutting) {
 	///////////////////////////////////////
 	igl_polyhedron.clear();
 	if (!igl::copyleft::cgal::mesh_to_polyhedron(V, F, igl_polyhedron)) {
@@ -2024,6 +2052,7 @@ void RemeshingMenu::update_polyhedron_tree(const std::vector<int>& face_refs) {
 	igl_tree.clear();
 	igl_tree.insert(faces(igl_polyhedron).first, faces(igl_polyhedron).second, igl_polyhedron);
 	igl_tree.accelerate_distance_queries();
+	///////////////////////////////////////
 	igl_v_faces.clear();
 	std::vector<std::unordered_set<int>>().swap(igl_v_faces);
     igl_v_faces = std::vector<std::unordered_set<int>>(V.rows(), std::unordered_set<int>());
@@ -2051,25 +2080,29 @@ void RemeshingMenu::update_polyhedron_tree(const std::vector<int>& face_refs) {
 	}
 	///////////////////////////////////////
     if (!face_refs.empty()) {
-        std::vector<FaceVector> new_face_vectors(viewer->data().F.rows(), FaceVector());
+        std::vector<FaceVector> new_face_vectors(F.rows(), FaceVector());
         for (int i = 0; i < face_refs.size(); i = i + 2) {
             int new_face_index = face_refs[i];
             int old_face_index = face_refs[i + 1];
             new_face_vectors[new_face_index] = face_vectors[old_face_index];
             new_face_vectors[new_face_index].face_id = new_face_index;
         }
-        for (int i = 0; i < viewer->data().F.rows(); i++) {
+        for (int i = 0; i < F.rows(); i++) {
             auto& fv = new_face_vectors[i];
             if (fv.face_id < 0) {
                 fv.face_id = i;
-                Eigen::Vector3d v_0 = viewer->data().V.row(viewer->data().F.row(i)[0]);
-                Eigen::Vector3d v_1 = viewer->data().V.row(viewer->data().F.row(i)[1]);
-                Eigen::Vector3d v_2 = viewer->data().V.row(viewer->data().F.row(i)[2]);
+                Eigen::Vector3d v_0 = V.row(F.row(i)[0]);
+                Eigen::Vector3d v_1 = V.row(F.row(i)[1]);
+                Eigen::Vector3d v_2 = V.row(F.row(i)[2]);
                 fv.center = (v_0 + v_1 + v_2) / 3.0;
                 fv.normal = (v_1 - v_0).cross(v_2 - v_0).normalized();
+                fv.assigned = { false, false };
+                fv.frame = { Eigen::Vector3d(), Eigen::Vector3d() };
             }
         }
         face_vectors = new_face_vectors;
+    } else if (!is_seam_cutting) {
+        reset_face_vectors();
     }
     ///////////////////////////////////////
 	update_loop_graph();
@@ -2083,42 +2116,10 @@ void RemeshingMenu::apply_subdivision() {
     F = NF;
     setup_mesh();
     update_polyhedron_tree();
-    reset_face_vectors();
     setup_boundary();
     interpolate_field();
     update_visualization();
-}
-
-void RemeshingMenu::construct_half_edge(std::vector<int>& half_edges) {
-    std::vector<std::unordered_set<int>> v_faces(V.rows(), std::unordered_set<int>());
-    if (igl_v_faces.empty()) {
-        for (int i = 0; i < F.rows(); i++) {
-            int index_0 = F.row(i)[0];
-            int index_1 = F.row(i)[1];
-            int index_2 = F.row(i)[2];
-            v_faces[index_0].emplace(i);
-            v_faces[index_1].emplace(i);
-            v_faces[index_2].emplace(i);
-        }
-    } else { v_faces = igl_v_faces; }
-    for (const SplitEdge& se : split_edges) {
-        std::unordered_set<int> face_ids = v_faces[se.index_0];
-        face_ids.insert(v_faces[se.index_1].begin(), v_faces[se.index_1].end());
-        for (const int face_index : face_ids) {
-            int tri_0 = F.row(face_index)[0];
-            int tri_1 = F.row(face_index)[1];
-            int tri_2 = F.row(face_index)[2];
-            if ((tri_0 == se.index_0 && tri_1 == se.index_1) || (tri_1 == se.index_0 && tri_0 == se.index_1)) {
-                half_edges.push_back(face_index * 3);
-            }
-            if ((tri_1 == se.index_0 && tri_2 == se.index_1) || (tri_2 == se.index_0 && tri_1 == se.index_1)) {
-                half_edges.push_back(face_index * 3 + 1);
-            }
-            if ((tri_2 == se.index_0 && tri_0 == se.index_1) || (tri_0 == se.index_0 && tri_2 == se.index_1)) {
-                half_edges.push_back(face_index * 3 + 2);
-            }
-        }
-    }
+    save_ctrlz();
 }
 
 void RemeshingMenu::get_mesh_information() {

@@ -63,6 +63,11 @@ enum DrawingMode {
     WALE
 };
 
+enum SeamingMode {
+    CUT,
+    NO_CUT
+};
+
 enum MIQMode {
     CROSS,
     POLYVECTOR

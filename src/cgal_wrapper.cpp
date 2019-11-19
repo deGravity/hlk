@@ -4,72 +4,6 @@
 
 namespace hlk {
 
-bool CGAL_2D_Intersection_Segment_Segment(Point_2 s_0_s, Point_2 s_0_e, Point_2 s_1_s, Point_2 s_1_e, Point_2& inter) {
-    if (is_almost_zero(std::sqrt(CGAL::squared_distance(s_0_s, Segment_2(s_1_s, s_1_e))))) {
-        inter = s_0_s;
-        return true;
-    }
-    if (is_almost_zero(std::sqrt(CGAL::squared_distance(s_0_e, Segment_2(s_1_s, s_1_e))))) {
-        inter = s_0_e;
-        return true;
-    }
-    if (is_almost_zero(std::sqrt(CGAL::squared_distance(s_1_s, Segment_2(s_0_s, s_0_e))))) {
-        inter = s_1_s;
-        return true;
-    }
-    if (is_almost_zero(std::sqrt(CGAL::squared_distance(s_1_e, Segment_2(s_0_s, s_0_e))))) {
-        inter = s_1_e;
-        return true;
-    }
-
-    CGAL::Object result = CGAL::intersection(Segment_2(s_0_s, s_0_e), Segment_2(s_1_s, s_1_e));
-    if (const Point_2 *ipoint = CGAL::object_cast<Point_2>(&result)) {
-        inter = *ipoint;
-        return true;
-    } else {
-        return false;
-    }
-}
-
-bool CGAL_2D_Intersection_Ray_Segment(Point_2 ray_s, Point_2 ray_e, Point_2 seg_s, Point_2 seg_e, Point_2& inter) {
-	CGAL::Object result = CGAL::intersection(Ray_2(ray_s, ray_e), Segment_2(seg_s, seg_e));
-	if (const Point_2 * ipoint = CGAL::object_cast<Point_2>(&result)) {
-		inter = *ipoint;
-		return true;
-	} else {
-		return false;
-	}
-}
-
-Eigen::Vector3d CGAL_3D_Projection_Point_Segment(Point_3 p, Point_3 s_s, Point_3 s_e) {
-    Line_3 l(s_s, s_e);
-    Point_3 m_p = l.projection(p);
-
-    double d_m_s = std::sqrt(CGAL::squared_distance(m_p, s_s));
-    double d_m_e = std::sqrt(CGAL::squared_distance(m_p, s_e));
-    double d_s_e = std::sqrt(CGAL::squared_distance(s_s, s_e));
-
-    if (d_m_s >= d_s_e) {
-        m_p = s_e;
-    } else if (d_m_e >= d_s_e) {
-        m_p = s_s;
-    }
-    return Eigen::Vector3d(m_p.x(), m_p.y(), m_p.z());
-}
-
-double CGAL_Distance_Point_Segments(const Eigen::Vector3d& p, const Polyline_type& polyline) {
-	double min_diff = std::numeric_limits<double>::max();
-	for (int i = 0; i < polyline.size() - 1; i++) {
-		double dist = std::sqrt(CGAL::squared_distance(VectorPoint3d(p), Segment_3(polyline[i], polyline[i+1])));
-        min_diff = min(min_diff, dist);
-	}
-	return min_diff;
-}
-
-double CGAL_Distance_Point_Segment(const Eigen::Vector3d& p, const Eigen::Vector3d& s, const Eigen::Vector3d& e){
-	return std::sqrt(CGAL::squared_distance(VectorPoint3d(p), Segment_3(VectorPoint3d(s), VectorPoint3d(e))));
-}
-
 bool point_inside_triangle(Poly_facet_iterator& face, Eigen::Vector3d& p) {
     Point_3 p0 = face->halfedge()->next()->next()->vertex()->point();
     Point_3 p1 = face->halfedge()->vertex()->point();
@@ -119,7 +53,7 @@ bool detect_edge_point(const Point_and_primitive_id& pp, Halfedge_handle& handle
     return true;
 }
 
-bool first_intersection( Halfedge_handle& hh, int nb,
+bool first_intersection(Halfedge_handle& hh, int nb,
     Eigen::Vector3d inside, Eigen::Vector3d outside,
     Halfedge_handle& handle, Eigen::Vector3d& intersection) {
 
@@ -130,6 +64,33 @@ bool first_intersection( Halfedge_handle& hh, int nb,
 
     Point_2 in2d = plane.to_2d(Point_3(inside.x(), inside.y(), inside.z()));
     Point_2 ou2d = plane.to_2d(Point_3(outside.x(), outside.y(), outside.z()));
+
+	auto CGAL_2D_Intersection_Ray_Segment =
+		[&](Point_2 ray_s, Point_2 ray_e, Point_2 seg_s, Point_2 seg_e, Point_2& inter) -> bool {
+			CGAL::Object result = CGAL::intersection(Ray_2(ray_s, ray_e), Segment_2(seg_s, seg_e));
+			if (const Point_2 *ipoint = CGAL::object_cast<Point_2>(&result)) {
+				inter = *ipoint;
+				return true;
+			}
+			return false;
+		};
+
+	auto CGAL_3D_Projection_Point_Segment =
+		[&](Point_3 p, Point_3 s_s, Point_3 s_e) -> Eigen::Vector3d {
+			Line_3 l(s_s, s_e);
+			Point_3 m_p = l.projection(p);
+
+			double d_m_s = std::sqrt(CGAL::squared_distance(m_p, s_s));
+			double d_m_e = std::sqrt(CGAL::squared_distance(m_p, s_e));
+			double d_s_e = std::sqrt(CGAL::squared_distance(s_s, s_e));
+
+			if (d_m_s >= d_s_e) {
+				m_p = s_e;
+			} else if (d_m_e >= d_s_e) {
+				m_p = s_s;
+			}
+			return Point3dVector(m_p);
+		};
 
     for (int i = 0; i < nb; i++) {
         hh = hh->next();
@@ -150,8 +111,7 @@ bool first_intersection( Halfedge_handle& hh, int nb,
 
 int CGAL_Closest_Point(const Tree& tree, const Eigen::Vector3d& point) {
 
-	Point_3 query(point.x(), point.y(), point.z());
-	Point_and_primitive_id pp = tree.closest_point_and_primitive(query);
+	Point_and_primitive_id pp = tree.closest_point_and_primitive(VectorPoint3d(point));
 	Point_3 p = pp.first;
 	Poly_facet_iterator f = pp.second;
 
@@ -179,14 +139,12 @@ int CGAL_Closest_Point(const Tree& tree, const Eigen::Vector3d& point) {
 }
 
 int CGAL_Closest_Face(const Tree& tree, const Eigen::Vector3d& point) {
-	Point_3 query(point.x(), point.y(), point.z());
-	Point_and_primitive_id pp = tree.closest_point_and_primitive(query);
+	Point_and_primitive_id pp = tree.closest_point_and_primitive(VectorPoint3d(point));
 	return  pp.second->id();
 }
 
 Eigen::Vector3d CGAL_Project(const Tree& tree, const Eigen::Vector3d& point) {
-	Point_3 query(point.x(), point.y(), point.z());
-	Point_and_primitive_id pp = tree.closest_point_and_primitive(query);
+	Point_and_primitive_id pp = tree.closest_point_and_primitive(VectorPoint3d(point));
 	return  Point3dVector(pp.first);
 }
 
@@ -197,8 +155,7 @@ std::vector<Eigen::Vector3d> CGAL_Mesh_Projection(
 	std::vector<Eigen::Vector3d> new_features;
 
 	for (int i = 0; i < features.size(); i++) {
-		Point_3 query(features[i].x(), features[i].y(), features[i].z());
-		Point_and_primitive_id pp = tree.closest_point_and_primitive(query);
+		Point_and_primitive_id pp = tree.closest_point_and_primitive(VectorPoint3d(features[i]));
 		Halfedge_handle cur_handle;
 		Eigen::Vector3d n;
 		if (detect_edge_point(pp, cur_handle, n)) {
@@ -219,7 +176,6 @@ std::vector<Eigen::Vector3d> CGAL_Mesh_Projection(
 		Poly_point_3 query(new_features[i].x(), new_features[i].y(), new_features[i].z());
 		Point_and_primitive_id pp = tree.closest_point_and_primitive(query);
 		project_faces.push_back(pp.second);
-		//face_ids.push_back(pp.second->id());
 	}
 
 	// searching for all of the cutting points on edges
@@ -231,9 +187,8 @@ std::vector<Eigen::Vector3d> CGAL_Mesh_Projection(
 	int iteration = 0;
 	int idx = 1;
 
-	//TODO" there are still bugs here!!!!!
+	// TODO: there are still bugs here!!!!!
 	while (true) {
-		// std::cout << "[cgal remesh] " << iteration << "/" << new_features.size() << "\n";
 		// search for the outside point of the current triangle
 		bool goon = false;
 		Halfedge_handle handle;
@@ -243,20 +198,15 @@ std::vector<Eigen::Vector3d> CGAL_Mesh_Projection(
 				inside = new_features[idx];
 				++idx;
 				if (idx > new_features.size() - 1) break;
-			}
-			else {
+			} else {
 				if (point_inside_triangle(cur_face, new_features[idx])) {
 					++idx;
 					if (idx > new_features.size() - 1) break;
-				}
-				else {
-
+				} else {
 					if (first_intersection(cur_handle, (iteration == 0) ? 3 : 2, inside, new_features[idx], handle, intersection)) {
 						goon = true;
 						break;
-					}
-					else
-					{
+					} else {
 						++idx;
 						if (idx > new_features.size() - 1) break;
 					}
@@ -276,13 +226,12 @@ std::vector<Eigen::Vector3d> CGAL_Mesh_Projection(
 		if (cur_face != NULL) {
 			cur_face_id = cur_face->id();
 			if (cur_face_id == project_faces[project_faces.size() - 1]->id()) break;
-		}
-		else { break; }
+		} else { break; }
 
 		++iteration;
 	}
 
-	if(!is_almost_zero((igl_cutting_points.front()- features.front()).norm()))
+	if (!is_almost_zero((igl_cutting_points.front() - features.front()).norm()))
 		igl_cutting_points.insert(igl_cutting_points.begin(), features.front());
 	if (!is_almost_zero((igl_cutting_points.back() - features.back()).norm()))
 		igl_cutting_points.emplace_back(features.back());
@@ -301,8 +250,7 @@ void CGAL_Mesh_Cutting(
     std::vector<Eigen::Vector3d> new_features;
 
     for (int i = 0; i < features.size(); i++) {
-        Point_3 query(features[i].x(), features[i].y(), features[i].z());
-        Point_and_primitive_id pp = tree.closest_point_and_primitive(query);
+        Point_and_primitive_id pp = tree.closest_point_and_primitive(VectorPoint3d(features[i]));
         Halfedge_handle cur_handle;
         Eigen::Vector3d n;
         if (detect_edge_point(pp, cur_handle, n)) {
@@ -455,82 +403,6 @@ Eigen::Vector3d RotationAxis(Eigen::Vector3d p, double angle, Eigen::Vector3d n)
 	return Eigen::Vector3d(outputMatrix[0][0], outputMatrix[0][1], outputMatrix[0][2]);
 }
 
-
-void CGAL_Export_Segment(std::ofstream& export_file_output, int& export_index,
-	std::string s_name, double r, double g, double b, Eigen::Vector3d start, Eigen::Vector3d end, double radius) {
-	Eigen::Vector3d normal = end - start;
-	Eigen::Vector3d base_1 = CGAL_3D_Plane_Base_1(start, normal);
-	double length_base_1 = base_1.norm();
-
-	base_1[0] = base_1[0] / length_base_1 * radius;
-	base_1[1] = base_1[1] / length_base_1 * radius;
-	base_1[2] = base_1[2] / length_base_1 * radius;
-
-	std::vector<Eigen::Vector3d> vecs;
-
-	for (int i = 0; i < 4; i++) {
-		double angle = i * 2 * M_PI / 4;
-		Eigen::Vector3d v = RotationAxis(normal + base_1, angle, normal);
-		vecs.push_back(v + start);
-	}
-	for (int i = 0; i < 4; i++) {
-		vecs.push_back(vecs[i] - normal);
-	}
-
-	std::vector<std::vector<int>> faces;
-
-	int face_index_0[4] = { 0, 1, 2, 3 };
-	int face_index_1[4] = { 5, 1, 0, 4 };
-	int face_index_2[4] = { 4, 0, 3, 7 };
-	int face_index_3[4] = { 5, 4, 7, 6 };
-	int face_index_4[4] = { 7, 3, 2, 6 };
-	int face_index_5[4] = { 6, 2, 1, 5 };
-
-	faces.emplace_back(std::vector<int>(face_index_0, face_index_0 + 4));
-	faces.emplace_back(std::vector<int>(face_index_1, face_index_1 + 4));
-	faces.emplace_back(std::vector<int>(face_index_2, face_index_2 + 4));
-	faces.emplace_back(std::vector<int>(face_index_3, face_index_3 + 4));
-	faces.emplace_back(std::vector<int>(face_index_4, face_index_4 + 4));
-	faces.emplace_back(std::vector<int>(face_index_5, face_index_5 + 4));
-
-	export_file_output << "g " + s_name << std::endl;
-
-	for (int i = 0; i < vecs.size(); i++) {
-		export_file_output << "v " << vecs[i][0] << " " << vecs[i][1] << " " << vecs[i][2] << " " << r << " " << g << " " << b << std::endl;
-	}
-
-	for (int i = 0; i < faces.size(); i++) {
-		export_file_output << "f ";
-		for (int j = 0; j < faces[i].size(); j++) {
-			export_file_output << faces[i][j] + export_index << " ";
-		}
-		export_file_output << "" << std::endl;
-	}
-
-	export_index += 8;
-}
-
-
-void CGAL_Export_Segments(std::string path, double r, double g, double b, double radius, const std::vector<Eigen::Vector3d>& points) {
-	std::ofstream export_file_output(path);
-	int export_index = 1;
-	for (int i = 0; i < points.size() - 1; i++)
-		CGAL_Export_Segment(export_file_output, export_index, "segments", r, g, b, points[i], points[i + 1], radius);
-	export_file_output.clear();
-	export_file_output.close();
-}
-
-
-void CGAL_Export_Segments(std::string path, double r, double g, double b, double radius, const std::vector<std::vector<Eigen::Vector3d>>& segments) {
-	std::ofstream export_file_output(path);
-	int export_index = 1;
-	for(int i=0;i<segments.size();i++)
-		for(int j=0;j<segments[i].size()-1;j++)
-			CGAL_Export_Segment(export_file_output, export_index, "segments_"+std::to_string(i), r, g, b, segments[i][j], segments[i][j+1], radius);
-	export_file_output.clear();
-	export_file_output.close();
-}
-
 void CGAL_Plane_Cutting(const Polyhedron_3 &mesh, const Tree& tree, const Eigen::Vector3d& plane_p,
 		const Eigen::Vector3d& plane_n, std::vector<Eigen::Vector3d>& loop_polyline) {
 
@@ -539,6 +411,15 @@ void CGAL_Plane_Cutting(const Polyhedron_3 &mesh, const Tree& tree, const Eigen:
 
 	CGAL::Polygon_mesh_slicer<Polyhedron_3, K> slicer(mesh);
 	slicer(K::Plane_3(VectorPoint3d(plane_p), Vector_3(plane_n[0], plane_n[1], plane_n[2])), std::back_inserter(loop_polylines));
+
+	auto CGAL_Distance_Point_Segments = [&](const Eigen::Vector3d& p, const Polyline_type& polyline) -> double {
+		double min_diff = std::numeric_limits<double>::max();
+		for (int i = 0; i < polyline.size() - 1; i++) {
+			double dist = std::sqrt(CGAL::squared_distance(VectorPoint3d(p), Segment_3(polyline[i], polyline[i+1])));
+			min_diff = min(min_diff, dist);
+		}
+		return min_diff;
+	};
 
 	double min_diff = std::numeric_limits<double>::max();
 	for (const auto& pl : loop_polylines) {
@@ -584,6 +465,8 @@ Eigen::Vector3d CGAL_Plane_Projection(const Eigen::Vector3d& point, const Eigen:
 	K::Plane_3 plane(VectorPoint3d(plane_p), Vector_3(plane_n[0], plane_n[1], plane_n[2]));
 	return Point3dVector(plane.projection(VectorPoint3d(point)));
 }
+
+// Export utilities for debugging.
 
 void CGAL_Export_Point(std::ofstream& export_file_output, int& export_index,
 	std::string s_name, double r, double g, double b, const Eigen::Vector3d &point, double radius) {
@@ -645,6 +528,79 @@ void CGAL_Export_Points(std::string path, double r, double g, double b, double r
 	for(int i=0;i<pointses.size();i++)
 		for (const auto& point : pointses[i])
 		CGAL_Export_Point(export_file_output, export_index, "points_"+std::to_string(i), r, g, b, point, radius);
+	export_file_output.clear();
+	export_file_output.close();
+}
+
+void CGAL_Export_Segment(std::ofstream& export_file_output, int& export_index,
+	std::string s_name, double r, double g, double b, Eigen::Vector3d start, Eigen::Vector3d end, double radius) {
+	Eigen::Vector3d normal = end - start;
+	Eigen::Vector3d base_1 = CGAL_3D_Plane_Base_1(start, normal);
+	double length_base_1 = base_1.norm();
+
+	base_1[0] = base_1[0] / length_base_1 * radius;
+	base_1[1] = base_1[1] / length_base_1 * radius;
+	base_1[2] = base_1[2] / length_base_1 * radius;
+
+	std::vector<Eigen::Vector3d> vecs;
+
+	for (int i = 0; i < 4; i++) {
+		double angle = i * 2 * M_PI / 4;
+		Eigen::Vector3d v = RotationAxis(normal + base_1, angle, normal);
+		vecs.push_back(v + start);
+	}
+	for (int i = 0; i < 4; i++) {
+		vecs.push_back(vecs[i] - normal);
+	}
+
+	std::vector<std::vector<int>> faces;
+
+	int face_index_0[4] = { 0, 1, 2, 3 };
+	int face_index_1[4] = { 5, 1, 0, 4 };
+	int face_index_2[4] = { 4, 0, 3, 7 };
+	int face_index_3[4] = { 5, 4, 7, 6 };
+	int face_index_4[4] = { 7, 3, 2, 6 };
+	int face_index_5[4] = { 6, 2, 1, 5 };
+
+	faces.emplace_back(std::vector<int>(face_index_0, face_index_0 + 4));
+	faces.emplace_back(std::vector<int>(face_index_1, face_index_1 + 4));
+	faces.emplace_back(std::vector<int>(face_index_2, face_index_2 + 4));
+	faces.emplace_back(std::vector<int>(face_index_3, face_index_3 + 4));
+	faces.emplace_back(std::vector<int>(face_index_4, face_index_4 + 4));
+	faces.emplace_back(std::vector<int>(face_index_5, face_index_5 + 4));
+
+	export_file_output << "g " + s_name << std::endl;
+
+	for (int i = 0; i < vecs.size(); i++) {
+		export_file_output << "v " << vecs[i][0] << " " << vecs[i][1] << " " << vecs[i][2] << " " << r << " " << g << " " << b << std::endl;
+	}
+
+	for (int i = 0; i < faces.size(); i++) {
+		export_file_output << "f ";
+		for (int j = 0; j < faces[i].size(); j++) {
+			export_file_output << faces[i][j] + export_index << " ";
+		}
+		export_file_output << "" << std::endl;
+	}
+
+	export_index += 8;
+}
+
+void CGAL_Export_Segments(std::string path, double r, double g, double b, double radius, const std::vector<Eigen::Vector3d>& points) {
+	std::ofstream export_file_output(path);
+	int export_index = 1;
+	for (int i = 0; i < points.size() - 1; i++)
+		CGAL_Export_Segment(export_file_output, export_index, "segments", r, g, b, points[i], points[i + 1], radius);
+	export_file_output.clear();
+	export_file_output.close();
+}
+
+void CGAL_Export_Segments(std::string path, double r, double g, double b, double radius, const std::vector<std::vector<Eigen::Vector3d>>& segments) {
+	std::ofstream export_file_output(path);
+	int export_index = 1;
+	for(int i=0;i<segments.size();i++)
+		for(int j=0;j<segments[i].size()-1;j++)
+			CGAL_Export_Segment(export_file_output, export_index, "segments_"+std::to_string(i), r, g, b, segments[i][j], segments[i][j+1], radius);
 	export_file_output.clear();
 	export_file_output.close();
 }

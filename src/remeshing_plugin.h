@@ -32,6 +32,7 @@ public:
         symmetry_mode_xz = false;
         symmetry_mode_xy = false;
         symmetrize_nrosy = false;
+        symmetrize_loops = false;
         has_direction_field = false;
         has_integer_grid = false;
         has_curl = false;
@@ -45,8 +46,8 @@ public:
 
         viewing_mode = ViewingMode::MESH_ONLY;
         drawing_mode = DrawingMode::WALE;
+        seaming_mode = SeamingMode::NO_CUT;
         miq_mode = MIQMode::CROSS;
-        cardinal = Cardinal::N;
         line_texture(texture_R, texture_G, texture_B);
         direction_field = { Eigen::MatrixXd(), Eigen::MatrixXd() };
     }
@@ -83,8 +84,7 @@ public:
     void setup_mesh();
     void get_mesh_information();
     bool model_loaded() { return V.rows() > 0 && F.rows() > 0; }
-    void construct_half_edge(std::vector<int>& half_edges);
-    void update_polyhedron_tree(const std::vector<int>& face_refs = std::vector<int>());
+    void update_polyhedron_tree(const std::vector<int>& face_refs = std::vector<int>(), bool is_seam_cutting = false);
     void apply_subdivision();
 
     void assign_vector(int face_id, Eigen::Vector3d n);
@@ -98,7 +98,7 @@ public:
 
     void split_mesh();
     void geodesic_split_mesh();
-    void split_existing_edges(int index_0, int index_1, int insert_index);
+    void split_existing_edges(int index_0, int index_1, int insert_index, std::vector<SplitEdge>& seam);
     void symmetry_split_mesh(std::vector<int> axes, int start, int end);
     void symmetry_split_mesh(std::vector<int> axes, const std::vector<Eigen::Vector3d>& feature_points_save);
     void symmetry_split_mesh(const std::vector<Eigen::Vector3d>& feature_points_save);
@@ -176,7 +176,7 @@ public:
     
     // directional faces
     std::vector<FaceVector> face_vectors;
-    std::vector<SplitEdge> split_edges;
+    std::vector<std::vector<SplitEdge>> seams;
 
 	// loops data
 	std::vector<TM_Node> loop_gi_nodes;
@@ -248,11 +248,11 @@ public:
     std::string in_path, out_path, input_model;
     ViewingMode viewing_mode;
     DrawingMode drawing_mode;
+    SeamingMode seaming_mode;
     MIQMode miq_mode;
-    Cardinal cardinal;
 
     bool symmetry_mode_yz, symmetry_mode_xz, symmetry_mode_xy;
-    bool symmetrize_nrosy;
+    bool symmetrize_nrosy, symmetrize_loops;
     int rosy;
 
     bool show_axis, show_stitches, multi_points_drawing;

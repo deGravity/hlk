@@ -42,16 +42,6 @@ typedef Tree::Point_and_primitive_id Point_and_primitive_id;
 typedef std::vector<K::Point_3> Polyline_type;
 typedef std::list<Polyline_type> Polylines;
 
-//TODO(HAISEN): move these functions as inner functions
-bool CGAL_2D_Intersection_Segment_Segment(Point_2 s_0_s, Point_2 s_0_e, Point_2 s_1_s, Point_2 s_1_e, Point_2& inter);
-
-bool CGAL_2D_Intersection_Ray_Segment(Point_2 ray_s, Point_2 ray_e, Point_2 seg_s, Point_2 seg_e, Point_2& inter);
-
-Eigen::Vector3d CGAL_3D_Projection_Point_Segment(Point_3 p, Point_3 s_s, Point_3 s_e);
-
-double CGAL_Distance_Point_Segments(const Eigen::Vector3d &p,const Polyline_type& polyline);
-double CGAL_Distance_Point_Segment(const Eigen::Vector3d& p, const Eigen::Vector3d& s, const Eigen::Vector3d& e);
-
 bool first_intersection(Halfedge_handle& hh, int nb,
     Eigen::Vector3d inside, Eigen::Vector3d outside,
     Halfedge_handle& handle, Eigen::Vector3d& intersection);
@@ -81,6 +71,8 @@ void CGAL_Plane_Cutting(const Polyhedron_3& mesh, const Tree& tree,
 
 std::vector<Eigen::Vector3d> CGAL_Plane_Projection(const std::vector<Eigen::Vector3d>& points, const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
 Eigen::Vector3d CGAL_Plane_Projection(const Eigen::Vector3d &point, const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
+
+// Export utilities for debugging.
 
 void CGAL_Export_Point(std::ofstream& export_file_output, int& export_index,
 	std::string s_name, double r, double g, double b, const Eigen::Vector3d& point, double radius);

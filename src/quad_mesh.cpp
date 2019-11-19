@@ -92,8 +92,7 @@ namespace hlk {
 		for (int side = 0; side < F_t.rows(); ++side) {
 			if (is_boundary_side[side]) {
 				unique_sides.row(i++) = F_t.block(side, 0, 1, 2);
-			}
-			else {
+			} else {
 				if (F_t(side, 0) < F_t(side, 1)) {
 					unique_sides.row(i++) = F_t.block(side, 0, 1, 2);
 					sides_to_edges[side] = edge;
@@ -315,8 +314,6 @@ namespace hlk {
                     }
                 }
 
-                if (found) break;
-
                 curr_he = flip_side(opp_he);
                 ++count;
                 if (visited.find(curr_he) != visited.end()) break;
@@ -334,6 +331,20 @@ namespace hlk {
                     if (flip_side(he) < 0) break;
                     he = flip_side(he);
                     if (he == curr_he_save) break;
+                }
+                curr_he_save = flip_side(curr_he_save);
+                if (curr_he_save >= 0) {
+					he = curr_he_save;
+                    while (true) {
+                        int quad_face = quad(he);
+                        for (const int he : sides(quad_face)) {
+                            curr_helix.emplace(he);
+                        }
+                        he = opposite_side(he);
+                        if (flip_side(he) < 0) break;
+                        he = flip_side(he);
+                        if (he == curr_he_save) break;
+                    }
                 }
                 if (helix.size() < curr_helix.size()) {
                     helix = curr_helix;
