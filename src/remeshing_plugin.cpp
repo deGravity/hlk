@@ -61,13 +61,17 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
                 std::cout << "Unable to save raw field. Error: " << errno << "\n";
             }
         } else {
+            bool should_draw = false;
             if (key == '1') {
                 globalRotation += 0.314;
                 update_raw_field();
+                should_draw = true;
             } else if (key == '-' || key == '_') {
                 cycleIndices(currCycle)--;
+                should_draw = true;
             } else if (key == '+' || key == '=') {
                 cycleIndices(currCycle)++;
+                should_draw = true;
             } else if (key == 'B') {
                 if (numBoundaries) {
                     // loop through the boundary cycles.
@@ -76,6 +80,7 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
                     } else {
                         currCycle = basisCycles.rows() - numBoundaries - numGenerators;
                     }
+                    should_draw = true;
                 }
             } else if (key == 'G') {
                 if (numGenerators) {
@@ -85,10 +90,13 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
                     } else {
                         currCycle = basisCycles.rows() - numGenerators;
                     }
+                    should_draw = true;
                 }
             }
-            viewing_mode = ViewingMode::MESH_SING;
-            update_visualization(key);
+            if (should_draw) {
+                viewing_mode = ViewingMode::MESH_SING;
+                update_visualization(key);
+            }
         }
 
 		if (czsl.ctrl && czsl.s) viewer.open_dialog_save_mesh();
