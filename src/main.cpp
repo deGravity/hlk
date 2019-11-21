@@ -82,22 +82,40 @@ int main(int argc, char* argv[]) {
 
     if (args.size() == 0) { std::cout << "Running in GUI mode.\n"; }
 
+    int mode = 1;
+    std::cout << "Choose an Interface\n"
+        << "1) Remeshing\n"
+        << "2) Labeling\n";
+
+#ifdef HAISEN
+    mode = 1;
+#else
+    // std::cin >> mode;
+#endif
+
     igl::opengl::glfw::Viewer viewer;
-    RemeshingMenu remeshing_menu(rosy, input_path, output_path);
-    try {
-        if (!input_model.empty()) {
-            remeshing_menu.set_input_model(input_model);
+    if (mode == 1) {
+        RemeshingMenu remeshing_menu(rosy, input_path, output_path);
+        try {
+            if (!input_model.empty()) {
+                remeshing_menu.set_input_model(input_model);
+            }
+            viewer.plugins.push_back(&remeshing_menu);
+            viewer.launch();
+        } catch (const std::runtime_error & e) {
+            std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
+            if (remeshing_menu.save_workspace()) {
+                std::cout << "all work saved.\n";
+            } else {
+                std::cout << "failed to save state...\n";
+            }
+            return -1;
         }
-        viewer.plugins.push_back(&remeshing_menu);
+    } else {
+        LabelingUI labelingui;
+        viewer.plugins.push_back(&labelingui);
         viewer.launch();
-    } catch (const std::runtime_error & e) {
-        std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
-        if (remeshing_menu.save_workspace()) {
-            std::cout << "all work saved.\n";
-        } else {
-            std::cout << "failed to save state...\n";
-        }
-        return -1;
     }
+
     return 0;
 }

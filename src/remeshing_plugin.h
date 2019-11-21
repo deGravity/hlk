@@ -33,6 +33,7 @@ public:
         symmetry_mode_xy = false;
         symmetrize_nrosy = false;
         symmetrize_loops = false;
+        should_setup_boundary = true;
         has_direction_field = false;
         has_integer_grid = false;
         has_curl = false;
@@ -59,6 +60,8 @@ public:
             remove(temp.face.c_str());
             remove(temp.edge.c_str());
         }
+        remove(in_path.c_str());
+        remove(out_path.c_str());
 	};
 
     void init(igl::opengl::glfw::Viewer* _viewer);
@@ -114,6 +117,13 @@ public:
 	void draw_a_segment(const Eigen::Vector3d v0, const Eigen::Vector3d v1, 
         const int color_index, const double face_dis = -1., const int data_index = 0);
 	void draw_segments(const std::vector<Eigen::Vector3d>& segments, const int color_index, const double face_dis = -1.);
+    /* Color - Index mapping:
+           red - 0
+         green - 1
+          blue - 2
+        orange - 3
+         black - 4
+     */
     void draw_a_point(const Eigen::Vector3d v, const int color_index, const double face_dis = -1.);
     void draw_points(const std::vector<Eigen::Vector3d>& vecs, const int color_index, const double face_dis = -1.);
 
@@ -252,7 +262,7 @@ public:
     MIQMode miq_mode;
 
     bool symmetry_mode_yz, symmetry_mode_xz, symmetry_mode_xy;
-    bool symmetrize_nrosy, symmetrize_loops;
+    bool symmetrize_nrosy, symmetrize_loops, should_setup_boundary;
     int rosy;
 
     bool show_axis, show_stitches, multi_points_drawing;

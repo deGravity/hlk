@@ -38,6 +38,8 @@ void RemeshingMenu::reset_field() {
     seams.clear();
     setup_boundary();
     interpolate_field();
+    update_visualization();
+    save_ctrlz();
 }
 
 void RemeshingMenu::init_curvature_field() {
@@ -63,6 +65,8 @@ void RemeshingMenu::init_curvature_field() {
 }
 
 void RemeshingMenu::setup_boundary() {
+    if (!should_setup_boundary) return;
+
 	std::vector<std::vector<int>> indices;
 	igl::boundary_loop(F, indices);
 
@@ -202,6 +206,7 @@ void RemeshingMenu::update_vectors_from_field(int direction) {
     // Populate face vectors.
     const Eigen::MatrixXd& PD1 = direction_field[direction];
     for (int i = 0; i < F.rows(); ++i) {
+        if (face_vectors[i].assigned[direction]) continue;
         double x = PD1.row(i) * B1.row(i).transpose();
         double y = PD1.row(i) * B2.row(i).transpose();
         double angle = atan2(y, x);
@@ -283,6 +288,7 @@ void RemeshingMenu::interpolate_field() {
         directional::polyvector_to_raw(V, F, polyvector_field, rosy, rawField);
 
         viewing_mode = ViewingMode::MESH_FIELD;
+        update_visualization();
 
     } else { // miq_mode == MIQMode::CROSS
 
@@ -290,19 +296,25 @@ void RemeshingMenu::interpolate_field() {
         update_vectors_from_field();
         directional::representative_to_raw(V, F, direction_field[1], rosy, rawField);
 
+        viewing_mode = ViewingMode::MESH_ONLY;
+        update_visualization();
+
         int s_count = 0;
         for (int i = 0; i < S.rows(); ++i) {
-            s_count += S(i) > 0.01 ? 1 : 0;
+            if (S(i) < -0.001) {
+                s_count += 1;
+                draw_a_point(V.row(i), 0);
+            } else if (S(i) > 0.001) {
+                s_count += 1;
+                draw_a_point(V.row(i), 2);
+            }
         }
         std::cout << "Singularity Count = " << s_count << "\n";
-
-        viewing_mode = ViewingMode::MESH_ONLY;
     }
 
     has_direction_field = true;
     has_integer_grid = false;
     has_curl = false;
-    update_visualization();
 }
 
 void RemeshingMenu::generate_integer_grid() {

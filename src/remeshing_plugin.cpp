@@ -115,7 +115,7 @@ void RemeshingMenu::draw_viewer_menu() {
         if (ImGui::Button("Save##Mesh", ImVec2((w - p) / 2.f, 0))) {
             viewer->open_dialog_save_mesh();
         }
-        if (ImGui::Button("Load Field##Mesh", ImVec2((w - p) / 2.f, 0))) {
+        /*if (ImGui::Button("Load Field##Mesh", ImVec2((w - p) / 2.f, 0))) {
             std::string fname = igl::file_dialog_open();
             if (fname.length() == 0) return;
             directional::read_raw_field(fname, rosy, rawField);
@@ -135,17 +135,14 @@ void RemeshingMenu::draw_viewer_menu() {
                 directional::representative_to_raw(V, F, direction_field[1], rosy, rawField);
                 directional::write_raw_field(fname, rawField);
             }
-        }
+        }*/
         if (ImGui::Button("Clear Loops##Mesh", ImVec2((w - p) / 2.f, 0))) {
             clear_loops();
             update_visualization();
-            save_ctrlz();
         }
         ImGui::SameLine(0, p);
         if (ImGui::Button("Reset Field##Mesh", ImVec2((w - p) / 2.f, 0))) {
             reset_field();
-            update_visualization();
-            save_ctrlz();
         }
         if (ImGui::Button("Subdivide Mesh", ImVec2(w - p, 0))) {
             apply_subdivision();
@@ -204,6 +201,7 @@ void RemeshingMenu::draw_viewer_menu() {
 
             // Direction field controls
             ImGui::Text("===Field Operations===");
+            ImGui::Checkbox("Should setup boundary", &should_setup_boundary);
             /*if (ImGui::Button("Initialize field from principal curvatures", ImVec2(w - p, 0))) {
                 init_curvature_field();
                 viewing_mode = ViewingMode::MESH_ONLY;
@@ -225,18 +223,16 @@ void RemeshingMenu::draw_viewer_menu() {
                     generate_integer_grid();
                     viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
                 }
-                if (miq_mode == MIQMode::POLYVECTOR) {
-                    if (ImGui::Button("Init Curl", ImVec2((w - p) / 2.f, 0))) {
-                        init_curl();
-                        if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD)
-                            update_visualization();
-                    }
-                    ImGui::SameLine(0, p);
-                    if (ImGui::Button("Reduce Curl", ImVec2((w - p) / 2.f, 0))) {
-                        reduce_curl();
-                        if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD)
-                            update_visualization();
-                    }
+                if (ImGui::Button("Init Curl", ImVec2((w - p) / 2.f, 0))) {
+                    init_curl();
+                    if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD)
+                        update_visualization();
+                }
+                ImGui::SameLine(0, p);
+                if (ImGui::Button("Reduce Curl", ImVec2((w - p) / 2.f, 0))) {
+                    reduce_curl();
+                    if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD)
+                        update_visualization();
                 }
             }
             // Quad controls
@@ -398,7 +394,6 @@ void RemeshingMenu::setup_mesh() {
 
     // Pass through the symmetrizer to find symmetries.
     symmetrizer = Symmetrizer(V, F);
-    // symmetrizer.symmetrize_geometry(V);
     symmetry_mode_yz = symmetrizer.has_vertex_symmetry(0);
     symmetry_mode_xz = symmetrizer.has_vertex_symmetry(1);
     symmetry_mode_xy = symmetrizer.has_vertex_symmetry(2);
@@ -997,7 +992,6 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
 						feature_points.push_back(geodesic_point_1);
 						/////////////////////////////////////////////
 						if (geodesic_index >= 0 && geodesic_index_1 >= 0 && !existing_edge_label) {
-							geodesic_path.clear();
 							std::vector<int>().swap(geodesic_path);
 							graph_dijkstra(graph_adj, geodesic_index, geodesic_index_1, geodesic_path);
 							existing_edge_label = true;
