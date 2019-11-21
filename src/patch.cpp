@@ -1,6 +1,22 @@
 #include "patch.h"
 
 namespace hlk {
+
+
+	void make_left_dec(int bottom, int top, int height) {
+
+		std::vector<int> rowWidths(height);
+		std::vector<int> rowDeltas(height - 1);
+
+		for (int i = 0; i < height; ++i) {
+			rowWidths[i] = (bottom - top) * i / (height - 1);
+		}
+
+		for (int i = 0; i < height - 1; ++i) {
+			rowDeltas[i] = rowWidths[i + 1] - rowWidths[i];
+		}
+	}
+
 	Patch::Patch(std::vector<std::vector<int>> sides, Eigen::MatrixXd corners)
 	{
 		// Assume Loop_In, Yarn_Out, Loop_Out, Yarn_In order
