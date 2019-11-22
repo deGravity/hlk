@@ -1,5 +1,8 @@
 #include "patch.h"
 
+#include <deque>
+#include <queue>
+
 namespace hlk {
 
 
@@ -15,6 +18,26 @@ namespace hlk {
 		for (int i = 0; i < height - 1; ++i) {
 			rowDeltas[i] = rowWidths[i + 1] - rowWidths[i];
 		}
+	}
+
+	void Patch::make_graph(std::vector<std::vector<ChartCell>> chart)
+	{
+		std::vector<int> side_lengths;
+		for (auto& side : sides) {
+			int accum = 0;
+			for (auto& l : side) {
+				accum += l;
+			}
+			side_lengths.push_back(accum);
+		}
+		std::queue<std::shared_ptr<KnitGraphEdge>> loop_edges;
+		std::deque<KnitGraphEdge> yarn_edges;
+		boundaries.resize(4);
+
+		for (int i = 0; i < side_lengths[0]; ++i) {
+			loop_edges.push(std::make_shared<KnitGraphEdge>());
+		}
+		
 	}
 
 	Patch::Patch(std::vector<std::vector<int>> sides, Eigen::MatrixXd corners)
