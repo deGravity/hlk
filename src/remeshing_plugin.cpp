@@ -44,7 +44,15 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
     _viewer->core().background_color = Eigen::Vector4f(0.792f, 0.792f, 0.878f, 1.000f);
     _viewer->data().line_width = 0.1f;
     _viewer->data().point_size = 0.5f;
-    _viewer->core().camera_zoom = 2.f;
+    _viewer->core().camera_zoom = 1.f;
+
+    // Set up multiple meshes for visualization.
+    _viewer->append_mesh(); // quad mesh        = 1
+    _viewer->append_mesh(); // deformed mesh    = 2
+    _viewer->append_mesh(); // raw field mesh   = 3
+    _viewer->append_mesh(); // singularity mesh = 4
+    _viewer->append_mesh(); // seam mesh        = 5
+    _viewer->selected_data_index = 0;
 
 	// This function is called every time a keyboard button is pressed
 	auto key_down = [&](igl::opengl::glfw::Viewer & viewer, unsigned char key, int modifier) {
@@ -431,16 +439,10 @@ bool RemeshingMenu::load(std::string filename) {
     viewer->data().lines = Eigen::MatrixXd(0, 9);
     viewer->data().set_face_based(true);
 
-    // Set up multiple meshes for visualization.
-    viewer->append_mesh(); // quad mesh        = 1
-    viewer->append_mesh(); // deformed mesh    = 2
-    viewer->append_mesh(); // raw field mesh   = 3
-    viewer->append_mesh(); // singularity mesh = 4
-    viewer->append_mesh(); // seam mesh        = 5
-    viewer->selected_data_index = 0;
     update_visualization();
 
 	if (temps.empty()) save_ctrlz();
+
     return true;
 }
 
