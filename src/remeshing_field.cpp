@@ -25,7 +25,7 @@ bool RemeshingMenu::save_raw_field() {
     std::string fname = igl::file_dialog_save();
     if (fname.length() == 0) return false;
     if (miq_mode == MIQMode::POLYVECTOR) {
-        return directional::write_raw_field(fname, combedField);
+        return directional::write_raw_field(fname, rawField);
     } else {
         directional::representative_to_raw(V, F, direction_field[1], rosy, rawField);
         return directional::write_raw_field(fname, rawField);
@@ -218,6 +218,7 @@ void RemeshingMenu::update_vectors_from_field(int direction) {
     // Populate face vectors.
     const Eigen::MatrixXd& PD1 = direction_field[direction];
     for (int i = 0; i < F.rows(); ++i) {
+        if (face_vectors[i].assigned[direction]) continue;
         double x = PD1.row(i) * B1.row(i).transpose();
         double y = PD1.row(i) * B2.row(i).transpose();
         double angle = atan2(y, x);
@@ -308,7 +309,7 @@ void RemeshingMenu::interpolate_field() {
 
         int s_count = 0;
         for (int i = 0; i < S.rows(); ++i) {
-            s_count += S(i) > 0.01 ? 1 : 0;
+            s_count += abs(S(i)) > 0.001 ? 1 : 0;
         }
         std::cout << "Singularity Count = " << s_count << "\n";
 
@@ -329,6 +330,7 @@ void RemeshingMenu::generate_integer_grid() {
             rawField, combedField,
             combedMatching, combedEffort,
             singVertices, singIndices,
+            //curlSingVertices, curlSingIndices,
             VMeshCut, FMeshCut, cutUV,
             1. / gradient_size,
             isInteger
@@ -384,7 +386,7 @@ void RemeshingMenu::init_curl() {
         c_b, c_bc, c_blevel,
         rawField, combedField,
         combedMatching, combedEffort,
-        curl, singVertices, singIndices,
+        curl, curlSingVertices, curlSingIndices,
         AE2F, curlMax, curlMaxOrig);
     has_curl = true;
 }
@@ -394,7 +396,7 @@ void RemeshingMenu::reduce_curl() {
         V, F, rosy, EV, EF, FE,
         rawField, combedField,
         combedMatching, combedEffort,
-        curl, singVertices, singIndices,
+        curl, curlSingVertices, curlSingIndices,
         curlMax);
     if (miq_mode == MIQMode::CROSS) {
         direction_field[1] = combedField.block(0, 0, F.rows(), 3);
@@ -408,7 +410,7 @@ void RemeshingMenu::init_quad_seams() {
     aabb_tree.init(quad_mesh.V, quad_mesh.F_t);
 
     quad_mesh.is_seam_edge.clear();
-    quad_mesh.is_seam_edge = std::vector<bool>(quad_mesh.e, false);
+    quad_mesh.is_seam_edge = std::vector<bool>(4 * quad_mesh.m, false);
     for (const SplitEdge& se : split_edges) {
         Eigen::Vector3d v0 = V.row(se.index_0);
         Eigen::Vector3d v1 = V.row(se.index_1);
@@ -437,7 +439,11 @@ void RemeshingMenu::quad_helix_finding() {
         for (auto iter = longest_helix.begin(); iter != longest_helix.end(); ++iter) {
             interactive_colors.row((*iter)) = Eigen::RowVector3d(0.8, 1., 0.6);
         }
+        for (int face : quad_mesh.singular_quads) {
+            interactive_colors.row(face) = Eigen::RowVector3d(1., 0., 0.6);
+        }
         stylize_quad_mesh(interactive_colors);
+
     } else {
         std::cout << "[remeshing] helix free!\n";
     }
@@ -446,11 +452,6 @@ void RemeshingMenu::quad_helix_finding() {
 void RemeshingMenu::setup_basis_cycles() {
     directional::dual_cycles(V, F, EV, EF, basisCycles, cycleCurvature, vertex2cycle, innerEdges);
     cycleIndices = Eigen::VectorXi::Constant(basisCycles.rows(), 0);
-
-    if (singVertices.size() == 0 || singIndices.size() == 0) { init_curl(); }
-    // TODO: figure out whether loading singularities is necessary/whether curl's singularity is good enough
-    // Eigen::VectorXi singVertices, singIndices;
-    // directional::read_singularities(TUTORIAL_SHARED_PATH "/fertility.sings", N, singVertices, singIndices);
 
     for (int i = 0; i < singVertices.size(); i++)
         cycleIndices(vertex2cycle(singVertices(i))) = singIndices(i);
@@ -507,22 +508,27 @@ void RemeshingMenu::update_raw_field() {
         std::cout << "Expected: " << eulerChar * N << "/" << N << std::endl;
     }
 
-    compute_target_curvature();
+    //compute_target_curvature();
+    //directional::index_prescription(
+    //    V, F, EV, innerEdges, basisCycles, targetCurvature,
+    //    cycleCurvature, cycleIndices, ldltSolver, N, field_guidance_weight,
+    //    rotationAngles, linfError);
+
     Eigen::VectorXd rotationAngles;
     double linfError;
     directional::index_prescription(
-        V, F, EV, innerEdges, basisCycles, targetCurvature,
-        cycleCurvature, cycleIndices, ldltSolver, N, field_guidance_weight,
+        V, F, EV, innerEdges, basisCycles,
+        cycleCurvature, cycleIndices, ldltSolver, N,
         rotationAngles, linfError);
     std::cout << "Index prescription linfError: " << linfError << std::endl;
 
     Eigen::MatrixXd representative;
     directional::rotation_to_representative(V, F, EV, EF, rotationAngles, N, globalRotation, representative);
+    direction_field[1] = representative;
     directional::representative_to_raw(V, F, representative, N, rawField);
 }
 
 void RemeshingMenu::update_singularities() {
-    // TODO: look here if singularities don't work out
     std::vector<int> singVerticesList, singIndicesList;
     for (int i = 0; i < V.rows(); i++) {
         if (cycleIndices(vertex2cycle(i))) {

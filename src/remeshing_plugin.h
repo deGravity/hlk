@@ -23,6 +23,7 @@ public:
 
         click_threshold = 0.1f;
         soft_constraint_strength = 0.5f;
+        field_guidance_weight = 0.5f;
         gradient_size = 50.0f;
         stiffen_iter = 0;
 
@@ -51,7 +52,7 @@ public:
         direction_field = { Eigen::MatrixXd(), Eigen::MatrixXd() };
 
         currCycle = 0;
-        N = rosy; // degree of field
+        N = 4; // degree of field
         globalRotation = 0.;
         singularitySelect = false;
     }
@@ -63,6 +64,8 @@ public:
             remove(temp.face.c_str());
             remove(temp.edge.c_str());
         }
+        remove(in_path.c_str());
+        remove(out_path.c_str());
 	};
 
     void init(igl::opengl::glfw::Viewer* _viewer);
@@ -249,7 +252,7 @@ public:
     Eigen::VectorXi combedMatching;
     Eigen::VectorXd combedEffort;
     Eigen::VectorXd curl; // norm of curl per edge
-    Eigen::VectorXi singVertices, singIndices;
+    Eigen::VectorXi curlSingVertices, curlSingIndices;
     Eigen::SparseMatrix<double> AE2F; // averaging curl to faces for visualization
     double curlMax, curlMaxOrig;
     Eigen::VectorXi c_b, c_blevel;
@@ -257,6 +260,7 @@ public:
 
     // trivial connections data
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > ldltSolver;
+    Eigen::VectorXi singVertices, singIndices;
     Eigen::VectorXi cycleIndices;
     Eigen::VectorXd cycleCurvature, targetCurvature;
     Eigen::SparseMatrix<double> basisCycles;
