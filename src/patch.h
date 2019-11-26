@@ -7,20 +7,13 @@
 
 namespace hlk {
 
-	enum class ChartEdge {
-		KNIT,
-		PURL,
-		SLIP
-	};
-
 	struct ChartCell {
 		int num_inputs;
 		std::vector<int> input_order;
-		std::vector<ChartEdge> outputs;
-		std::vector<int> output_signs;
+		std::vector<LoopType> outputs;
+		std::vector<LoopSign> output_signs;
 		bool has_yarn_in;
 		bool has_yarn_out;
-		
 	};
 	
 	struct Patch {

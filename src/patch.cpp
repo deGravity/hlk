@@ -37,6 +37,9 @@ namespace hlk {
 		for (int i = 0; i < side_lengths[0]; ++i) {
 			loop_edges.push(std::make_shared<KnitGraphEdge>());
 		}
+
+		for (auto& row : chart) {
+		}
 		
 	}
 

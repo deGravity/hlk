@@ -1,23 +1,56 @@
 #pragma once
 
-#include <eigen/Core>
+#include <Eigen/Core>
+#include <vector>
 
 namespace hlk {
 
+	enum class LoopType {
+		KNIT,
+		PURL,
+		SLIP
+	};
+
+	enum class LoopSign {
+		PLUS,
+		MINUS,
+		NONE
+	};
+
 	struct KnitGraphEdge {
-		bool is_loop;
-		std::shared_ptr<KnitGraphNode> neighbor;
+		std::shared_ptr<KnitGraphNode> src;
+		std::shared_ptr<KnitGraphNode> dst;
+
+		// These fields are only used by loop edges
+		LoopType type;
+		LoopSign sign;
 	};
 
 	struct KnitGraphNode {
-		bool purl[2];
-		bool fixed;
+		std::vector<std::shared_ptr<KnitGraphEdge>> top;
+		std::vector<std::shared_ptr<KnitGraphEdge>> bottom;
+		std::shared_ptr<KnitGraphEdge> left;
+		std::shared_ptr<KnitGraphEdge> right;
+		std::vector<int> loop_stacking;
+
 		Eigen::RowVector3d pos;
-		std::vector<std::shared_ptr<KnitGraphNode>> neighbors;
+
+		bool contractable = false; // If true, this is a pass-through node that should be removed
 
 	};
 
 	struct KnitGraph {
+		std::vector<std::shared_ptr<KnitGraphNode>> nodes;
+		std::vector<std::shared_ptr<KnitGraphEdge>> edges;
+
+		bool doubled_wales = true; // Whether or not each node is this graph represents two stitches in the final objec
+		bool contracted = false; // Whether or not all contractible nodes have been removed
+		bool doubled = true; // Whethor or not all nodes represent two stitches
+		bool scheduled = false; // Whether or not this graph has been scheduled and shift-paths created
+
+		void contract(); // Contract and remove all contractible edges
+		void split_doubled(); // Split all nodes into two loop-wise connected nodes - pre-req. for scheduling
+		void schedule(); // Order and assign yarns for each node. Fix yarn in/out and create shift-paths
 
 	};
 };
