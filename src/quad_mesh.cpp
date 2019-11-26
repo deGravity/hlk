@@ -55,6 +55,7 @@ namespace hlk {
 
 		// Find singularities
 		is_singularity = std::vector<bool>(n, false);
+        singular_vertices.clear();
 		for (int i = 0; i < n; ++i) {
 			if (is_border_vertex[i]) {
 				is_singularity[i] = valence[i] > 3;

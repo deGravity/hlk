@@ -130,6 +130,7 @@ public:
     std::vector<int> symmetry_axes();
 
     // field - impl in remeshing_field.cpp
+    bool load_raw_field();
     bool save_raw_field();
     void reset_face_vectors();
     void reset_field();
@@ -248,7 +249,7 @@ public:
     Eigen::MatrixXi EV, EF, FE;
     Eigen::MatrixXd VField, VSings, VSeams;
     Eigen::MatrixXd CField, CSings, CSeams;
-    Eigen::MatrixXd rawField, combedField;
+    Eigen::MatrixXd curlRawField, combedField;
     Eigen::VectorXi combedMatching;
     Eigen::VectorXd combedEffort;
     Eigen::VectorXd curl; // norm of curl per edge
@@ -265,7 +266,7 @@ public:
     Eigen::VectorXd cycleCurvature, targetCurvature;
     Eigen::SparseMatrix<double> basisCycles;
     Eigen::VectorXi vertex2cycle, innerEdges;
-    Eigen::MatrixXd CMesh;
+    Eigen::MatrixXd CMesh, rawField;
     std::vector<std::vector<int>> cycleFaces;
     int eulerChar, numGenerators, numBoundaries;
     int currCycle;

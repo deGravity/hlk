@@ -66,7 +66,8 @@ enum DrawingMode {
 
 enum MIQMode {
     CROSS,
-    POLYVECTOR
+    POLYVECTOR,
+    INDEX
 };
 
 struct CTRLZSL {

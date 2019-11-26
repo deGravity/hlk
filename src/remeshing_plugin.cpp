@@ -1,9 +1,7 @@
 #include <directional/glyph_lines_raw.h>
-#include <directional/read_raw_field.h>
 #include <directional/seam_lines.h>
 #include <directional/singularity_spheres.h>
 #include <directional/visualization_schemes.h>
-#include <directional/write_raw_field.h>
 #include <igl/AABB.h>
 #include <igl/adjacency_list.h>
 #include <igl/avg_edge_length.h>
@@ -174,13 +172,7 @@ void RemeshingMenu::draw_viewer_menu() {
             viewer->open_dialog_save_mesh();
         }
         if (ImGui::Button("Load Field##Mesh", ImVec2((w - p) / 2.f, 0))) {
-            std::string fname = igl::file_dialog_open();
-            if (fname.length() == 0) return;
-            directional::read_raw_field(fname, rosy, rawField);
-            has_direction_field = true;
-            has_curl = false;
-            viewing_mode = ViewingMode::MESH_SING;
-            update_visualization();
+            load_raw_field();
         }
         ImGui::SameLine(0, p);
         if (ImGui::Button("Save Field##Mesh", ImVec2((w - p) / 2.f, 0))) {
@@ -225,9 +217,12 @@ void RemeshingMenu::draw_viewer_menu() {
             // Add threshold values.
             ImGui::DragFloat("Click Threshold", &click_threshold, 0.05f, 0.01f, 0.5f);
             ImGui::DragFloat("Soft Weight", &soft_constraint_strength, 0.0f, 0.0f, 1.0f);
-            ImGui::DragFloat("Field Weight", &field_guidance_weight, 0.0f, 0.0f, 1.0f);
-            ImGui::DragInt("# Stiffening", &stiffen_iter, 1, 0, 10);
+            //ImGui::DragFloat("Field Weight", &field_guidance_weight, 0.0f, 0.0f, 1.0f);
             ImGui::DragFloat("Gradient Size", &gradient_size, 1.0f, 0.0f, 150.0f);
+            ImGui::DragInt("# Stiffening", &stiffen_iter, 1, 0, 10);
+            if (miq_mode == MIQMode::INDEX) {
+                ImGui::DragInt("N-vector field", &N, 1, 1, 4);
+            }
             ImGui::PopItemWidth();
             ImGui::Text("===Field Operations===");
             /*if (ImGui::Button("Initialize field from principal curvatures", ImVec2(w - p, 0))) {
@@ -242,43 +237,42 @@ void RemeshingMenu::draw_viewer_menu() {
                     miq_mode = MIQMode::CROSS;
                 }
                 ImGui::SameLine(0, p);
-                if (ImGui::RadioButton("Polyvector", miq_mode == MIQMode::POLYVECTOR)) {
+                if (ImGui::RadioButton("Polyvec", miq_mode == MIQMode::POLYVECTOR)) {
                     miq_mode = MIQMode::POLYVECTOR;
                 }
-                if (ImGui::Button("Interpolate Field", ImVec2(w - p, 0))) {
-                    interpolate_field();
-                    viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
-                }
-
-                if (ImGui::Button("Init Curl", ImVec2((w - p) / 2.f, 0))) {
-                    init_curl();
-                    if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD)
-                        update_visualization();
-                }
                 ImGui::SameLine(0, p);
-                if (ImGui::Button("Reduce Curl", ImVec2((w - p) / 2.f, 0))) {
-                    reduce_curl();
-                    if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD)
-                        update_visualization();
+                if (ImGui::RadioButton("Index", miq_mode == MIQMode::INDEX)) {
+                    miq_mode = MIQMode::INDEX;
+                }
+                if (miq_mode != MIQMode::INDEX) {
+                    if (ImGui::Button("Interpolate Field", ImVec2(w - p, 0))) {
+                        interpolate_field();
+                    }
+                    if (ImGui::Button("Init Curl", ImVec2((w - p) / 2.f, 0))) {
+                        init_curl();
+                    }
+                    ImGui::SameLine(0, p);
+                    if (ImGui::Button("Reduce Curl", ImVec2((w - p) / 2.f, 0))) {
+                        reduce_curl();
+                    }
                 }
                 if (ImGui::Button("Run MIQ parametrization", ImVec2(w - p, 0))) {
                     generate_integer_grid();
-                    viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
                 }
             }
             // Quad controls
             ImGui::Text("===Quad Operations===");
-            if (miq_mode == MIQMode::POLYVECTOR) {
+            /*if (miq_mode == MIQMode::POLYVECTOR) {
                 ImGui::Checkbox("[parameterize.h] isInteger", &isInteger);
-            }
+            }*/
             if (has_integer_grid) {
                 if (ImGui::Button("Extract Quad Mesh", ImVec2(w - p, 0))) {
                     std::vector<std::vector<double>> Vs, TCs;
                     std::vector<std::vector<int>> Fs;
-                    if (miq_mode == MIQMode::POLYVECTOR) {
-                        extract_quad_mesh(V, F, cutUV, FMeshCut, quad_mesh);
-                    } else {
+                    if (miq_mode == MIQMode::CROSS) {
                         extract_quad_mesh(V, F, V_uv, F_uv, quad_mesh);
+                    } else {
+                        extract_quad_mesh(V, F, cutUV, FMeshCut, quad_mesh);
                     }
                     is_quad_meshed = true;
                     init_quad_seams();
@@ -298,7 +292,6 @@ void RemeshingMenu::draw_viewer_menu() {
                 }
                 ImGui::SameLine(0, p);
                 if (ImGui::Button("Check Helix", ImVec2((w - p) / 2.f, 0))) {
-                    stylize_quad_mesh(directional::default_mesh_color());
                     quad_helix_finding();
                 }
             }
@@ -653,7 +646,7 @@ bool RemeshingMenu::save_workspace() {
     igl::serialize(cutUV, "cutUV", filename);
 
     igl::serialize(direction_field, "direction_field", filename);
-    igl::serialize(rawField, "rawField", filename);
+    igl::serialize(curlRawField, "curlRawField", filename);
     igl::serialize(c_b, "c_b", filename);
     igl::serialize(c_blevel, "c_blevel", filename);
     igl::serialize(c_bc, "c_bc", filename);
@@ -679,6 +672,9 @@ bool RemeshingMenu::save_workspace() {
     igl::serialize(loop_path, "loop_path", filename);
     igl::serialize(loop_feature_face_ids, "loop_feature_face_ids", filename);
 
+    igl::serialize(singVertices, "singVertices", filename);
+    igl::serialize(singIndices, "singIndices", filename);
+    igl::serialize(rawField, "rawField", filename);
     igl::serialize(cycleIndices, "cycleIndices", filename);
     igl::serialize(cycleCurvature, "cycleCurvature", filename);
     igl::serialize(targetCurvature, "targetCurvature", filename);
@@ -745,7 +741,7 @@ bool RemeshingMenu::load_workspace() {
     update_polyhedron_tree();
 
     igl::deserialize(direction_field, "direction_field", filename);
-    igl::deserialize(rawField, "rawField", filename);
+    igl::deserialize(curlRawField, "curlRawField", filename);
     igl::deserialize(c_b, "c_b", filename);
     igl::deserialize(c_blevel, "c_blevel", filename);
     igl::deserialize(c_bc, "c_bc", filename);
@@ -771,6 +767,9 @@ bool RemeshingMenu::load_workspace() {
     igl::deserialize(loop_path, "loop_path", filename);
     igl::deserialize(loop_feature_face_ids, "loop_feature_face_ids", filename);
 
+    igl::deserialize(singVertices, "singVertices", filename);
+    igl::deserialize(singIndices, "singIndices", filename);
+    igl::deserialize(rawField, "rawField", filename);
     igl::deserialize(cycleIndices, "cycleIndices", filename);
     igl::deserialize(cycleCurvature, "cycleCurvature", filename);
     igl::deserialize(targetCurvature, "targetCurvature", filename);
@@ -1971,12 +1970,12 @@ void RemeshingMenu::stylize_tri_mesh(const Eigen::MatrixXd& colors) {
     viewer->data().clear();
     viewer->data().set_mesh(V, F);
     if (has_integer_grid) {
-        if (miq_mode == MIQMode::POLYVECTOR) {
+        if (miq_mode == MIQMode::CROSS) {
+            viewer->data().set_uv(V_uv, F_uv);
+        } else {
             viewer->data().clear();
             viewer->data().set_mesh(VMeshCut, FMeshCut);
             viewer->data().set_uv(cutUV, FMeshCut);
-        } else {
-            viewer->data().set_uv(V_uv, F_uv);
         }
         viewer->data().set_texture(texture_R, texture_B, texture_G);
     }
@@ -2034,16 +2033,6 @@ void RemeshingMenu::update_visualization(unsigned char key) {
     }
 
     switch (viewing_mode) {
-    case ViewingMode::MESH_CURL:
-    {
-        if (!has_curl) { init_curl(); }
-        Eigen::VectorXd currCurl = AE2F * curl;
-        Eigen::MatrixXd curlColors;
-        igl::jet(currCurl, 0.0, curlMaxOrig, curlColors);
-        stylize_tri_mesh(curlColors);
-        break;
-    }
-
     case ViewingMode::MESH_SING:
     {
         if (key == 'B' || key == 'G') {
@@ -2075,10 +2064,19 @@ void RemeshingMenu::update_visualization(unsigned char key) {
         break;
     }
 
+    case ViewingMode::MESH_CURL:
+    {
+        if (!has_curl) { init_curl(); }
+        Eigen::VectorXd currCurl = AE2F * curl;
+        Eigen::MatrixXd curlColors;
+        igl::jet(currCurl, 0.0, curlMaxOrig, curlColors);
+        stylize_tri_mesh(curlColors);
+        break;
+    }
+
     case ViewingMode::MESH_FIELD:
     {
         if (!has_curl) { init_curl(); }
-
         // field mesh
         directional::glyph_lines_raw(
             V, F, combedField, directional::indexed_glyph_colors(combedField),
@@ -2121,8 +2119,9 @@ void RemeshingMenu::update_visualization(unsigned char key) {
     {
         stylize_quad_mesh(directional::default_mesh_color());
         set_mesh_overlays(4, false);
-        if (viewing_mode == ViewingMode::MESH_QUAD)
+        if (viewing_mode == ViewingMode::MESH_QUAD) {
             set_mesh_overlays(viewer->selected_data_index);
+        }
         break;
     }
     }

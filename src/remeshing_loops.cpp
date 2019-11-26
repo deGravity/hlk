@@ -63,10 +63,10 @@ void RemeshingMenu::update_loop_graph() {
 	double beta = 0.25;
 
 	//igl_v_ns
-	Eigen::MatrixXd N;
-	igl::per_vertex_normals(viewer->data().V, viewer->data().F, N);
+	Eigen::MatrixXd normals;
+	igl::per_vertex_normals(viewer->data().V, viewer->data().F, normals);
 	igl_v_ns.clear();
-	for (int i = 0; i < viewer->data().V.rows(); i++)  igl_v_ns.emplace_back(N.row(i));
+	for (int i = 0; i < viewer->data().V.rows(); i++)  igl_v_ns.emplace_back(normals.row(i));
 
 	//loop_g
 	auto loop_g = build_underlying_edges();

@@ -1,5 +1,6 @@
 #include <directional/dual_cycles.h>
 #include <directional/index_prescription.h>
+#include <directional/read_raw_field.h>
 #include <directional/representative_to_raw.h>
 #include <directional/rotation_to_representative.h>
 #include <directional/polyvector_field.h>
@@ -9,6 +10,7 @@
 #include <igl/barycenter.h>
 #include <igl/boundary_loop.h>
 #include <igl/copyleft/comiso/nrosy.h>
+#include <igl/file_dialog_open.h>
 #include <igl/file_dialog_save.h>
 #include <igl/local_basis.h>
 #include <igl/principal_curvature.h>
@@ -20,17 +22,34 @@
 #include "remeshing_plugin.h"
 
 namespace hlk {
+bool RemeshingMenu::load_raw_field() {
+    std::string fname = igl::file_dialog_open();
+    if (fname.length() == 0) return false;
+
+    if (miq_mode == MIQMode::INDEX) {
+        directional::read_raw_field(fname, N, rawField);
+    } else {
+        directional::read_raw_field(fname, rosy, curlRawField);
+        if (miq_mode == MIQMode::CROSS) {
+            direction_field[1] = curlRawField.block(0, 0, F.rows(), 3);
+        }
+    }
+
+    has_direction_field = true;
+    has_curl = false;
+    return true;
+}
 
 bool RemeshingMenu::save_raw_field() {
     std::string fname = igl::file_dialog_save();
     if (fname.length() == 0) return false;
-    if (miq_mode == MIQMode::POLYVECTOR) {
+
+    if (miq_mode == MIQMode::INDEX) {
         return directional::write_raw_field(fname, rawField);
-    } else {
-        directional::representative_to_raw(V, F, direction_field[1], rosy, rawField);
-        return directional::write_raw_field(fname, rawField);
+    } else if (miq_mode == MIQMode::CROSS) {
+        directional::representative_to_raw(V, F, direction_field[1], rosy, curlRawField);
     }
-    return true;
+    return directional::write_raw_field(fname, curlRawField);
 }
 
 void RemeshingMenu::reset_face_vectors() {
@@ -230,14 +249,12 @@ void RemeshingMenu::update_vectors_from_field(int direction) {
 }
 
 void RemeshingMenu::interpolate_field() {
-    Eigen::VectorXd S;
-
     if (miq_mode == MIQMode::POLYVECTOR) {
-        // Interpolate both directions separately first.
-        interpolate_cross_field(S, 0);
+        // Interpolate both directions separately first. <- WHY DO I NEED THIS????
+        /*interpolate_cross_field(S, 0);
         update_vectors_from_field(0);
         interpolate_cross_field(S, 1);
-        update_vectors_from_field(1);
+        update_vectors_from_field(1);*/
 
         // Set up constraints.
         std::vector<int> constrained_faces;
@@ -297,46 +314,56 @@ void RemeshingMenu::interpolate_field() {
         }
 
         directional::polyvector_field(V, F, p_b, p_bc, rosy, polyvector_field);
-        directional::polyvector_to_raw(V, F, polyvector_field, rosy, rawField);
+        directional::polyvector_to_raw(V, F, polyvector_field, rosy, curlRawField);
 
-        viewing_mode = ViewingMode::MESH_FIELD;
+    } else if (miq_mode == MIQMode::CROSS) {
 
-    } else { // miq_mode == MIQMode::CROSS
-
+        Eigen::VectorXd S;
         interpolate_cross_field(S);
         update_vectors_from_field();
-        directional::representative_to_raw(V, F, direction_field[1], rosy, rawField);
+        directional::representative_to_raw(V, F, direction_field[1], rosy, curlRawField);
 
         int s_count = 0;
         for (int i = 0; i < S.rows(); ++i) {
             s_count += abs(S(i)) > 0.001 ? 1 : 0;
         }
         std::cout << "Singularity Count = " << s_count << "\n";
-
-        viewing_mode = ViewingMode::MESH_ONLY;
     }
 
     has_direction_field = true;
     has_integer_grid = false;
     has_curl = false;
+    viewing_mode = ViewingMode::MESH_ONLY;
     update_visualization();
 }
 
 void RemeshingMenu::generate_integer_grid() {
 
-    if (miq_mode == MIQMode::POLYVECTOR) {
+    if (miq_mode == MIQMode::INDEX) {
+        if (N == 1) {
+            directional::representative_to_raw(V, F, rawField, rosy, rawField);
+        } else if (N != 4) {
+            std::cout << "unsupported N=" << N << "\n";
+            return;
+        }
         Meshing::polyvector_parametrize(
             V, F, rosy, EV, EF, FE,
             rawField, combedField,
             combedMatching, combedEffort,
             singVertices, singIndices,
-            //curlSingVertices, curlSingIndices,
             VMeshCut, FMeshCut, cutUV,
-            1. / gradient_size,
-            isInteger
-        );
+            1. / gradient_size, isInteger);
 
-    } else {
+    } else if (miq_mode == MIQMode::POLYVECTOR) {
+        Meshing::polyvector_parametrize(
+            V, F, rosy, EV, EF, FE,
+            curlRawField, combedField,
+            combedMatching, combedEffort,
+            curlSingVertices, curlSingIndices,
+            VMeshCut, FMeshCut, cutUV,
+            1. / gradient_size, isInteger);
+
+    } else { // miq_mode == MIQMode::CROSS
         std::vector<std::vector<int>> hard_edges;
 
         Eigen::MatrixXi TT, TTi;
@@ -378,28 +405,40 @@ void RemeshingMenu::generate_integer_grid() {
     }
     
     has_integer_grid = true;
+    viewing_mode = ViewingMode::MESH_ONLY;
+    update_visualization();
 }
 
 void RemeshingMenu::init_curl() {
     Meshing::init_curl(
         V, F, rosy, EV, EF, FE,
         c_b, c_bc, c_blevel,
-        rawField, combedField,
+        curlRawField, combedField,
         combedMatching, combedEffort,
         curl, curlSingVertices, curlSingIndices,
         AE2F, curlMax, curlMaxOrig);
+
     has_curl = true;
+    if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD) {
+        update_visualization();
+    }
 }
 
 void RemeshingMenu::reduce_curl() {
+    if (!has_curl) { init_curl(); }
+
     Meshing::reduce_curl(
         V, F, rosy, EV, EF, FE,
-        rawField, combedField,
+        curlRawField, combedField,
         combedMatching, combedEffort,
         curl, curlSingVertices, curlSingIndices,
         curlMax);
+
     if (miq_mode == MIQMode::CROSS) {
         direction_field[1] = combedField.block(0, 0, F.rows(), 3);
+    }
+    if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD) {
+        update_visualization();
     }
 }
 
@@ -439,13 +478,14 @@ void RemeshingMenu::quad_helix_finding() {
         for (auto iter = longest_helix.begin(); iter != longest_helix.end(); ++iter) {
             interactive_colors.row((*iter)) = Eigen::RowVector3d(0.8, 1., 0.6);
         }
-        for (int face : quad_mesh.singular_quads) {
+        for (int face : quad_mesh.singular_quads) { // for debugging purposes
             interactive_colors.row(face) = Eigen::RowVector3d(1., 0., 0.6);
         }
         stylize_quad_mesh(interactive_colors);
 
     } else {
         std::cout << "[remeshing] helix free!\n";
+        stylize_quad_mesh(Eigen::RowVector3d::Constant(1.0));
     }
 }
 
@@ -466,7 +506,7 @@ void RemeshingMenu::setup_basis_cycles() {
     std::cout << "#generators: " << numGenerators << std::endl;
     std::cout << "#boundaries: " << numBoundaries << std::endl;
 
-    //collecting cycle faces for visualization
+    // collecting cycle faces for visualization
     cycleFaces.resize(basisCycles.rows());
     for (int k = 0; k < basisCycles.outerSize(); ++k) {
         for (Eigen::SparseMatrix<double>::InnerIterator it(basisCycles, k); it; ++it) {
@@ -506,6 +546,7 @@ void RemeshingMenu::update_raw_field() {
         std::cout << "Warning: All non-generator singularities should add up to N * the Euler characteristic." << std::endl;
         std::cout << "Total indices: " << sum << "/" << N << std::endl;
         std::cout << "Expected: " << eulerChar * N << "/" << N << std::endl;
+        return;
     }
 
     //compute_target_curvature();
@@ -513,7 +554,6 @@ void RemeshingMenu::update_raw_field() {
     //    V, F, EV, innerEdges, basisCycles, targetCurvature,
     //    cycleCurvature, cycleIndices, ldltSolver, N, field_guidance_weight,
     //    rotationAngles, linfError);
-
     Eigen::VectorXd rotationAngles;
     double linfError;
     directional::index_prescription(
@@ -522,10 +562,8 @@ void RemeshingMenu::update_raw_field() {
         rotationAngles, linfError);
     std::cout << "Index prescription linfError: " << linfError << std::endl;
 
-    Eigen::MatrixXd representative;
-    directional::rotation_to_representative(V, F, EV, EF, rotationAngles, N, globalRotation, representative);
-    direction_field[1] = representative;
-    directional::representative_to_raw(V, F, representative, N, rawField);
+    directional::rotation_to_representative(V, F, EV, EF, rotationAngles, N, globalRotation, direction_field[1]);
+    directional::representative_to_raw(V, F, direction_field[1], N, rawField);
 }
 
 void RemeshingMenu::update_singularities() {
