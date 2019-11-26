@@ -5,13 +5,14 @@
 
 #include "labeling_ui.h"
 #include "remeshing_plugin.h"
+#include "patch.h"
 
 using namespace hlk;
 using namespace std;
 
 int main(void) {
 
-	int mode = 2;
+	int mode = 3;
 
 	/*
 	cout << "Choose an Interface" << endl;
@@ -33,11 +34,38 @@ int main(void) {
 		viewer.plugins.push_back(&remeshing_menu);
 		viewer.launch();
 	}
-	else {
+	else if (mode ==2) {
 		igl::opengl::glfw::Viewer viewer2;
 		LabelingUI labelingui;
 		viewer2.plugins.push_back(&labelingui);
 		viewer2.launch();
+	}
+	else { // test patch visualization
+		std::string filename = igl::file_dialog_open();
+		Patch p;
+		Chart c;
+		
+		p.sides = { {4}, {4}, {4}, {4} };
+		p.corners.resize(4, 3);
+		p.corners << 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0;
+		c.read_from_file(filename);
+
+		p.make_graph(c.rows);
+		Eigen::MatrixXd V;
+		Eigen::MatrixXi E;
+		Eigen::MatrixXd C;
+		
+		p.graph.build_mesh(0.1, 4, V, E, C);
+
+		std::cout << V << std::endl << std::endl << E << std::endl;
+
+		igl::opengl::glfw::Viewer viewer;
+		viewer.data().set_points(V, Eigen::RowVector3d(1.0, 1.0, 1.0));
+		viewer.data().set_edges(V, E, C);
+		viewer.data().show_lines = true;
+		viewer.data().show_overlay = true;
+		viewer.data().line_width = 2.0f;
+		viewer.launch();
 	}
 
     return 0;

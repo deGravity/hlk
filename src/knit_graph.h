@@ -5,10 +5,14 @@
 
 namespace hlk {
 
+	struct KnitGraphEdge;
+	struct KnitGraphNode;
+
 	enum class LoopType {
 		KNIT,
 		PURL,
-		SLIP
+		SLIP,
+		YARNOVER,
 	};
 
 	enum class LoopSign {
@@ -20,6 +24,8 @@ namespace hlk {
 	struct KnitGraphEdge {
 		std::shared_ptr<KnitGraphNode> src;
 		std::shared_ptr<KnitGraphNode> dst;
+
+		bool is_loop = true;
 
 		// These fields are only used by loop edges
 		LoopType type;
@@ -34,6 +40,8 @@ namespace hlk {
 		std::vector<int> loop_stacking;
 
 		Eigen::RowVector3d pos;
+
+		int index = -1; // Useful for some algorithms
 
 		bool contractable = false; // If true, this is a pass-through node that should be removed
 
@@ -52,5 +60,12 @@ namespace hlk {
 		void split_doubled(); // Split all nodes into two loop-wise connected nodes - pre-req. for scheduling
 		void schedule(); // Order and assign yarns for each node. Fix yarn in/out and create shift-paths
 
+		void re_index(); // Assign each node a unique index number
+		void edge_list_graph(Eigen::MatrixXd& V, Eigen::MatrixXi& E);
+
+		void build_mesh(double th, int poly_size,
+			Eigen::MatrixXd& V,
+			Eigen::MatrixXi& F,
+			Eigen::MatrixXd& C);
 	};
 };
