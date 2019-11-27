@@ -251,6 +251,31 @@ namespace hlk {
 			rows.push_back(row);
 		}
 
+		// Remove extraneous output edges
+		if (from_nothing) {
+			if (dir < 0) {
+				rows.front().front().has_yarn_in = false;
+				rows.front().front().outputs = std::vector<LoopType>{ LoopType::SLIP };
+				rows.front().front().output_signs = std::vector<LoopSign>{ LoopSign::NONE };
+			}
+			else {
+				rows.back().front().has_yarn_in = false;
+				rows.back().front().outputs = std::vector<LoopType>{ LoopType::SLIP };
+				rows.back().front().output_signs = std::vector<LoopSign>{ LoopSign::NONE };
+			}
+		}
+		if (to_nothing) {
+			if (dir < 0) {
+				rows.front().back().has_yarn_out = false;
+				rows.front().back().outputs = std::vector<LoopType>{ LoopType::SLIP };
+				rows.front().back().output_signs = std::vector<LoopSign>{ LoopSign::NONE };
+			}
+			else {
+				rows.back().back().has_yarn_out = false;
+				rows.back().back().outputs = std::vector<LoopType>{ LoopType::SLIP };
+				rows.back().back().output_signs = std::vector<LoopSign>{ LoopSign::NONE };
+			}
+		}
 	}
 
 	void Chart::decreases_leaning(int bottom, int top, int height, int dir)
