@@ -41,20 +41,24 @@ int main(void) {
 		viewer2.launch();
 	}
 	else { // test patch visualization
-		std::string filename = igl::file_dialog_open();
+		//std::string filename = igl::file_dialog_open();
 		Patch p;
 		Chart c;
 		
-		p.sides = { {4}, {4}, {4}, {4} };
+		p.sides = { {5}, {5}, {1}, {5} };
 		p.corners.resize(4, 3);
 		p.corners << 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0;
-		c.read_from_file(filename);
+		//c.read_from_file(filename);
+
+		c.short_rows(1, 5, 5, 1);
 
 		p.make_graph(c.rows);
 		Eigen::MatrixXd V;
 		Eigen::MatrixXi E;
 		Eigen::MatrixXd C;
 		
+
+
 		p.graph.build_mesh(0.1, 4, V, E, C);
 
 		std::cout << V << std::endl << std::endl << E << std::endl;

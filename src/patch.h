@@ -27,6 +27,13 @@ namespace hlk {
 
 		std::map<std::string, ChartCell> stitch_db;
 		void setup_stitch_db();
+
+		std::vector<int> interpolate(int first, int last, int rows);
+		std::vector<int> row_diffs(const std::vector<int>& rows);
+
+		void decreases_leaning(int bottom, int top, int height, int dir);
+		void increases_leaning(int bottom, int top, int height, int dir);
+		void short_rows(int left, int right, int width, int dir);
 	};
 
 	

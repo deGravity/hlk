@@ -98,6 +98,227 @@ namespace hlk {
 		stitch_db["]"].output_signs = std::vector<LoopSign>{ LoopSign::NONE };
 	}
 
+	std::vector<int> Chart::interpolate(int first, int last, int rows)
+	{
+		std::vector<int> row_widths(rows);
+
+		for (int i = 0; i < rows; ++i) {
+			row_widths[i] = first + (last - first) * i / (rows - 1);
+		}
+
+		return row_widths;
+	}
+
+	std::vector<int> Chart::row_diffs(const std::vector<int>& rows)
+	{
+		std::vector<int> row_diffs(rows.size() - 1);
+		for (int i = 0; i < rows.size() - 1; ++i) {
+			row_diffs[i] = rows[i + 1] - rows[i];
+		}
+		return row_diffs;
+	}
+
+	// TODO - DRY with other chart generation functions
+	void Chart::increases_leaning(int bottom, int top, int height, int dir)
+	{
+		bool from_nothing = bottom == 0;
+		if (bottom == 0) bottom = 1;
+		std::vector<int> row_widths = interpolate(bottom, top, height);
+		auto diffs = row_diffs(row_widths);
+		std::vector<std::vector<int>> num_outputs(height);
+		num_outputs[height-1] = std::vector<int>(top, 1);
+		for (int i = 0; i < height -1 ; ++i) {
+			int num_increases = diffs[i];
+			int left_increases = 0;
+			int right_increases = 0;
+			if (dir < 0) { // left leaning
+				left_increases = num_increases;
+			}
+			else if (dir > 0) { // right leaning
+				right_increases = num_increases;
+			}
+			else { // evenly distributed
+				left_increases = ceil((double)num_increases / 2);
+				right_increases = floor((double)num_increases / 2);
+			}
+			int num_straight = row_widths[i] - num_increases;
+			for (int j = 0; j < left_increases; ++j) {
+				num_outputs[i].push_back(2);
+			}
+			for (int j = 0; j < num_straight; ++j) {
+				num_outputs[i].push_back(1);
+			}
+			for (int j = 0; j < right_increases; ++j) {
+				num_outputs[i].push_back(2);
+			}
+		}
+
+		rows.resize(height);
+
+		for (int i = 0; i < height; ++i) {
+			for (int j = 0; j < row_widths[i]; ++j) {
+				ChartCell stitch;
+				int n_out = num_outputs[i][j];
+				stitch.has_yarn_in = true;
+				stitch.has_yarn_out = true;
+				stitch.num_inputs = 1;
+				stitch.input_order = std::vector<int>{ 0 };
+				if (n_out == 1) {
+					stitch.outputs = std::vector<LoopType>{ LoopType::KNIT };
+					stitch.output_signs = std::vector<LoopSign>{ LoopSign::NONE };
+				}
+				else {
+					stitch.outputs = std::vector<LoopType>{ LoopType::KNIT, LoopType::KNIT };
+					stitch.output_signs = std::vector<LoopSign>{ LoopSign::NONE, LoopSign::NONE };
+				}
+
+				rows[i].push_back(stitch);
+			}
+		}
+
+		// Special case for increases from nothing
+		if (from_nothing) {
+			rows[0][0].num_inputs = 0;
+			rows[0][0].input_order = std::vector<int>{};
+		}
+	}
+
+	void Chart::short_rows(int left, int right, int width, int dir)
+	{
+		bool from_nothing = left == 0;
+		bool to_nothing = right == 0;
+		if (from_nothing) left = 1;
+		if (to_nothing) right = 1;
+
+		assert(abs(left - right) < width); // Only allow one extra row at a time
+		int max_height = left > right ? left : right;
+		auto col_heights = interpolate(left, right, width);
+		std::vector<std::vector<bool>> cols;
+		for (auto height : col_heights) {
+			std::vector<bool> col;
+			if (dir < 0) { // Short rows Down
+				col = std::vector<bool>(height, true);
+				col.resize(max_height, false);
+			}
+			else {
+				col = std::vector<bool>(max_height - height, false);
+				col.resize(max_height, true);
+			}
+			cols.push_back(col);
+		}
+
+		for (int i = 0; i < max_height; ++i) {
+			std::vector<ChartCell> row;
+			for (int j = 0; j < width; ++j) {
+				if (cols[j][i]) { // Non pass-through cell
+					ChartCell stitch;
+					stitch.num_inputs = 1;
+					stitch.input_order = std::vector<int>{ 0 };
+					if (i < max_height - 1 && !cols[j][i+1]) {
+						stitch.outputs = std::vector<LoopType>{LoopType::SLIP};
+						stitch.output_signs = std::vector<LoopSign>{LoopSign::NONE};
+					}
+					else {
+						stitch.outputs = std::vector<LoopType>{ LoopType::KNIT };
+						stitch.output_signs = std::vector<LoopSign>{ LoopSign::NONE };
+					}
+					if (j > 0 && !cols[j - 1][i]) {
+						stitch.has_yarn_in = false;
+					}
+					else {
+						stitch.has_yarn_in = true;
+					}
+
+					if (j < width - 1 && !cols[j + 1][i]) {
+						stitch.has_yarn_out = false;
+					}
+					else {
+						stitch.has_yarn_out = true;
+					}
+					row.push_back(stitch);
+				}
+				else { // Pass-through cell
+					ChartCell stitch;
+					stitch.num_inputs = 1;
+					stitch.input_order = std::vector<int>{ 0 };
+					stitch.outputs = std::vector<LoopType>{ LoopType::SLIP };
+					stitch.output_signs = std::vector<LoopSign>{ LoopSign::PLUS };
+					stitch.has_yarn_in = false;
+					stitch.has_yarn_out = false;
+					row.push_back(stitch);
+				}
+			}
+			rows.push_back(row);
+		}
+
+	}
+
+	void Chart::decreases_leaning(int bottom, int top, int height, int dir)
+	{
+		// Special case of a decreases to nothing - pretend there's a stitch there
+		// for now. Later we will change these to decreases into the next row or
+		// bind-offs, depending on the patch neighbors
+		bool to_nothing = top == 0;
+		if (to_nothing) top = 1;
+
+		std::vector<int> row_widths = interpolate(bottom, top, height);
+		auto diffs = row_diffs(row_widths);
+		std::vector<std::vector<int>> num_inputs(height);
+		num_inputs[0] = std::vector<int>(bottom, 1);
+		for (int i = 1; i < height; ++i) {
+			int num_decreases = -diffs[i - 1];
+			int left_decreases = 0;
+			int right_decreases = 0;
+			if (dir < 0) { // left leaning
+				left_decreases = num_decreases;
+			}
+			else if (dir > 0) { // right leaning
+				right_decreases = num_decreases;
+			}
+			else { // evenly distributed
+				left_decreases = ceil((double)num_decreases / 2);
+				right_decreases = floor((double)num_decreases / 2);
+			}
+			int num_straight = row_widths[i] - num_decreases;
+			for (int j = 0; j < left_decreases; ++j) {
+				num_inputs[i].push_back(2);
+			}
+			for (int j = 0; j < num_straight; ++j) {
+				num_inputs[i].push_back(1);
+			}
+			for (int j = 0; j < right_decreases; ++j) {
+				num_inputs[i].push_back(2);
+			}
+		}
+
+		rows.resize(height);
+
+		for (int i = 0; i < height; ++i) {
+			for (int j = 0; j < row_widths[i]; ++j) {
+				ChartCell stitch;
+				stitch.has_yarn_in = true;
+				stitch.has_yarn_out = true;
+				stitch.num_inputs = num_inputs[i][j];
+				if (stitch.num_inputs == 1) {
+					stitch.input_order = std::vector<int>{ 0 };
+				}
+				else {
+					// Todo - this is going to affect learning direction
+					stitch.input_order = std::vector<int>{ 0,1 }; 
+				}
+				stitch.outputs = std::vector<LoopType>{ LoopType::KNIT };
+				stitch.output_signs = std::vector<LoopSign>{ LoopSign::NONE };
+				rows[i].push_back(stitch);
+			}
+		}
+		
+		// Remove output edge from a decrease to a point
+		if (to_nothing) {
+			rows.back().back().outputs = std::vector<LoopType>{};
+			rows.back().back().output_signs = std::vector<LoopSign>{};
+		}
+	}
+
 	ChartCell Chart::parse_stitch(const std::string & stitch)
 	{
 		ChartCell cell;
