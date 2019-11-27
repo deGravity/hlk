@@ -219,12 +219,6 @@ void RemeshingMenu::update_vectors_from_field(int direction) {
 
 void RemeshingMenu::interpolate_field() {
     if (miq_mode == MIQMode::POLYVECTOR) {
-        // Interpolate both directions separately first.
-        // interpolate_cross_field(S, 0);
-        // update_vectors_from_field(0);
-        // interpolate_cross_field(S, 1);
-        // update_vectors_from_field(1);
-
         // Set up constraints.
         std::vector<int> constrained_faces;
         std::vector<int> wale_constrained_faces;

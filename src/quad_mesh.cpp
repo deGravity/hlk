@@ -45,8 +45,8 @@ namespace hlk {
 		valence = std::vector<int>(n, 0);
 		for (int i = 0; i < F_q.rows(); ++i) {
 			for (int j = 0; j < 4; ++j) {
-				// Only count non-border sides once
-				if (F_q(i, j) < F_q(i, (j + 1) % 4)) { //|| flip_side(nth_side(i,j)) < 0) {
+				// Only count each side once
+				if (F_q(i, j) < F_q(i, (j + 1) % 4)) {
 					valence[F_q(i, j)] += 1;
 					valence[F_q(i, (j + 1) % 4)] += 1;
 				}
