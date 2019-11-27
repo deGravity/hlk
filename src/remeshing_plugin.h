@@ -52,8 +52,8 @@ public:
         line_texture(texture_R, texture_G, texture_B);
         direction_field = { Eigen::MatrixXd(), Eigen::MatrixXd() };
     }
-	~RemeshingMenu() {
-		clear();
+    ~RemeshingMenu() {
+        clear();
         // remove ctrl+z saves.
         for (auto& temp : temps) {
             remove(temp.mesh.c_str());
@@ -62,7 +62,7 @@ public:
         }
         remove(in_path.c_str());
         remove(out_path.c_str());
-	};
+    };
 
     void init(igl::opengl::glfw::Viewer* _viewer);
     void draw_viewer_menu();
@@ -114,9 +114,9 @@ public:
     void update_drawing();
     void draw_direction_field();
 
-	void draw_a_segment(const Eigen::Vector3d v0, const Eigen::Vector3d v1, 
+    void draw_a_segment(const Eigen::Vector3d v0, const Eigen::Vector3d v1, 
         const int color_index, const double face_dis = -1., const int data_index = 0);
-	void draw_segments(const std::vector<Eigen::Vector3d>& segments, const int color_index, const double face_dis = -1.);
+    void draw_segments(const std::vector<Eigen::Vector3d>& segments, const int color_index, const double face_dis = -1.);
     /* Color - Index mapping:
            red - 0
          green - 1
@@ -147,14 +147,14 @@ public:
 
     // loops - impl in remeshing_loops.cpp
     void clear_loops();
-	void update_loop_graph();
-	void compute_elastic_loop(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_v);
-	void compute_elastic_loop_field_align(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
-	void compute_elastic_loop_min_geodesic(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
-	void symmetry_elastic_loop(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
-	void symmetry_elastic_loop(std::vector<int> axes, const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
+    void update_loop_graph();
+    void compute_elastic_loop(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_v);
+    void compute_elastic_loop_field_align(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
+    void compute_elastic_loop_min_geodesic(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
+    void symmetry_elastic_loop(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
+    void symmetry_elastic_loop(std::vector<int> axes, const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
 
-	void save_ctrlz();
+    void save_ctrlz();
 
     // bools...
     bool has_direction_field;
@@ -188,22 +188,22 @@ public:
     std::vector<FaceVector> face_vectors;
     std::vector<std::vector<SplitEdge>> seams;
 
-	// loops data
-	std::vector<TM_Node> loop_gi_nodes;
-	std::vector<TM_Edge> loop_gi_edges;
-	std::vector<std::unordered_set<int>> loop_g_iedges;
-	std::vector<std::vector<Eigen::Vector3d>> loop_graph_adj;
-	std::vector<bool> loop_graph_boundary;
-	std::vector<Eigen::Vector3d> igl_v_ns;
+    // loops data
+    std::vector<TM_Node> loop_gi_nodes;
+    std::vector<TM_Edge> loop_gi_edges;
+    std::vector<std::unordered_set<int>> loop_g_iedges;
+    std::vector<std::vector<Eigen::Vector3d>> loop_graph_adj;
+    std::vector<bool> loop_graph_boundary;
+    std::vector<Eigen::Vector3d> igl_v_ns;
 
-	std::vector<Eigen::Vector3d> loop_points;
-	std::vector<Eigen::Vector3d> loop_de_points;
-	std::vector<std::vector<Eigen::Vector3d>> loop_polylines;
-	std::vector<std::vector<Eigen::Vector3d>> loop_update_polylines;
+    std::vector<Eigen::Vector3d> loop_points;
+    std::vector<Eigen::Vector3d> loop_de_points;
+    std::vector<std::vector<Eigen::Vector3d>> loop_polylines;
+    std::vector<std::vector<Eigen::Vector3d>> loop_update_polylines;
 
-	int loop_start_index = -1;
-	int loop_end_index = -1;
-	std::vector<Eigen::Vector3d> loop_path;
+    int loop_start_index = -1;
+    int loop_end_index = -1;
+    std::vector<Eigen::Vector3d> loop_path;
     std::vector<int> loop_feature_face_ids;
 
     // geometry data
@@ -273,8 +273,8 @@ public:
     double mouse_x, mouse_y;
     bool ctrl_on, alt_on, shift_on, mouse_down_on;
 
-	CTRLZSL czsl;
-	std::vector<TEMPDATA> temps;
+    CTRLZSL czsl;
+    std::vector<TEMPDATA> temps;
 };
 
 }

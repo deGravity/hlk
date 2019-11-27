@@ -218,14 +218,12 @@ void RemeshingMenu::update_vectors_from_field(int direction) {
 }
 
 void RemeshingMenu::interpolate_field() {
-    Eigen::VectorXd S;
-
     if (miq_mode == MIQMode::POLYVECTOR) {
         // Interpolate both directions separately first.
-        interpolate_cross_field(S, 0);
-        update_vectors_from_field(0);
-        interpolate_cross_field(S, 1);
-        update_vectors_from_field(1);
+        // interpolate_cross_field(S, 0);
+        // update_vectors_from_field(0);
+        // interpolate_cross_field(S, 1);
+        // update_vectors_from_field(1);
 
         // Set up constraints.
         std::vector<int> constrained_faces;
@@ -291,7 +289,7 @@ void RemeshingMenu::interpolate_field() {
         update_visualization();
 
     } else { // miq_mode == MIQMode::CROSS
-
+        Eigen::VectorXd S;
         interpolate_cross_field(S);
         update_vectors_from_field();
         directional::representative_to_raw(V, F, direction_field[1], rosy, rawField);
@@ -315,6 +313,8 @@ void RemeshingMenu::interpolate_field() {
     has_direction_field = true;
     has_integer_grid = false;
     has_curl = false;
+    viewing_mode = ViewingMode::MESH_ONLY;
+    update_visualization();
 }
 
 void RemeshingMenu::generate_integer_grid() {
@@ -392,9 +392,13 @@ void RemeshingMenu::init_curl() {
         curl, singVertices, singIndices,
         AE2F, curlMax, curlMaxOrig);
     has_curl = true;
+    if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD) {
+        update_visualization();
+    }
 }
 
 void RemeshingMenu::reduce_curl() {
+    if (!has_curl) { init_curl(); }
     Meshing::reduce_curl(
         V, F, rosy, EV, EF, FE,
         rawField, combedField,
@@ -403,6 +407,9 @@ void RemeshingMenu::reduce_curl() {
         curlMax);
     if (miq_mode == MIQMode::CROSS) {
         direction_field[1] = combedField.block(0, 0, F.rows(), 3);
+    }
+    if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD) {
+        update_visualization();
     }
 }
 
@@ -447,9 +454,13 @@ void RemeshingMenu::quad_helix_finding() {
         for (auto iter = longest_helix.begin(); iter != longest_helix.end(); ++iter) {
             interactive_colors.row((*iter)) = Eigen::RowVector3d(0.8, 1., 0.6);
         }
+        for (int face : quad_mesh.singular_quads) {
+            interactive_colors.row(face) = Eigen::RowVector3d(1., 0., 0.6);
+        }
         stylize_quad_mesh(interactive_colors);
     } else {
         std::cout << "[remeshing] helix free!\n";
+        stylize_quad_mesh(Eigen::RowVector3d::Constant(1.0));
     }
 }
 

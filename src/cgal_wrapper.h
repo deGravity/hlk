@@ -9,7 +9,7 @@
 #include <CGAL/AABB_traits.h>
 #include <CGAL/AABB_triangle_primitive.h>
 #include <CGAL/Polyhedron_3.h>
-#include <CGAL/Polyhedron_items_with_id_3.h>
+#include <CGAL/Polyhedron_items_with_id_3.h>                   
 #include <CGAL/Polyhedron_incremental_builder_3.h>
 #include <CGAL/Polygon_mesh_slicer.h>
 #include <CGAL/Simple_cartesian.h>
@@ -58,7 +58,7 @@ void CGAL_Mesh_Cutting(
     std::vector<std::vector<int>>& cutting_faces);
 
 std::vector<Eigen::Vector3d> CGAL_Mesh_Projection(
-	const std::vector<Eigen::Vector3d>& features, const double insert_threshold, const Tree& tree);
+    const std::vector<Eigen::Vector3d>& features, const double insert_threshold, const Tree& tree);
 
 Point_3 VectorPoint3d(Eigen::Vector3d p);
 Eigen::Vector3d Point3dVector(Point_3 p);
@@ -67,7 +67,7 @@ int CGAL_Closest_Face(const Tree& tree, const Eigen::Vector3d& point);
 Eigen::Vector3d CGAL_Project(const Tree& tree, const Eigen::Vector3d& point);
 
 void CGAL_Plane_Cutting(const Polyhedron_3& mesh, const Tree& tree, 
-	const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n, std::vector<Eigen::Vector3d> &loop_polyline);
+    const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n, std::vector<Eigen::Vector3d> &loop_polyline);
 
 std::vector<Eigen::Vector3d> CGAL_Plane_Projection(const std::vector<Eigen::Vector3d>& points, const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
 Eigen::Vector3d CGAL_Plane_Projection(const Eigen::Vector3d &point, const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
@@ -75,12 +75,12 @@ Eigen::Vector3d CGAL_Plane_Projection(const Eigen::Vector3d &point, const Eigen:
 // Export utilities for debugging.
 
 void CGAL_Export_Point(std::ofstream& export_file_output, int& export_index,
-	std::string s_name, double r, double g, double b, const Eigen::Vector3d& point, double radius);
+    std::string s_name, double r, double g, double b, const Eigen::Vector3d& point, double radius);
 void CGAL_Export_Points(std::string path, double r, double g, double b, double radius, const std::vector<Eigen::Vector3d> &points);
 void CGAL_Export_Points(std::string path, double r, double g, double b, double radius, const std::vector<std::vector<Eigen::Vector3d>>& pointses);
 
 void CGAL_Export_Segment(std::ofstream& export_file_output, int& export_index,
-	std::string s_name, double r, double g, double b, Eigen::Vector3d start, Eigen::Vector3d end, double radius);
+    std::string s_name, double r, double g, double b, Eigen::Vector3d start, Eigen::Vector3d end, double radius);
 void CGAL_Export_Segments(std::string path, double r, double g, double b, double radius, const std::vector<Eigen::Vector3d>& points);
 void CGAL_Export_Segments(std::string path, double r, double g, double b, double radius, const std::vector<std::vector<Eigen::Vector3d>>& segments);
 
