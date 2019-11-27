@@ -529,6 +529,36 @@ namespace hlk {
 		Eigen::MatrixXd node_positions = W * C3d;
 	}
 
+	Patch::Patch(std::vector<std::vector<int>> sides, Eigen::MatrixXd corners)
+	{
+		this->corners = corners;
+		this->sides = sides;
+		std::vector<int> side_counts;
+		for (auto& side : sides) {
+			int count = 0;
+			for (auto& quad_side : side) {
+				count += quad_side;
+			}
+			side_counts.push_back(count);
+		}
+
+		// Figure out which case we are in
+		assert(side_counts[0] == side_counts[2] || side_counts[1] == side_counts[3]); // only one shaping operation
+		Chart c;
+		
+		if (side_counts[0] > side_counts[2]) { // Decreases
+			c.decreases_leaning(side_counts[0], side_counts[2], side_counts[1], 0);
+		}
+		else if (side_counts[1] != side_counts[3]) { // Short Rows
+			c.short_rows(side_counts[3], side_counts[1], side_counts[0], -1);
+		}
+		else { // Flat or increases
+			c.increases_leaning(side_counts[0], side_counts[2], side_counts[1], 0);
+		}
+
+		make_graph(c.rows);
+	}
+
 
 	/*
 	Patch::Patch(std::vector<std::vector<int>> sides, Eigen::MatrixXd corners)

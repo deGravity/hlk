@@ -47,8 +47,6 @@ namespace hlk {
 		void make_graph(std::vector<std::vector<ChartCell>> chart);
 		void interpolate_coordinates();
 
-		Patch() {}
-
 		Patch(std::vector<std::vector<int>> sides, Eigen::MatrixXd corners);
 	};
 };
