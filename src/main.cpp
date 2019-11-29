@@ -42,13 +42,14 @@ int main(void) {
 	}
 	else { // test patch visualization
 		//std::string filename = igl::file_dialog_open();
-		std::vector<std::vector<int>> sides{ {4,4},{8},{},{8} };
-		Eigen::MatrixXd corners(4, 3);
+		std::vector<std::vector<int>> sides{ {3,2},{2},{5},{5} };
+		Eigen::MatrixXd corners(5, 3);
 		corners << 
 			1, 0, 0,
-			1, 0.5, 0,
+			1.3, 0.5, 0,
 			1, 1, 0,
-			0, 0.5, 0;
+			0, 1, 0,
+			0, 0, 0;
 		Patch p(sides, corners);
 
 		Eigen::MatrixXd V;
