@@ -102,6 +102,12 @@ namespace hlk {
 	{
 		std::vector<int> row_widths(rows);
 
+		assert(rows > 0 || first == last); // If there's only one row, you can't have a size change
+
+		if (rows == 0) {
+			return std::vector<int>{first};
+		}
+
 		for (int i = 0; i < rows; ++i) {
 			row_widths[i] = first + (last - first) * i / (rows - 1);
 		}
@@ -459,15 +465,13 @@ namespace hlk {
 
 	void Patch::interpolate_coordinates()
 	{
-		Eigen::MatrixXd V;
+		Eigen::MatrixXd V, V3d;
 		Eigen::MatrixXi E; // Unused
-		graph.edge_list_graph(V, E);
+		graph.edge_list_graph(V3d, E);
 
 		Eigen::MatrixXd C;
 		C.resize(corners.rows(), 2);
-		V = V.block(0, 0, V.rows(), 2); // Drop the Z coordinate
-
-		Eigen::MatrixXd W;
+		V = V3d.block(0, 0, V3d.rows(), 2); // Drop the Z coordinate
 
 		// Create a 2d corner block
 		std::vector<std::vector<double>> side_coords(4);
@@ -482,51 +486,74 @@ namespace hlk {
 			side_lengths.push_back(accum);
 		}
 
-		for (int s = 0; s < 4; ++s) {
-			if (side_lengths[s] == 0) {
-				if (sides[s].size() > 0) {
-
+		int coord = 0;
+		Eigen::RowVector2d vtx(0.0, 0.0);
+		std::vector<int> duplicated_coords;
+		std::vector<Eigen::RowVector2d> corners2d;
+		corners2d.push_back(vtx);
+		for (int side = 0; side < 4; ++side) {
+			std::vector<double> deltas;
+			if (side_lengths[side] == 0) {
+				// If all segments in a side are size 0, evenly distribute
+				for (int l : sides[side]) {
+					deltas.push_back((1.0 / sides[side].size()));
 				}
-				side_coords[s].push_back(0.0);
-				side_coords[s].push_back(1.0);
 			}
 			else {
-				double accum_length = 0.0;
-				for (int i = 0; i < sides[s].size(); ++i) {
-					side_coords[s].push_back(accum_length);
-					double l = (double)sides[s][i] / side_lengths[s];
-					accum_length += l;
+				for (int l : sides[side]) {
+					deltas.push_back((double)l / side_lengths[side]);
 				}
-				side_coords[s].push_back(accum_length);
+			}
+
+			// coordinates decrease along top and left edges
+			int sign = 1;
+			if (side > 1) {
+				sign = -1;
+			}
+
+			if (sides[side].size() == 0) {
+				// If we have no side vertices, duplice the shared corner
+				int duplicated = 0;
+				for (int s = 0; s < side; ++s) {
+					duplicated += sides[s].size();
+				}
+				duplicated_coords.push_back(duplicated);
+				vtx(coord) += sign * 1.0;
+				corners2d.push_back(vtx);
+			}
+			else {
+				for (int i = 0; i < deltas.size(); ++i) {
+					vtx(coord) += sign * deltas[i];
+					if (side < sides.size() - 1 || i < deltas.size() - 1) { // don't duplicate the final corner
+						corners2d.push_back(vtx);
+					}
+				}
+			}
+			coord = (coord + 1) % 2;
+		}
+		Eigen::MatrixXd C3d(corners.rows() + duplicated_coords.size(), 3);
+		int r = 0;
+		int duplicate_index = 0;
+		for (int i = 0; i < corners.rows(); ++i) {
+			C3d.row(r++) = corners.row(i);
+			while (duplicate_index < duplicated_coords.size() && duplicated_coords[duplicate_index] == i) {
+				C3d.row(r++) = corners.row(i);
+				++duplicate_index;
 			}
 		}
-		// Corner Vertices will be doubled - we need to account for this
-		// when interpolating later
-		//
-		std::vector<Eigen::RowVector2d> coords2d;
-		for (double x : side_coords[0]) {
-			coords2d.push_back(Eigen::RowVector2d(x, 0.0));
-		}
-		for (double y : side_coords[1]) {
-			coords2d.push_back(Eigen::RowVector2d(1.0, y));
-		}
-		for (double x : side_coords[2]) {
-			coords2d.push_back(Eigen::RowVector2d(1-x, 0.0));
-		}
-		for (double y : side_coords[3]) {
-			coords2d.push_back(Eigen::RowVector2d(0.0, 1 - y));
+
+		C.resize(corners2d.size(), 2);
+		for (int i = 0; i < corners2d.size(); ++i) {
+			C.row(i) = corners2d[i];
 		}
 
-		C.resize(coords2d.size(), 2);
-		for (int i = 0; i < coords2d.size(); ++i) {
-			C.row(i) = coords2d[i];
-		}
-
+		Eigen::MatrixXd W;
 		igl::mvc(V, C, W);
+		auto node_positions = W * C3d;
 
-		Eigen::MatrixXd C3d;
-
-		Eigen::MatrixXd node_positions = W * C3d;
+		for (int i = 0; i < W.rows(); ++i) {
+			graph.nodes[i]->pos = node_positions.row(i);
+		}
 	}
 
 	Patch::Patch(std::vector<std::vector<int>> sides, Eigen::MatrixXd corners)

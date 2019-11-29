@@ -12,7 +12,7 @@ using namespace std;
 
 int main(void) {
 
-	int mode = 2;
+	int mode = 3;
 
 	/*
 	cout << "Choose an Interface" << endl;
@@ -42,13 +42,13 @@ int main(void) {
 	}
 	else { // test patch visualization
 		//std::string filename = igl::file_dialog_open();
-		std::vector<std::vector<int>> sides{ {5},{0},{5},{4} };
+		std::vector<std::vector<int>> sides{ {4,4},{8},{},{8} };
 		Eigen::MatrixXd corners(4, 3);
 		corners << 
-			0, 0, 0,
 			1, 0, 0,
+			1, 0.5, 0,
 			1, 1, 0,
-			0, 1, 0;
+			0, 0.5, 0;
 		Patch p(sides, corners);
 
 		Eigen::MatrixXd V;
@@ -57,6 +57,7 @@ int main(void) {
 		
 
 
+		p.interpolate_coordinates();
 		p.graph.build_mesh(0.1, 4, V, E, C);
 
 		std::cout << V << std::endl << std::endl << E << std::endl;
