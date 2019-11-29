@@ -94,8 +94,8 @@ namespace hlk {
 
 	const Eigen::VectorXi& LabeledQuadMesh::quad_center_slot(int quad)
 	{
-		return vertex_slots[quad];
-		//return vertex_slots[n + quad];
+		//return vertex_slots[quad];
+		return vertex_slots[n + quad];
 	}
 
 	void LabeledQuadMesh::init()

@@ -12,7 +12,7 @@ using namespace std;
 
 int main(void) {
 
-	int mode = 3;
+	int mode = 2;
 
 	/*
 	cout << "Choose an Interface" << endl;

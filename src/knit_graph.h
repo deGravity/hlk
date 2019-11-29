@@ -42,8 +42,8 @@ namespace hlk {
 		Eigen::RowVector3d pos;
 
 		int index = -1; // Useful for some algorithms
-
-		bool contractable = false; // If true, this is a pass-through node that should be removed
+		
+		bool contractable(); // If true, this is a pass-through node that should be removed
 
 	};
 

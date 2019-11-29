@@ -77,3 +77,33 @@ void hlk::KnitGraph::build_mesh(double th, int poly_size, Eigen::MatrixXd & V, E
 	}
 	*/
 }
+
+bool hlk::KnitGraphNode::contractable()
+{
+	// contractable if no interacting yarns
+	bool can_contract = (top.size() == 0 && bottom.size() == 0) || (!left && !right);
+	if (can_contract) {
+		// Only contract if no dangling edges (don't want to contract things we may need later
+		std::vector<std::shared_ptr<KnitGraphEdge>> edges;
+		for (auto& e : top) {
+			edges.push_back(e);
+		}
+		for (auto& e : bottom) {
+			edges.push_back(e);
+		}
+		if (left) {
+			edges.push_back(left);
+		}
+		if (right) {
+			edges.push_back(right);
+		}
+		bool do_contract = true;
+		for (auto& edge : edges) {
+			if (!edge->src || !edge->dst) {
+				do_contract = false;
+			}
+		}
+		return do_contract;
+	}
+	return false;
+}

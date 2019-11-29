@@ -542,21 +542,81 @@ namespace hlk {
 			side_counts.push_back(count);
 		}
 
-		// Figure out which case we are in
-		assert(side_counts[0] == side_counts[2] || side_counts[1] == side_counts[3]); // only one shaping operation
-		Chart c;
-		
-		if (side_counts[0] > side_counts[2]) { // Decreases
-			c.decreases_leaning(side_counts[0], side_counts[2], side_counts[1], 0);
-		}
-		else if (side_counts[1] != side_counts[3]) { // Short Rows
-			c.short_rows(side_counts[3], side_counts[1], side_counts[0], -1);
-		}
-		else { // Flat or increases
-			c.increases_leaning(side_counts[0], side_counts[2], side_counts[1], 0);
-		}
+		// If we are in a special case (source or sink) build sepate patches then connect
 
-		make_graph(c.rows);
+		if (side_counts[0] > 0 && (side_counts[1] == 0 && side_counts[2] == 0 && side_counts[3] == 0)) {
+			// Sink case
+			std::vector<Patch> patches;
+			for (int i = 0; i < sides[0].size(); ++i) {
+				int n = sides[0][i];
+				std::vector<std::vector<int>> patch_sides{ {n},{n},{0},{n} };
+				Eigen::MatrixXd patch_corners(4, 3);
+				// TODO - Properly initialize use corners
+				patches.emplace_back(patch_sides, patch_corners);
+			}
+
+			for (int i = 0; i < patches.size(); ++i) {
+				for (auto& node : patches[i].graph.nodes) {
+					graph.nodes.push_back(node);
+				}
+				// Only keep forward yarn-edges (don't double count)
+				for (auto& edge : patches[i].graph.edges) {
+					if (edge->is_loop || edge->src) {
+						graph.edges.push_back(edge);
+					}
+				}
+				auto& p1 = patches[i];
+				auto& p2 = patches[(i + 1) % patches.size()];
+				for (int i = 0; i < p1.boundaries[1].size(); ++i) {
+					p1.boundaries[1][i]->dst = p2.boundaries[2][i]->dst;
+				}
+			}
+		}
+		else if (side_counts[3] > 0 && (side_counts[1] == 0 && side_counts[2] == 0 && side_counts[0] == 0)) {
+			// Sink case
+			std::vector<Patch> patches;
+			for (int i = 0; i < sides[0].size(); ++i) {
+				int n = sides[2][i];
+				std::vector<std::vector<int>> patch_sides{ {0},{n},{n},{n} };
+				Eigen::MatrixXd patch_corners(4, 3);
+				// TODO - Properly initialize use corners
+				patches.emplace_back(patch_sides, patch_corners);
+			}
+
+			for (int i = 0; i < patches.size(); ++i) {
+				for (auto& node : patches[i].graph.nodes) {
+					graph.nodes.push_back(node);
+				}
+				// Only keep forward yarn-edges (don't double count)
+				for (auto& edge : patches[i].graph.edges) {
+					if (edge->is_loop || edge->src) {
+						graph.edges.push_back(edge);
+					}
+				}
+				auto& p1 = patches[i];
+				auto& p2 = patches[(i + 1) % patches.size()];
+				for (int i = 0; i < p1.boundaries[1].size(); ++i) {
+					p1.boundaries[1][i]->dst = p2.boundaries[2][i]->dst;
+				}
+			}
+		}
+		else {
+			// Figure out which case we are in
+			assert(side_counts[0] == side_counts[2] || side_counts[1] == side_counts[3]); // only one shaping operation
+			Chart c;
+
+			if (side_counts[0] > side_counts[2]) { // Decreases
+				c.decreases_leaning(side_counts[0], side_counts[2], side_counts[1], 0);
+			}
+			else if (side_counts[1] != side_counts[3]) { // Short Rows
+				c.short_rows(side_counts[3], side_counts[1], side_counts[0], -1);
+			}
+			else { // Flat or increases
+				c.increases_leaning(side_counts[0], side_counts[2], side_counts[1], 0);
+			}
+
+			make_graph(c.rows);
+		}
 	}
 
 

@@ -57,7 +57,7 @@ namespace hlk {
 		int texture_id = -1;
 
 		// There are no quad-specific geometry constraints
-		//std::vector<z3::expr> get_constraints();
+		std::vector<std::pair<z3::expr, std::string>> get_constraints();
 		void update_texture();
 	};
 
@@ -130,6 +130,11 @@ namespace hlk {
 
 		hlk::Optimizer topology_optimizer;
 		hlk::Optimizer geometry_optimizer;
+
+
+		// TODO - be better than this
+		int min_time = 0;
+		int max_time = 1;
 
 	};
 }

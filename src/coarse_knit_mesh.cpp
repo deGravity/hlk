@@ -2,6 +2,9 @@
 
 #include <algorithm>
 
+#include <igl/parula.h>
+#include <igl/jet.h>
+
 #include "glyphs.h"
 #include "glyph.h"
 
@@ -35,6 +38,19 @@ namespace hlk {
 		for (auto& side : sides) {
 			side.update_texture();
 		}
+
+		// Get a time scale
+		int num_sources = 0;
+		int num_sinks = 0;
+		for (auto& quad : quads) {
+			if (quad.time->val < min_time) min_time = quad.time->val;
+			if (quad.time->val > max_time) max_time = quad.time->val;
+
+			if (sides[quad.index].is_loop->val && sides[quad.index + 1].is_loop->val && sides[quad.index + 2].is_loop->val && sides[quad.index + 3].is_loop->val) {
+
+			}
+		}
+
 		for (auto& quad : quads) {
 			quad.update_texture();
 		}
@@ -194,8 +210,78 @@ namespace hlk {
 		mesh = m;
 		time = geo_opt.get_int_prop(nth_label("time", i));
 	}
+	std::vector<std::pair<z3::expr, std::string>> CoarseKnitQuad::get_constraints()
+	{
+		int q = this->index;
+		auto& s0_o = mesh->sides[q].is_out->var;
+		auto& s0_l = mesh->sides[q].is_loop->var;
+		auto& s1_o = mesh->sides[q+1].is_out->var;
+		auto& s1_l = mesh->sides[q+1].is_loop->var;
+		auto& s2_o = mesh->sides[q+2].is_out->var;
+		auto& s2_l = mesh->sides[q+2].is_loop->var;
+		auto& s3_o = mesh->sides[q+3].is_out->var;
+		auto& s3_l = mesh->sides[q+3].is_loop->var;
+
+		// vertical skips are bad
+		auto no_skip_0 = !s0_l || // X
+			(s0_l != s2_l) || // X
+			(s0_o != s2_o) || // O
+			((s1_l == s0_l && s1_o == s0_o) || //
+			(s3_l == s0_l && s3_o == s0_o)); //
+
+		auto no_skip_1 = !s1_l || // X
+			(s1_l != s3_l) || // X
+			(s1_o != s3_o) || // 
+			((s2_l == s1_l && s2_o == s1_o) || //
+			(s0_l == s1_l && s0_o == s1_o)); //
+
+		auto sink_source = s0_l && s1_l && s2_l && s3_l && (s0_o == s1_o) && (s1_o == s2_o) && (s2_o == s3_o) && (s3_o == s0_o);
+
+		/*
+		auto opp_loop = [&](int a, int b) {
+			return mesh->sides[q + a].is_out != mesh->sides[b].is_out && mesh->sides[a].is_loop && mesh->sides[b].is_loop;
+		};
+		*/
+
+		//auto criss_cross = opp_loop(0, 2) && opp_loop(1, 3);
+
+		auto criss_cross = s0_l && s1_l && s2_l && s3_l && (s0_o != s2_o) && (s1_o != s3_o);
+
+		std::vector<std::pair<z3::expr, std::string>> constraints;
+		
+		constraints.push_back(std::make_pair(
+			no_skip_0,
+			"no_skip_0_" + std::to_string(q)
+		));
+
+		constraints.push_back(std::make_pair(
+			no_skip_1,
+			"no_skip_1_" + std::to_string(q)
+		));
+
+		
+		constraints.push_back(std::make_pair(
+			!criss_cross,
+			"no_criss_cross_" + std::to_string(q)
+		));
+		
+		constraints.push_back(std::make_pair(
+			!sink_source,
+			"no_sink_source_" + std::to_string(q)
+		));
+
+		return constraints;
+	}
 	void CoarseKnitQuad::update_texture()
 	{
+		int min_t = mesh->min_time;
+		int max_t = mesh->max_time;
+		double color_v = (double)(time->val - min_t) / (max_t - min_t);
+		double r, g, b;
+		igl::parula(color_v, r, g, b);
+		Eigen::RowVector4d color(r, g, b, 1.0);
+		auto slot = mesh->quad_slots[index];
+		mesh->set_glyph(slot, glyphs::SOLID_LINE, color);
 		// TODO - Print Glyphs for inc/dec type
 	}
 	CoarseKnitSide::CoarseKnitSide(Optimizer & geo_opt, Optimizer & topo_opt, int i, CoarseKnitMesh * m)
@@ -218,7 +304,7 @@ namespace hlk {
 		int prev_idx = mesh->prev_side(index);
 		auto& prev_is_loop = mesh->sides[prev_idx].is_loop;
 		auto& prev_is_out = mesh->sides[prev_idx].is_out;
-		if (is_regular) {
+		if (false){//is_regular) {
 			// Handedness order is loop_in -> yarn_out -> loop_out -> yarn_in
 			// The orientation (in/out) switches after loops and stays the
 			// same after yarns, while the direction (loop/yarn) always switches.
@@ -290,6 +376,12 @@ for (auto& edge : edges) {
 }
 for (auto& side : sides) {
 	for (auto constraint : side.get_constraints()) {
+		geometry_optimizer.add_constraint(constraint.first, constraint.second);
+	}
+}
+
+for (auto& quad : quads) {
+	for (auto constraint : quad.get_constraints()) {
 		geometry_optimizer.add_constraint(constraint.first, constraint.second);
 	}
 }
