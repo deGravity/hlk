@@ -148,13 +148,13 @@ namespace hlk {
 
 	}
 
-	CoarseKnitEdge::CoarseKnitEdge(Optimizer & geo_opt, Optimizer & topo_opt, int i, CoarseKnitMesh * m)
+	CoarseKnitEdge::CoarseKnitEdge(Optimizer & topo_opt, Optimizer & geo_opt, int i, CoarseKnitMesh * m)
 	{
 		seam = -1;
 		index = i;
 		mesh = m;
 	}
-	std::vector<std::pair<z3::expr, std::string>> CoarseKnitEdge::get_constraints()
+	std::vector<std::pair<z3::expr, std::string>> CoarseKnitEdge::get_topology_constraints()
 	{
 		std::vector<std::pair<z3::expr, std::string>> constraints;
 		int side_a_idx = mesh->edges_to_sides(index, 0);
@@ -189,6 +189,10 @@ namespace hlk {
 
 		return constraints;
 	}
+	std::vector<std::pair<z3::expr, std::string>> CoarseKnitEdge::get_geometry_constraints()
+	{
+		return std::vector<std::pair<z3::expr, std::string>>();
+	}
 	void CoarseKnitEdge::update_texture()
 	{
 		if (seam >= 0) {
@@ -211,15 +215,15 @@ namespace hlk {
 
 		}
 	}
-	CoarseKnitQuad::CoarseKnitQuad(Optimizer & geo_opt, Optimizer & topo_opt, int i, CoarseKnitMesh * m)
+	CoarseKnitQuad::CoarseKnitQuad(Optimizer & topo_opt, Optimizer & geo_opt, int i, CoarseKnitMesh * m)
 	{
 		shaping_distribution = DISTRIBUTED;
 		short_row_distribution = NONE;
 		index = i;
 		mesh = m;
-		time = geo_opt.get_int_prop(nth_label("time", i));
+		time = topo_opt.get_int_prop(nth_label("time", i));
 	}
-	std::vector<std::pair<z3::expr, std::string>> CoarseKnitQuad::get_constraints()
+	std::vector<std::pair<z3::expr, std::string>> CoarseKnitQuad::get_topology_constraints()
 	{
 		int q = this->index;
 		auto& s0_o = mesh->sides[q].is_out->var;
@@ -258,6 +262,7 @@ namespace hlk {
 
 		std::vector<std::pair<z3::expr, std::string>> constraints;
 		
+		/*
 		constraints.push_back(std::make_pair(
 			no_skip_0,
 			"no_skip_0_" + std::to_string(q)
@@ -278,8 +283,16 @@ namespace hlk {
 			!sink_source,
 			"no_sink_source_" + std::to_string(q)
 		));
+		*/
 
 		return constraints;
+	}
+	std::vector<std::pair<z3::expr, std::string>> CoarseKnitQuad::get_geometry_constraints()
+	{
+
+
+
+		return std::vector<std::pair<z3::expr, std::string>>();
 	}
 	void CoarseKnitQuad::update_texture()
 	{
@@ -293,15 +306,16 @@ namespace hlk {
 		mesh->set_glyph(slot, glyphs::SOLID_LINE, color);
 		// TODO - Print Glyphs for inc/dec type
 	}
-	CoarseKnitSide::CoarseKnitSide(Optimizer & geo_opt, Optimizer & topo_opt, int i, CoarseKnitMesh * m)
+	CoarseKnitSide::CoarseKnitSide(Optimizer & topo_opt, Optimizer & geo_opt, int i, CoarseKnitMesh * m)
 	{
-		is_loop = geo_opt.get_bool_prop(nth_label("is_loop", i));
-		is_out = geo_opt.get_bool_prop(nth_label("is_out", i));
+		is_loop = topo_opt.get_bool_prop(nth_label("is_loop", i));
+		is_out = topo_opt.get_bool_prop(nth_label("is_out", i));
+		stitches = geo_opt.get_int_prop(nth_label("stitches", i));
 		index = i;
 		mesh = m;
 	}
 
-	std::vector<std::pair<z3::expr,std::string>> CoarseKnitSide::get_constraints()
+	std::vector<std::pair<z3::expr,std::string>> CoarseKnitSide::get_topology_constraints()
 	{
 		std::vector<std::pair<z3::expr, std::string>> constraints;
 		int u = mesh->side_u(index);
@@ -313,7 +327,7 @@ namespace hlk {
 		int prev_idx = mesh->prev_side(index);
 		auto& prev_is_loop = mesh->sides[prev_idx].is_loop;
 		auto& prev_is_out = mesh->sides[prev_idx].is_out;
-		if (false){//is_regular) {
+		if (is_regular) {
 			// Handedness order is loop_in -> yarn_out -> loop_out -> yarn_in
 			// The orientation (in/out) switches after loops and stays the
 			// same after yarns, while the direction (loop/yarn) always switches.
@@ -354,6 +368,10 @@ namespace hlk {
 		}
 		return constraints;
 	}
+	std::vector<std::pair<z3::expr, std::string>> CoarseKnitSide::get_geometry_constraints()
+	{
+		return std::vector<std::pair<z3::expr, std::string>>();
+	}
 	void CoarseKnitSide::update_texture()
 	{
 		auto& arrow = is_loop->is_fixed ? glyphs::SOLID_ARROW : glyphs::DASHED_ARROW;
@@ -366,58 +384,64 @@ namespace hlk {
 	{
 		topology_optimizer.push();
 
-std::vector<z3::expr> seam_costs;
-int i = 0;
-std::cout << "Num possible seams = " << seams.size();
-for (auto& seam : seams) {
-	std::string cost_name = "seam_cost_" + std::to_string(i);
-	z3::expr s_cost = topology_optimizer.context.int_const(cost_name.c_str());
-	seam_costs.push_back(s_cost);
-	topology_optimizer.add_constraint((seam->var && s_cost == 1) || (!seam->var && s_cost == 0));
-	++i;
-}
+		std::vector<z3::expr> seam_costs;
+		int i = 0;
+		std::cout << "Num possible seams = " << seams.size();
+		for (auto& seam : seams) {
+			std::string cost_name = "seam_cost_" + std::to_string(i);
+			z3::expr s_cost = topology_optimizer.context.int_const(cost_name.c_str());
+			seam_costs.push_back(s_cost);
+			topology_optimizer.add_constraint((seam->var && s_cost == 1) || (!seam->var && s_cost == 0));
+			++i;
+		}
 
 
-for (auto& edge : edges) {
-	for (auto constraint : edge.get_constraints()) {
-		topology_optimizer.add_constraint(constraint.first, constraint.second);
+		for (auto& edge : edges) {
+			for (auto constraint : edge.get_topology_constraints()) {
+				topology_optimizer.add_constraint(constraint.first, constraint.second);
+			}
+		}
+		for (auto& side : sides) {
+			for (auto constraint : side.get_topology_constraints()) {
+				topology_optimizer.add_constraint(constraint.first, constraint.second);
+			}
+		}
+
+		for (auto& quad : quads) {
+			for (auto constraint : quad.get_topology_constraints()) {
+				topology_optimizer.add_constraint(constraint.first, constraint.second);
+			}
+		}
+
+
+
+		z3::expr cost = topology_optimizer.context.int_const("cst");
+		if (seam_costs.size() > 0) {
+			cost = seam_costs[0];
+			for (int i = 1; i < seam_costs.size(); ++i) {
+				cost = cost + seam_costs[i];
+			}
+		}
+
+		auto result = seam_costs.size() > 0 ? topology_optimizer.minimize(cost, 15) : topology_optimizer.solve();
+
+		if (result.has_result) {
+			topology_optimizer.update_all_props(*result.result_model);
+			update_textures();
+		}
+		else {
+			// TODO - Get Information from the UNSAT core
+			std::cout << result.unsat_core << std::endl;
+		}
+
+		topology_optimizer.pop();
+		return result.has_result;
 	}
-}
-for (auto& side : sides) {
-	for (auto constraint : side.get_constraints()) {
-		topology_optimizer.add_constraint(constraint.first, constraint.second);
-	}
-}
 
-for (auto& quad : quads) {
-	for (auto constraint : quad.get_constraints()) {
-		topology_optimizer.add_constraint(constraint.first, constraint.second);
-	}
-}
+	bool CoarseKnitMesh::optimize_geometry()
+	{
 
-
-
-z3::expr cost = topology_optimizer.context.int_const("cst");
-if (seam_costs.size() > 0) {
-	cost = seam_costs[0];
-	for (int i = 1; i < seam_costs.size(); ++i) {
-		cost = cost + seam_costs[i];
-	}
-}
-
-auto result = seam_costs.size() > 0 ? topology_optimizer.minimize(cost, 15) : topology_optimizer.solve();
-
-if (result.has_result) {
-	topology_optimizer.update_all_props(*result.result_model);
-	update_textures();
-}
-else {
-	// TODO - Get Information from the UNSAT core
-	std::cout << result.unsat_core << std::endl;
-}
-
-topology_optimizer.pop();
-return result.has_result;
+		return false;
 	}
 	void CoarseKnitMesh::copy_shaping(int origin_side, int dest_side)
 	{

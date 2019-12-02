@@ -40,7 +40,8 @@ namespace hlk {
 		int index;
 		CoarseKnitMesh* mesh;
 
-		std::vector<std::pair<z3::expr, std::string>> get_constraints();
+		std::vector<std::pair<z3::expr, std::string>> get_topology_constraints();
+		std::vector<std::pair<z3::expr, std::string>> get_geometry_constraints();
 		void update_texture();
 	};
 
@@ -56,8 +57,9 @@ namespace hlk {
 
 		int texture_id = -1;
 
-		// There are no quad-specific geometry constraints
-		std::vector<std::pair<z3::expr, std::string>> get_constraints();
+		std::vector<std::pair<z3::expr, std::string>> get_topology_constraints();
+		std::vector<std::pair<z3::expr, std::string>> get_geometry_constraints();
+
 		void update_texture();
 	};
 
@@ -65,10 +67,13 @@ namespace hlk {
 		CoarseKnitSide(Optimizer& topo_opt, Optimizer& geo_opt, int i, CoarseKnitMesh* m);
 		std::shared_ptr<BoolProp> is_loop;
 		std::shared_ptr<BoolProp> is_out;
+		std::shared_ptr<IntProp> stitches;
 		int index;
 		CoarseKnitMesh* mesh;
 
-		std::vector<std::pair<z3::expr, std::string>> get_constraints();
+		std::vector<std::pair<z3::expr, std::string>> get_topology_constraints();
+		std::vector<std::pair<z3::expr, std::string>> get_geometry_constraints();
+
 		void update_texture();
 	};
 
@@ -91,6 +96,7 @@ namespace hlk {
 		std::vector<CoarseKnitSide> sides;
 
 		bool optimize_topology();
+		bool optimize_geometry();
 
 		// Copy shaping between quads
 		void copy_shaping(int origin_side, int dest_side);
@@ -132,7 +138,9 @@ namespace hlk {
 		// Set Initial Textures
 		virtual void init();
 
-		
+		double scale = 1; // Units:Inches
+		double stitch_guage = 7.0; // In stitches / inch 
+		double row_guage = 14.0; // In rows / inch
 
 
 		// TODO - be better than this
