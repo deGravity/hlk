@@ -63,13 +63,13 @@ namespace hlk {
 		for (int q = 0; q < m; ++q) {
 			
 			for (int j = 0; j < 4; ++j) {
-				sides.emplace_back(geometry_optimizer, topology_optimizer, 4 * q + j, this);
+				sides.emplace_back(topology_optimizer, geometry_optimizer, 4 * q + j, this);
 			}
-			quads.emplace_back(geometry_optimizer, topology_optimizer, q, this);
+			quads.emplace_back(topology_optimizer, geometry_optimizer, q, this);
 			
 		}
 		for (int i = 0; i < e; ++i) {
-			edges.emplace_back(geometry_optimizer, topology_optimizer, i, this);
+			edges.emplace_back(topology_optimizer, geometry_optimizer, i, this);
 		}
 
 		vertex_in_seam.resize(n, false);
@@ -105,7 +105,7 @@ namespace hlk {
 						if (sep_seam == -1) {
 							new_seam = true;
 							sep_seam = seams.size();
-							seams.emplace_back(geometry_optimizer.get_bool_prop(nth_label("seam", sep_seam)));
+							seams.emplace_back(topology_optimizer.get_bool_prop(nth_label("seam", sep_seam)));
 						}
 						std::vector<int> s_edges;
 						for (int seam_side : separatrix) {
@@ -131,7 +131,7 @@ namespace hlk {
 
 		std::cout << "Mesh Loaded, Optimizing Topology" << std::endl;
 		// Solve the SMT problem and update the textures
-		if (!optimize_geometry()) {
+		if (!optimize_topology()) {
 			std::cout << "Unable to initialize" << std::endl;
 		}
 
@@ -353,42 +353,42 @@ namespace hlk {
 		auto& symbol = is_out->val ? line : arrow;
 		mesh->set_glyph(mesh->dual_half_edge_slots[index], symbol, s_color);
 	}
-	bool CoarseKnitMesh::optimize_geometry()
+	bool CoarseKnitMesh::optimize_topology()
 	{
-		geometry_optimizer.push();
+		topology_optimizer.push();
 
 std::vector<z3::expr> seam_costs;
 int i = 0;
 std::cout << "Num possible seams = " << seams.size();
 for (auto& seam : seams) {
 	std::string cost_name = "seam_cost_" + std::to_string(i);
-	z3::expr s_cost = geometry_optimizer.context.int_const(cost_name.c_str());
+	z3::expr s_cost = topology_optimizer.context.int_const(cost_name.c_str());
 	seam_costs.push_back(s_cost);
-	geometry_optimizer.add_constraint((seam->var && s_cost == 1) || (!seam->var && s_cost == 0));
+	topology_optimizer.add_constraint((seam->var && s_cost == 1) || (!seam->var && s_cost == 0));
 	++i;
 }
 
 
 for (auto& edge : edges) {
 	for (auto constraint : edge.get_constraints()) {
-		geometry_optimizer.add_constraint(constraint.first, constraint.second);
+		topology_optimizer.add_constraint(constraint.first, constraint.second);
 	}
 }
 for (auto& side : sides) {
 	for (auto constraint : side.get_constraints()) {
-		geometry_optimizer.add_constraint(constraint.first, constraint.second);
+		topology_optimizer.add_constraint(constraint.first, constraint.second);
 	}
 }
 
 for (auto& quad : quads) {
 	for (auto constraint : quad.get_constraints()) {
-		geometry_optimizer.add_constraint(constraint.first, constraint.second);
+		topology_optimizer.add_constraint(constraint.first, constraint.second);
 	}
 }
 
 
 
-z3::expr cost = geometry_optimizer.context.int_const("cst");
+z3::expr cost = topology_optimizer.context.int_const("cst");
 if (seam_costs.size() > 0) {
 	cost = seam_costs[0];
 	for (int i = 1; i < seam_costs.size(); ++i) {
@@ -396,10 +396,10 @@ if (seam_costs.size() > 0) {
 	}
 }
 
-auto result = seam_costs.size() > 0 ? geometry_optimizer.minimize(cost, 15) : geometry_optimizer.solve();
+auto result = seam_costs.size() > 0 ? topology_optimizer.minimize(cost, 15) : topology_optimizer.solve();
 
 if (result.has_result) {
-	geometry_optimizer.update_all_props(*result.result_model);
+	topology_optimizer.update_all_props(*result.result_model);
 	update_textures();
 }
 else {
@@ -407,7 +407,7 @@ else {
 	std::cout << result.unsat_core << std::endl;
 }
 
-geometry_optimizer.pop();
+topology_optimizer.pop();
 return result.has_result;
 	}
 	void CoarseKnitMesh::copy_shaping(int origin_side, int dest_side)
@@ -459,7 +459,7 @@ return result.has_result;
 			assert(edges[sides_to_edges[side]].seam < 0);
 		}
 		int seam_id = seams.size();
-		seams.emplace_back(geometry_optimizer.get_bool_prop(nth_label("seam", seam_id)));
+		seams.emplace_back(topology_optimizer.get_bool_prop(nth_label("seam", seam_id)));
 		std::vector<int> new_seam;
 		for (auto side : seam_sides) {
 			int e = sides_to_edges[side];
@@ -565,7 +565,7 @@ return result.has_result;
 		seam_edges[seam] = new_seams[0];
 		for (int i = 1; i < new_seams.size(); ++i) {
 			int new_seam_id = seams.size();
-			seams.emplace_back(geometry_optimizer.get_bool_prop(nth_label("seam", new_seam_id)));
+			seams.emplace_back(topology_optimizer.get_bool_prop(nth_label("seam", new_seam_id)));
 			seam_edges.push_back(new_seams[i]);
 			for (int e : new_seams[i]) {
 				edges[e].seam = new_seam_id;

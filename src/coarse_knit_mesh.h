@@ -35,7 +35,7 @@ namespace hlk {
 
 	struct CoarseKnitEdge {
 		// Data We Definitely Want
-		CoarseKnitEdge(Optimizer& geo_opt, Optimizer& topo_opt, int i, CoarseKnitMesh* m);
+		CoarseKnitEdge(Optimizer& topo_opt, Optimizer& geo_opt, int i, CoarseKnitMesh* m);
 		int seam;
 		int index;
 		CoarseKnitMesh* mesh;
@@ -46,7 +46,7 @@ namespace hlk {
 
 	struct CoarseKnitQuad {
 		
-		CoarseKnitQuad(Optimizer& geo_opt, Optimizer& topo_opt, int i, CoarseKnitMesh* m);
+		CoarseKnitQuad(Optimizer& topo_opt, Optimizer& geo_opt, int i, CoarseKnitMesh* m);
 		std::shared_ptr<IntProp> time;
 		int index;
 		CoarseKnitMesh* mesh;
@@ -62,7 +62,7 @@ namespace hlk {
 	};
 
 	struct CoarseKnitSide {
-		CoarseKnitSide(Optimizer& geo_opt, Optimizer& topo_opt, int i, CoarseKnitMesh* m);
+		CoarseKnitSide(Optimizer& topo_opt, Optimizer& geo_opt, int i, CoarseKnitMesh* m);
 		std::shared_ptr<BoolProp> is_loop;
 		std::shared_ptr<BoolProp> is_out;
 		int index;
@@ -86,7 +86,7 @@ namespace hlk {
 		std::vector<CoarseKnitQuad> quads;
 		std::vector<CoarseKnitSide> sides;
 
-		bool optimize_geometry();
+		bool optimize_topology();
 
 		// Copy shaping between quads
 		void copy_shaping(int origin_side, int dest_side);

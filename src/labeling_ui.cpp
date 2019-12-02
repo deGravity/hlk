@@ -80,7 +80,7 @@ namespace hlk {
 			drag_start_side = -1;
 
 			if (auto_solve) {
-				bool sat = M.optimize_geometry();
+				bool sat = M.optimize_topology();
 
 				if (!sat) {
 					std::cout << "UNSAT!" << std::endl;
@@ -101,7 +101,7 @@ namespace hlk {
 					if (edge >= 0 && M.edges[edge].seam >= 0) {
 						M.toggle_seam(side);
 						if (auto_solve) {
-							bool sat = M.optimize_geometry();
+							bool sat = M.optimize_topology();
 							update_mesh();
 							if (!sat) {
 								std::cout << "UNSAT!" << std::endl;
