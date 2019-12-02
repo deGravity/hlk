@@ -29,6 +29,7 @@ The direct dependencies that must be installed before building are
 - CGAL
   - boost
 - glm
+- Eigen3.3
 
 By default, libigl is expected to live as an external project at the same level
 as the project. Clone libigl, and run cmake generate on it:
