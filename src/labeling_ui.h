@@ -15,6 +15,7 @@ namespace hlk {
 		//void set_mesh(CoarseKnitMesh m);
 
 		bool load_quad_mesh_file();
+		void load_quad_mesh_file(std::string filename);
 
 		bool mouse_down(int button, int modifier);
 

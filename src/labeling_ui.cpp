@@ -14,38 +14,45 @@ namespace hlk {
 	{
 		std::string filename = igl::file_dialog_open();
 		if (filename.size() > 0) {
-			read_quad_mesh(filename, M, true);
-
-
-			// Setup the base mesh
-			viewer->data().clear();
-			viewer->data().set_mesh(M.V, M.F_t);
-			viewer->data().set_colors(Eigen::RowVector4d(1.0, 1.0, 1.0, 1.0));
-
-			base_index = viewer->selected_data_index;
-
-			if (!mesh_loaded) {
-				overlay_index = viewer->append_mesh();
-			}
-			else {
-				viewer->selected_data_index = overlay_index;
-				viewer->data().clear();
-			}
-			viewer->data().set_mesh(M.LV, M.LF);
-			viewer->data().set_texture(R, G, B, A);
-			viewer->data().set_uv(M.UV);
-			viewer->data().show_texture = true;
-			viewer->data().show_lines = false;
-			viewer->data().set_colors(M.C);
-
-			// Set the data index back to the underlying mesh
-			viewer->selected_data_index = base_index;
-
-			mesh_loaded = true;
+			load_quad_mesh_file(filename);
 			return true;
 		}
 		return false;
 	}
+
+	void LabelingUI::load_quad_mesh_file(std::string filename)
+	{
+		read_quad_mesh(filename, M, true);
+
+
+		// Setup the base mesh
+		viewer->data().clear();
+		viewer->data().set_mesh(M.V, M.F_t);
+		viewer->data().set_colors(Eigen::RowVector4d(1.0, 1.0, 1.0, 1.0));
+
+		base_index = viewer->selected_data_index;
+
+		if (!mesh_loaded) {
+			overlay_index = viewer->append_mesh();
+		}
+		else {
+			viewer->selected_data_index = overlay_index;
+			viewer->data().clear();
+		}
+		viewer->data().set_mesh(M.LV, M.LF);
+		viewer->data().set_texture(R, G, B, A);
+		viewer->data().set_uv(M.UV);
+		viewer->data().show_texture = true;
+		viewer->data().show_lines = false;
+		viewer->data().set_colors(M.C);
+
+		// Set the data index back to the underlying mesh
+		viewer->selected_data_index = base_index;
+
+		mesh_loaded = true;
+	}
+
+
 	bool LabelingUI::mouse_down(int button, int modifier) {
 		if (igl::opengl::glfw::imgui::ImGuiMenu::mouse_down(button, modifier)) return true;
 		
