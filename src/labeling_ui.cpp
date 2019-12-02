@@ -16,12 +16,21 @@ namespace hlk {
 		if (filename.size() > 0) {
 			read_quad_mesh(filename, M, true);
 
+
 			// Setup the base mesh
-			//viewer->data().set_mesh(M.V, M.F_t);
-			//viewer->data().set_colors(Eigen::RowVector4d(1.0, 1.0, 1.0, 1.0));
+			viewer->data().clear();
+			viewer->data().set_mesh(M.V, M.F_t);
+			viewer->data().set_colors(Eigen::RowVector4d(1.0, 1.0, 1.0, 1.0));
+
 			base_index = viewer->selected_data_index;
 
-			overlay_index = viewer->append_mesh();
+			if (!mesh_loaded) {
+				overlay_index = viewer->append_mesh();
+			}
+			else {
+				viewer->selected_data_index = overlay_index;
+				viewer->data().clear();
+			}
 			viewer->data().set_mesh(M.LV, M.LF);
 			viewer->data().set_texture(R, G, B, A);
 			viewer->data().set_uv(M.UV);

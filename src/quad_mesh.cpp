@@ -11,7 +11,17 @@
 
 
 namespace hlk {
+	
 	void QuadMesh::init() {
+
+		// Cleanup from any previous inits
+		valence.clear();
+		is_boundary_side.clear();
+		is_singularity.clear();
+		singular_vertices.clear();
+		singular_quads.clear();
+		is_border_vertex.clear();
+
 		// Use maxCoeff instead of V.rows() to remain idempotent
 		n = F_q.maxCoeff() + 1;
 		m = F_q.rows();

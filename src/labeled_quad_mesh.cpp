@@ -108,6 +108,17 @@ namespace hlk {
 	{
 		QuadMesh::init();
 
+		// Clean up from any previous inits
+		on_mesh_vertices.clear();
+		vertex_layers.clear();
+		slots.clear();
+		vertex_slots.clear();
+		dual_half_edge_slots.clear();
+		half_edge_slots.clear();
+		edge_slots.clear();
+		quad_slots.clear();
+		quadrant_slots.clear();
+
 		// Make the slots
 		std::vector<Eigen::RowVector3d> label_vertices;
 		std::vector<Eigen::RowVector3i> label_faces;

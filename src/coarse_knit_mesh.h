@@ -73,6 +73,10 @@ namespace hlk {
 	};
 
 	struct CoarseKnitMesh : LabeledQuadMesh {
+
+		// These must remain first since they must be destructed last!
+		hlk::Optimizer topology_optimizer;
+		hlk::Optimizer geometry_optimizer;
 		
 		std::vector<std::shared_ptr<BoolProp>> seams;
 		// Edges in a seam
@@ -128,8 +132,7 @@ namespace hlk {
 		// Set Initial Textures
 		virtual void init();
 
-		hlk::Optimizer topology_optimizer;
-		hlk::Optimizer geometry_optimizer;
+		
 
 
 		// TODO - be better than this

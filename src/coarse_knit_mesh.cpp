@@ -60,6 +60,17 @@ namespace hlk {
 	{
 		LabeledQuadMesh::init();
 
+		// Clean up from any previous inits
+		seams.clear();
+		vertex_in_seam.clear();
+		size_lines.clear();
+		symmetries.clear();
+		edges.clear();
+		quads.clear();
+		sides.clear();
+		geometry_optimizer.clear();
+		topology_optimizer.clear();
+
 		for (int q = 0; q < m; ++q) {
 			
 			for (int j = 0; j < 4; ++j) {
@@ -136,8 +147,6 @@ namespace hlk {
 		}
 
 	}
-
-	
 
 	CoarseKnitEdge::CoarseKnitEdge(Optimizer & geo_opt, Optimizer & topo_opt, int i, CoarseKnitMesh * m)
 	{
