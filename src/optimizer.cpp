@@ -356,6 +356,11 @@ namespace hlk {
         }
     }
 
+	z3::expr Optimizer::zero()
+	{
+		return context.num_val(0, context.int_sort());
+	}
+
     void Optimizer::Result::set_model(z3::model m)
     {
         result_model = make_unique<model>(m);

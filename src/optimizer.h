@@ -211,7 +211,7 @@ namespace hlk {
         z3::context context;
         void print_info();
         void clear();
-    //private:
+
         Result minimize_bs(z3::expr objective, unsigned int timeout = -1U);
         Result minimize_inc(z3::expr objective, unsigned int timeout = -1U);
         Result minimize_dec(z3::expr objective, unsigned int timeout = -1U); // timeout in seconds
@@ -220,6 +220,8 @@ namespace hlk {
         std::vector<std::shared_ptr<IntProp>> int_properties;
 
         z3::solver solver;
+
+		z3::expr zero();
     };
 
 };

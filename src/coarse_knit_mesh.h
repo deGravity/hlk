@@ -74,6 +74,8 @@ namespace hlk {
 		std::vector<std::pair<z3::expr, std::string>> get_topology_constraints();
 		std::vector<std::pair<z3::expr, std::string>> get_geometry_constraints();
 
+		z3::expr get_geometry_cost();
+
 		void update_texture();
 	};
 
@@ -88,8 +90,10 @@ namespace hlk {
 		// Will always be ordered 
 		std::vector<std::vector<int>> seam_edges;
 		std::vector<bool> vertex_in_seam;
-		std::vector<std::vector<int>> size_lines;
+		std::vector<std::pair<std::vector<int>, double>> size_lines;
 		std::vector<std::vector<int>> symmetries;
+
+		std::vector<double> side_lengths;
 
 		std::vector<CoarseKnitEdge> edges;
 		std::vector<CoarseKnitQuad> quads;
@@ -97,6 +101,15 @@ namespace hlk {
 
 		bool optimize_topology();
 		bool optimize_geometry();
+
+		// Get Constraints for seams
+		std::vector<std::pair<z3::expr, std::string>> get_seam_costs();
+
+		// Get Constraints for line sizes
+		std::vector<std::pair<z3::expr, std::string>> size_line_constraints();
+
+		// Get Symmetry constraints
+		std::vector<std::pair<z3::expr, std::string>> get_symmetry_constraints();
 
 		// Copy shaping between quads
 		void copy_shaping(int origin_side, int dest_side);
@@ -139,13 +152,19 @@ namespace hlk {
 		virtual void init();
 
 		double scale = 1; // Units:Inches
-		double stitch_guage = 7.0; // In stitches / inch 
-		double row_guage = 14.0; // In rows / inch
+		double stitch_gauge = 7.0; // In stitches / inch 
+		double row_gauge = 14.0; // In rows / inch
+
+		double tollerance = 0.01;
 
 
 		// TODO - be better than this
 		int min_time = 0;
 		int max_time = 1;
 
+		unsigned int minimizer_timeout = 15;
+
+		bool topology_solved = false;
+		bool geometry_solved = false;
 	};
 }
