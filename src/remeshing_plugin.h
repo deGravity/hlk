@@ -21,7 +21,7 @@ public:
         in_path = input_path;
         out_path = output_path;
 
-        click_threshold = 0.1f;
+        click_threshold = 0.01f;
         soft_constraint_strength = 0.5f;
         gradient_size = 50.0f;
         stiffen_iter = 0;

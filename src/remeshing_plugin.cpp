@@ -1420,21 +1420,10 @@ void RemeshingMenu::split_mesh() {
                 existing_index_1 = v_index_2;
             }
 
-            // check the first point
+            // if next edge is found
             if (next_edge_index >= 0) {
-                double distance = (feature_points[0] - V.row(next_edge_index).transpose()).norm();
-                if (feature_face_ids[0] == i) {
-                    if (distance < mesh_edge_size * click_threshold) {
-                        seam.push_back({ insert_v_index, next_edge_index, face_vectors[i].normal });
-                        split_existing_edges(existing_index_0, existing_index_1, insert_v_index, seam);
-                    }
-                }
-                if (feature_face_ids[feature_face_ids.size() - 1] == i) {
-                    if (distance < mesh_edge_size * click_threshold) {
-                        seam.push_back({ insert_v_index, next_edge_index, face_vectors[i].normal });
-                        split_existing_edges(existing_index_0, existing_index_1, insert_v_index, seam);
-                    }
-                }
+                seam.push_back({ insert_v_index, next_edge_index, face_vectors[i].normal });
+                split_existing_edges(existing_index_0, existing_index_1, insert_v_index, seam);
             }
         }
 

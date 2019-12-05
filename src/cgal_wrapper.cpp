@@ -246,29 +246,23 @@ void CGAL_Mesh_Cutting(
     std::vector<Eigen::Vector3d>& igl_cutting_points,
     std::vector<std::vector<int>>& cutting_faces) {
 
-
-	auto merge_loop = [](const std::vector<Eigen::Vector3d> &points, const double distance_threshold) {
+	auto merge_loop = [](const std::vector<Eigen::Vector3d>& points, const double distance_threshold) {
 		
-		std::vector<Eigen::Vector3d> new_points(1,points[0]);
+		std::vector<Eigen::Vector3d> new_points(1, points[0]);
 
 		for (int i = 1; i < points.size() - 1; i++)
 			if ((points[i] - new_points.back()).norm() > distance_threshold)
 				new_points.emplace_back(points[i]);
 		
 		if ((points.back() - new_points.back()).norm() > distance_threshold)
-			//new_points.emplace_back(points[i]);
 			new_points.erase(new_points.begin() + new_points.size()-1);
 		new_points.emplace_back(points.back());
 
 		return new_points;
 	};
 
-    face_ids.clear();
-
-
-	std::vector<Eigen::Vector3d> merge_feature=merge_loop(features,0.011);
-	std::vector<Eigen::Vector3d> new_features;
-
+    std::vector<Eigen::Vector3d> merge_feature = features.size() > 2 ? merge_loop(features, 0.011) : features;
+    std::vector<Eigen::Vector3d> new_features;
     for (int i = 0; i < merge_feature.size(); i++) {
         Point_and_primitive_id pp = tree.closest_point_and_primitive(VectorPoint3d(merge_feature[i]));
         Halfedge_handle cur_handle;
@@ -285,7 +279,8 @@ void CGAL_Mesh_Cutting(
     }
 
     // related faces of projecting points
-    std::vector<Poly_facet_iterator> project_faces; 
+    face_ids.clear();
+    std::vector<Poly_facet_iterator> project_faces;
     for (int i = 0; i < new_features.size(); i++) {
         Poly_point_3 query(new_features[i].x(), new_features[i].y(), new_features[i].z());
         Point_and_primitive_id pp = tree.closest_point_and_primitive(query);
@@ -306,8 +301,8 @@ void CGAL_Mesh_Cutting(
     int iteration = 0;
     int idx = 1;
 
-	CGAL_Export_Segments("D:\\merge_feature.obj", 1.0, 0.0, 0.0, 0.005, merge_feature);
-	CGAL_Export_Segments("D:\\new_features.obj", 1.0, 0.0, 0.0, 0.005, new_features);
+	//CGAL_Export_Segments("D:\\merge_feature.obj", 1.0, 0.0, 0.0, 0.005, merge_feature);
+	//CGAL_Export_Segments("D:\\new_features.obj", 1.0, 0.0, 0.0, 0.005, new_features);
 
     // TODO: there are still bugs here!!!!!
     while (true) {
@@ -330,16 +325,14 @@ void CGAL_Mesh_Cutting(
 				}
             }
         }
-		if (!goon)
-		{
+		if (!goon) {
 			std::cerr << "if (!goon)" << std::endl;
 			break;
 		}
 
 		Halfedge_handle handle;
 		Eigen::Vector3d intersection;
-		if (first_intersection(cur_handle, (iteration == 0) ? 3 : 2, inside, new_features[idx], handle, intersection))
-		{
+		if (first_intersection(cur_handle, (iteration == 0) ? 3 : 2, inside, new_features[idx], handle, intersection)) {
 			Point_3 edge_3d_0 = handle->vertex()->point();
 			Point_3 edge_3d_1 = handle->opposite()->vertex()->point();
 			double d0 = std::sqrt(CGAL::squared_distance(edge_3d_0, Point_3(intersection[0], intersection[1], intersection[2])));
@@ -348,9 +341,7 @@ void CGAL_Mesh_Cutting(
 				igl_cutting_points.emplace_back(intersection);
 				handles.emplace_back(cur_handle);
 				process_adds.emplace_back(true);
-			}
-			else
-			{
+			} else {
 				process_adds.emplace_back(false);
 			}
 
@@ -364,19 +355,16 @@ void CGAL_Mesh_Cutting(
 			if (cur_face != NULL) {
 				cur_face_id = cur_face->id();
 				if (cur_face_id == project_faces[project_faces.size() - 1]->id()) break;
-			}
-			else {
+			} else {
 				std::cerr << "329" << std::endl;
 				break;
 			}
-		}
-		else
-		{
+
+		} else {
 			inside = process_cutting_points.back();
 			cur_handle = process_handles.back();
 
-			if (process_adds.back())
-			{
+			if (process_adds.back()) {
 				igl_cutting_points.erase(igl_cutting_points.begin() + igl_cutting_points.size() - 1);
 				handles.erase(handles.begin() + handles.size() - 1);
 			}
@@ -387,14 +375,10 @@ void CGAL_Mesh_Cutting(
 
 		}
 
-		
-		
-
         ++iteration;
     }
     
-	CGAL_Export_Segments("D:\\igl_cutting_points.obj", 1.0, 0.0, 0.0, 0.005, igl_cutting_points);
-
+	//CGAL_Export_Segments("D:\\igl_cutting_points.obj", 1.0, 0.0, 0.0, 0.005, igl_cutting_points);
 
     for (int i = 0; i < handles.size(); i++) {
         int face_id = handles[i]->face()->id();
