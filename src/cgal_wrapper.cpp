@@ -246,11 +246,31 @@ void CGAL_Mesh_Cutting(
     std::vector<Eigen::Vector3d>& igl_cutting_points,
     std::vector<std::vector<int>>& cutting_faces) {
 
-    face_ids.clear();
-    std::vector<Eigen::Vector3d> new_features;
 
-    for (int i = 0; i < features.size(); i++) {
-        Point_and_primitive_id pp = tree.closest_point_and_primitive(VectorPoint3d(features[i]));
+	auto merge_loop = [](const std::vector<Eigen::Vector3d> &points, const double distance_threshold) {
+		
+		std::vector<Eigen::Vector3d> new_points(1,points[0]);
+
+		for (int i = 1; i < points.size() - 1; i++)
+			if ((points[i] - new_points.back()).norm() > distance_threshold)
+				new_points.emplace_back(points[i]);
+		
+		if ((points.back() - new_points.back()).norm() > distance_threshold)
+			//new_points.emplace_back(points[i]);
+			new_points.erase(new_points.begin() + new_points.size()-1);
+		new_points.emplace_back(points.back());
+
+		return new_points;
+	};
+
+    face_ids.clear();
+
+
+	std::vector<Eigen::Vector3d> merge_feature=merge_loop(features,0.011);
+	std::vector<Eigen::Vector3d> new_features;
+
+    for (int i = 0; i < merge_feature.size(); i++) {
+        Point_and_primitive_id pp = tree.closest_point_and_primitive(VectorPoint3d(merge_feature[i]));
         Halfedge_handle cur_handle;
         Eigen::Vector3d n;
         if (detect_edge_point(pp, cur_handle, n)) {
@@ -258,9 +278,9 @@ void CGAL_Mesh_Cutting(
             Poly_point_3 p1 = cur_handle->opposite()->vertex()->point();
             n = Eigen::Vector3d(p1.x() - p0.x(), p1.y() - p0.y(), p1.z() - p0.z()).cross(n);
             n *= (0.005 / n.norm());
-            new_features.push_back(features[i] + n);
+            new_features.push_back(merge_feature[i] + n);
         } else {
-            new_features.push_back(features[i]);
+            new_features.push_back(merge_feature[i]);
         }
     }
 
@@ -278,16 +298,24 @@ void CGAL_Mesh_Cutting(
     Poly_facet_iterator cur_face = project_faces[0];
     Halfedge_handle cur_handle = cur_face->halfedge();
     Eigen::Vector3d inside = new_features[0];
-    std::vector<Halfedge_handle> handles;
+	std::vector<Halfedge_handle> handles;
+	std::vector<Halfedge_handle> process_handles;
+	std::vector<Eigen::Vector3d> process_cutting_points;
+	std::vector<bool> process_adds;
+
     int iteration = 0;
     int idx = 1;
+
+	CGAL_Export_Segments("D:\\merge_feature.obj", 1.0, 0.0, 0.0, 0.005, merge_feature);
+	CGAL_Export_Segments("D:\\new_features.obj", 1.0, 0.0, 0.0, 0.005, new_features);
 
     // TODO: there are still bugs here!!!!!
     while (true) {
         std::cout << "[cgal remesh] " << iteration << "/" << new_features.size() << "\n";
         // search for the outside point of the current triangle
         bool goon = false;
-        while (true) {
+
+		while (true) {
             if (cur_face_id == project_faces[idx]->id()) {
                 inside = new_features[idx];
                 ++idx;
@@ -297,37 +325,77 @@ void CGAL_Mesh_Cutting(
                     ++idx;
                     if (idx > new_features.size() - 1) break;
                 } else {
-                    goon = true;
-                    break;
-                }
+					goon = true;
+					break;
+				}
             }
         }
-        if (!goon) break;
+		if (!goon)
+		{
+			std::cerr << "if (!goon)" << std::endl;
+			break;
+		}
 
-        Halfedge_handle handle;
-        Eigen::Vector3d intersection;
-        if (first_intersection(cur_handle, (iteration == 0) ? 3 : 2, inside, new_features[idx], handle, intersection)) {
-            Point_3 edge_3d_0 = handle->vertex()->point();
-            Point_3 edge_3d_1 = handle->opposite()->vertex()->point();
-            double d0 = std::sqrt(CGAL::squared_distance(edge_3d_0, Point_3(intersection[0], intersection[1], intersection[2])));
-            double d1 = std::sqrt(CGAL::squared_distance(edge_3d_1, Point_3(intersection[0], intersection[1], intersection[2])));
-            if (d0 > insert_threshold && d1 > insert_threshold) {
-                igl_cutting_points.push_back(intersection);
-                handles.push_back(cur_handle);
-            }
-            // move to next step
-            inside = intersection;
-            cur_handle = handle->opposite();
-            cur_face = cur_handle->face();
-            if (cur_face != NULL) {
-                cur_face_id = cur_face->id();
-                if (cur_face_id == project_faces[project_faces.size() - 1]->id()) break;
-            } else { break; }
-        } else { break; }
+		Halfedge_handle handle;
+		Eigen::Vector3d intersection;
+		if (first_intersection(cur_handle, (iteration == 0) ? 3 : 2, inside, new_features[idx], handle, intersection))
+		{
+			Point_3 edge_3d_0 = handle->vertex()->point();
+			Point_3 edge_3d_1 = handle->opposite()->vertex()->point();
+			double d0 = std::sqrt(CGAL::squared_distance(edge_3d_0, Point_3(intersection[0], intersection[1], intersection[2])));
+			double d1 = std::sqrt(CGAL::squared_distance(edge_3d_1, Point_3(intersection[0], intersection[1], intersection[2])));
+			if (d0 > insert_threshold && d1 > insert_threshold) {
+				igl_cutting_points.emplace_back(intersection);
+				handles.emplace_back(cur_handle);
+				process_adds.emplace_back(true);
+			}
+			else
+			{
+				process_adds.emplace_back(false);
+			}
+
+			process_handles.emplace_back(cur_handle);
+			process_cutting_points.emplace_back(inside);
+
+			// move to next step
+			inside = intersection;
+			cur_handle = handle->opposite();
+			cur_face = cur_handle->face();
+			if (cur_face != NULL) {
+				cur_face_id = cur_face->id();
+				if (cur_face_id == project_faces[project_faces.size() - 1]->id()) break;
+			}
+			else {
+				std::cerr << "329" << std::endl;
+				break;
+			}
+		}
+		else
+		{
+			inside = process_cutting_points.back();
+			cur_handle = process_handles.back();
+
+			if (process_adds.back())
+			{
+				igl_cutting_points.erase(igl_cutting_points.begin() + igl_cutting_points.size() - 1);
+				handles.erase(handles.begin() + handles.size() - 1);
+			}
+
+			process_cutting_points.erase(process_cutting_points.begin() + process_cutting_points.size() - 1);
+			process_handles.erase(process_handles.begin() + process_handles.size() - 1);
+			process_adds.erase(process_adds.begin() + process_adds.size() - 1);
+
+		}
+
+		
+		
 
         ++iteration;
     }
     
+	CGAL_Export_Segments("D:\\igl_cutting_points.obj", 1.0, 0.0, 0.0, 0.005, igl_cutting_points);
+
+
     for (int i = 0; i < handles.size(); i++) {
         int face_id = handles[i]->face()->id();
         int opposite_face_id = handles[i]->opposite()->face()->id();
@@ -516,8 +584,8 @@ void CGAL_Export_Point(std::ofstream& export_file_output, int& export_index,
 void CGAL_Export_Points(std::string path, double r, double g, double b, double radius, const std::vector<Eigen::Vector3d>& points) {
     std::ofstream export_file_output(path);
     int export_index = 1;
-    for (const auto& point : points)
-        CGAL_Export_Point(export_file_output, export_index, "points", r, g, b, point, radius);
+	for (int i = 0; i < points.size(); i++)
+        CGAL_Export_Point(export_file_output, export_index, "points_"+std::to_string(i), r, g, b, points[i], radius);
     export_file_output.clear();
     export_file_output.close();
 }
@@ -590,7 +658,7 @@ void CGAL_Export_Segments(std::string path, double r, double g, double b, double
     std::ofstream export_file_output(path);
     int export_index = 1;
     for (int i = 0; i < points.size() - 1; i++)
-        CGAL_Export_Segment(export_file_output, export_index, "segments", r, g, b, points[i], points[i + 1], radius);
+        CGAL_Export_Segment(export_file_output, export_index, "segments_"+std::to_string(i), r, g, b, points[i], points[i + 1], radius);
     export_file_output.clear();
     export_file_output.close();
 }
@@ -600,7 +668,7 @@ void CGAL_Export_Segments(std::string path, double r, double g, double b, double
     int export_index = 1;
     for(int i=0;i<segments.size();i++)
         for(int j=0;j<segments[i].size()-1;j++)
-            CGAL_Export_Segment(export_file_output, export_index, "segments_"+std::to_string(i), r, g, b, segments[i][j], segments[i][j+1], radius);
+            CGAL_Export_Segment(export_file_output, export_index, "segments_"+std::to_string(i)+"_"+std::to_string(j), r, g, b, segments[i][j], segments[i][j+1], radius);
     export_file_output.clear();
     export_file_output.close();
 }

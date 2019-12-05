@@ -89,8 +89,20 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
 
     if (input_model.empty()) {
 #ifdef HAISEN
-        load("E:\\Stitchgraph\\stitchgraph\\data\\clothing_models\\sweater.obj");
+		//load("E:\\Stitchgraph\\stitchgraph\\data\\clothing_models\\sweater.obj");
+		load("E:\\Stitchgraph\\stitchgraph\\data\\autoknit_models\\teddy-small.obj");
+		//E:\\Stitchgraph\\stitchgraph\\data\autoknit_models\\teddy-small.obj
         //load("E:\\Stitchgraph\\stitchgraph\\data\\clothing_models\\torus.obj");
+
+		int prev_size = loop_update_polylines.size();
+		compute_elastic_loop_min_geodesic(Eigen::Vector3d(1.50704, -0.0594467, 0.822281), Eigen::Vector3d(-0.84178, 0.525713, -0.122607));
+		int prev_seam_size = seams.size();
+		for (int i = prev_size; i < loop_update_polylines.size(); ++i) {
+			feature_points = loop_update_polylines[i];
+			split_mesh();
+		}
+		should_redraw = true;
+
 #endif
 #ifdef YUXUAN
         load("/Users/Bluefish_/Desktop/01_SU19/stitchgraph/data/clothing_models/sweater.obj");
@@ -901,22 +913,26 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
             Eigen::Vector3d a = feature_points.back() - feature_points.front();
             int prev_size = loop_update_polylines.size();
             if (button == 2) {
+				std::cerr << "button == 2button == 2button == 2button == 2button == 2button == 2" << std::endl;
                 auto plane_n = a.cross(n).normalized();
                 auto plane_p = feature_points[0];
                 compute_elastic_loop_min_geodesic(plane_p, plane_n);
                 if (symmetrize_loops) symmetry_elastic_loop(plane_p, plane_n);
             } else { // button == 1
+				std::cerr << " button == 1 button == 1 button == 1 button == 1 button == 1 button == 1 button == 1" << std::endl;
                 compute_elastic_loop(feature_points.front(), a.normalized());
             }
             // use the loop as feature points
             int prev_seam_size = seams.size();
             for (int i = prev_size; i < loop_update_polylines.size(); ++i) {
-                feature_points = loop_update_polylines[i];
-                split_mesh();
+				 feature_points = loop_update_polylines[i];
+                 split_mesh();
             }
             should_redraw = true;
         }
         
+
+
     } else if (button == 2 && ctrl_on && alt_on) { // ctrl+alt+right
         if (mouse_d < 2) {
             if (intersects) {
@@ -1836,7 +1852,9 @@ void RemeshingMenu::update_drawing() {
     }
 
     // draw seams
+	std::cerr << seams.size() << std::endl;
     for (const std::vector<SplitEdge>& seam : seams) {
+		std::cerr << seam.size() << std::endl;
         for (int i = 0; i < seam.size(); i++) {
             Eigen::Vector3d v_0 = V.row(seam[i].index_0);
             Eigen::Vector3d v_1 = V.row(seam[i].index_1);
@@ -1863,12 +1881,15 @@ void RemeshingMenu::update_drawing() {
     draw_points(loop_points, 1, 0.00);
     draw_points(loop_de_points, 0, 0.00);
 
-    for (auto& line : loop_polylines)
-        draw_segments(line, 0, 0.00);
-    for (int i = 0; i < loop_update_polylines.size(); ++i) {
-        draw_segments(loop_update_polylines[i], 2, 0.00);
-        draw_points(loop_update_polylines[i], 4, 0.01);
-    }
+	// loop
+   // for (auto& line : loop_polylines)
+     //   draw_segments(line, 0, 0.00);
+	for (auto& line : loop_update_polylines)
+	{
+		draw_segments(line, 2, 0.00);
+		//draw_points(line, 4, 0.01);
+	}
+
 }
 
 void RemeshingMenu::draw_direction_field() {
