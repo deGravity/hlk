@@ -913,13 +913,11 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
             Eigen::Vector3d a = feature_points.back() - feature_points.front();
             int prev_size = loop_update_polylines.size();
             if (button == 2) {
-				std::cerr << "button == 2button == 2button == 2button == 2button == 2button == 2" << std::endl;
                 auto plane_n = a.cross(n).normalized();
                 auto plane_p = feature_points[0];
                 compute_elastic_loop_min_geodesic(plane_p, plane_n);
                 if (symmetrize_loops) symmetry_elastic_loop(plane_p, plane_n);
             } else { // button == 1
-				std::cerr << " button == 1 button == 1 button == 1 button == 1 button == 1 button == 1 button == 1" << std::endl;
                 compute_elastic_loop(feature_points.front(), a.normalized());
             }
             // use the loop as feature points
@@ -1852,7 +1850,6 @@ void RemeshingMenu::update_drawing() {
     }
 
     // draw seams
-	std::cerr << seams.size() << std::endl;
     for (const std::vector<SplitEdge>& seam : seams) {
 		std::cerr << seam.size() << std::endl;
         for (int i = 0; i < seam.size(); i++) {
@@ -1882,12 +1879,11 @@ void RemeshingMenu::update_drawing() {
     draw_points(loop_de_points, 0, 0.00);
 
 	// loop
-   // for (auto& line : loop_polylines)
-     //   draw_segments(line, 0, 0.00);
-	for (auto& line : loop_update_polylines)
-	{
-		draw_segments(line, 2, 0.00);
-		//draw_points(line, 4, 0.01);
+	for (auto& line : loop_polylines)
+		draw_segments(line, 0, 0.00);
+	for (int i = 0; i < loop_update_polylines.size(); ++i) {
+		draw_segments(loop_update_polylines[i], 2, 0.00);
+		draw_points(loop_update_polylines[i], 4, 0.01);
 	}
 
 }
