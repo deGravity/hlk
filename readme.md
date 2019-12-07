@@ -49,7 +49,7 @@ We recommend installing the dependencies with [Homebrew](https://brew.sh):
 ```bash
 brew install z3
 brew install open-mesh
-brew intall boost
+brew install boost
 brew install glm
 ```
 
