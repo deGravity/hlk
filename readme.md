@@ -15,7 +15,7 @@ or
 
 ```bash
 git clone ...
-cd stitchgraph
+cd high-level-knitting
 git submodule init
 git submodule update
 ```
