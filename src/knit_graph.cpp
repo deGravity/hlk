@@ -1,4 +1,5 @@
 #include "knit_graph.h"
+#include "glyph.h"
 
 #include <iostream>
 //#include <igl/copyleft/cgal/wire_mesh.h>
@@ -51,10 +52,10 @@ void hlk::KnitGraph::build_mesh(double th, int poly_size, Eigen::MatrixXd & V, E
 	for (int i = 0; i < edges.size(); ++i) {
 		if (edges[i]->dst && edges[i]->src) {
 			if (edges[i]->is_loop) {
-				C.row(c++) = Eigen::RowVector3d(1.0, 0.564, 0.0);
+				C.row(c++) = color::ORANGE.block(0,0,1,3);
 			}
 			else {
-				C.row(c++) = Eigen::RowVector3d(0.149, 1.0, 0.149);
+				C.row(c++) = color::GREEN.block(0,0,1,3);
 			}
 		}
 	}

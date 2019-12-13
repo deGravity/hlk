@@ -372,6 +372,13 @@ namespace hlk {
 
 		return constraints;
 	}
+	void CoarseKnitQuad::get_corners(Eigen::MatrixXd& C) const
+	{
+		C.resize(4, 3);
+		for (int i = 0; i < 4; ++i) {
+			C.row(i) = mesh->V.row(mesh->F_q(index, i));
+		}
+	}
 	void CoarseKnitQuad::update_texture()
 	{
 		int min_t = mesh->min_time;
@@ -446,13 +453,34 @@ namespace hlk {
 	}
 	std::vector<std::pair<z3::expr, std::string>> CoarseKnitSide::get_geometry_constraints()
 	{
-		return std::vector<std::pair<z3::expr, std::string>>();
+		double target_length = mesh->side_lengths[index];
+		double gauge = is_loop->val ? mesh->stitch_gauge : mesh->row_gauge;
+		int target_stitches = round(target_length * gauge / mesh->scale);
+		target_stitches = target_stitches > 0 ? target_stitches : 1; // At least 1 stitch per side
+		int tollerance = ceil(mesh->tollerance * target_stitches);
+		int min_sts = target_stitches - tollerance;
+		int max_sts = target_stitches + tollerance;
+		min_sts = min_sts > 0 ? min_sts : 1;
+
+		std::vector<std::pair<z3::expr, std::string>> constraints;
+
+		constraints.push_back(std::make_pair(
+			min_sts <= stitches->var,
+			"min_sts_" + std::to_string(index)
+		));
+
+		constraints.push_back(std::make_pair(
+			max_sts >= stitches->var,
+			"max_sts_" + std::to_string(index)
+		));
+
+		return constraints;
 	}
 	z3::expr CoarseKnitSide::get_geometry_cost()
 	{
 		double target_length = mesh->side_lengths[index];
 		double gauge = is_loop->val ? mesh->stitch_gauge : mesh->row_gauge;
-		int target_stitches = round(target_length / gauge);
+		int target_stitches = round(target_length * gauge / mesh->scale);
 		target_stitches = target_stitches > 0 ? target_stitches : 1; // At least 1 stitch per side
 		return (stitches->var - target_stitches) * (stitches->var - target_stitches);
 	}
@@ -534,6 +562,13 @@ namespace hlk {
 		z3::expr cost = sides[0].get_geometry_cost();
 		for (int i = 1; i < sides.size(); ++i) {
 			cost = cost + sides[i].get_geometry_cost();
+		}
+		std::cout << "Cost Function = " << cost.to_string() << std::endl;
+
+		for (auto& side : sides) {
+			for (auto constraint : side.get_geometry_constraints()) {
+				geometry_optimizer.add_constraint(constraint.first, constraint.second);
+			}
 		}
 
 		for (auto constraint : size_line_constraints()) {

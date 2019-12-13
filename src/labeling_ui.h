@@ -27,6 +27,8 @@ namespace hlk {
 
 		void update_mesh();
 
+		void generate_instructions();
+
 	private:
 
 		CoarseKnitMesh M;

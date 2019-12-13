@@ -137,6 +137,9 @@ namespace hlk {
 
         add_property_constraints();
 
+		z3::expr objective_int = context.int_const("objective_int");
+		solver.add(objective_int == objective);
+
         cout << "Checking SAT" << endl;
         auto is_sat = sat == solver.check();
         cout << "SAT checked." << endl;
@@ -145,7 +148,11 @@ namespace hlk {
         if (is_sat) {
             result.set_model(solver.get_model());
 
-            int max_objective = result.result_model->eval(objective).get_numeral_int();
+
+			std::cout << "Objective = " << objective.to_string() << std::endl;
+			auto kind = objective.kind();
+			
+            int max_objective = result.result_model->eval(objective_int).get_numeral_int();			
             cout << "Best so far = " << max_objective << endl;
 
             if (timeout != -1U) {

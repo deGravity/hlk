@@ -304,6 +304,10 @@ namespace hlk {
 		if (ImGui::Button("Load Quad Mesh")) {
 			load_quad_mesh_file();
 		}
+
+		if (ImGui::Button("Generate Knitting Instructions")) {
+			generate_instructions();
+		}
 	
 	}
 
@@ -313,6 +317,11 @@ namespace hlk {
 			viewer->data_list[overlay_index].set_uv(M.UV);
 			viewer->data_list[overlay_index].set_colors(M.C);
 		}
+	}
+
+	void LabelingUI::generate_instructions()
+	{
+		M.optimize_geometry();
 	}
 
 	bool LabelingUI::pick_face(int& fid, Eigen::Vector3f& bc)

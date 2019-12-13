@@ -60,6 +60,8 @@ namespace hlk {
 		std::vector<std::pair<z3::expr, std::string>> get_topology_constraints();
 		std::vector<std::pair<z3::expr, std::string>> get_geometry_constraints();
 
+		void get_corners(Eigen::MatrixXd& C) const;
+
 		void update_texture();
 	};
 
@@ -151,9 +153,9 @@ namespace hlk {
 		// Set Initial Textures
 		virtual void init();
 
-		double scale = 1; // Units:Inches
-		double stitch_gauge = 7.0; // In stitches / inch 
-		double row_gauge = 14.0; // In rows / inch
+		double scale = 4; // Units:Inches
+		double stitch_gauge = 6.0; // In stitches / inch 
+		double row_gauge = 10.0; // In rows / inch
 
 		double tollerance = 0.01;
 

@@ -406,8 +406,9 @@ namespace hlk {
 				auto& stitch = row[col];
 				auto node = std::make_shared<KnitGraphNode>();
 				node->pos = Eigen::RowVector3d(
+					(double)(col + 1) / (row.size() + 1),
 					(double) (row_num + 1)/(chart.size()+1), 
-					(double) (col + 1) /(row.size()+1), 0);
+					 0);
 				graph.nodes.push_back(node);
 				// Connect Loop-In Edges
 				for (int i = 0; i < stitch.num_inputs; ++i) {

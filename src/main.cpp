@@ -7,12 +7,14 @@
 #include "remeshing_plugin.h"
 #include "patch.h"
 
+#include "autoknit.h"
+
 using namespace hlk;
 using namespace std;
 
 int main(void) {
 
-	int mode = 2;
+	int mode = 3;
 
 	/*
 	cout << "Choose an Interface" << endl;
@@ -40,16 +42,16 @@ int main(void) {
 		viewer2.plugins.push_back(&labelingui);
 		viewer2.launch();
 	}
-	else { // test patch visualization
+	else if (mode == 3) { // test patch visualization
 		//std::string filename = igl::file_dialog_open();
-		std::vector<std::vector<int>> sides{ {3,2},{2},{5},{5} };
+		std::vector<std::vector<int>> sides{ {3,2},{1},{5},{5} };
 		Eigen::MatrixXd corners(5, 3);
-		corners << 
+		corners <<
+			0, 0, 0,
+			.5, -.3, 0,
 			1, 0, 0,
-			1.3, 0.5, 0,
 			1, 1, 0,
-			0, 1, 0,
-			0, 0, 0;
+			0, 1, 0;
 		Patch p(sides, corners);
 
 		Eigen::MatrixXd V;
@@ -65,11 +67,60 @@ int main(void) {
 
 		igl::opengl::glfw::Viewer viewer;
 		viewer.data().set_points(V, Eigen::RowVector3d(1.0, 1.0, 1.0));
+		for (int i = 0; i < V.rows(); ++i) {
+			viewer.data().add_label(V.row(i), std::to_string(i) + "\n(" + std::to_string(V(i,0)) + " , " + std::to_string(V(i,1)) + ")");
+		}
+		
+		igl::opengl::glfw::imgui::ImGuiMenu menu;
+		viewer.plugins.push_back(&menu);
 		viewer.data().set_edges(V, E, C);
 		viewer.data().show_lines = true;
 		viewer.data().show_overlay = true;
 		viewer.data().line_width = 2.0f;
 		viewer.launch();
+	}
+	else {
+		ak::RowColGraph g;
+		int courses = 30;
+		int wales = 30;
+		double radius = 1;
+		double height = 6;
+		g.vertices.resize(courses * wales);
+		for (int i = 0; i < courses; ++i) {
+			for (int j = 0; j < wales; ++j) {
+				int v = i * wales + j;
+				int l = i * wales + (j + (wales - 1)) % wales;
+				int r = i * wales + (j + 1) % wales;
+				int u = (i + 1) * wales + j;
+				int b = (i - 1) * wales + j;
+
+				if (u < g.vertices.size()) {
+					g.vertices[v].add_col_out(u);
+				}
+
+				if (b >= 0) {
+					g.vertices[v].add_col_in(b);
+				}
+
+				g.vertices[v].row_in = l;
+				g.vertices[v].row_out = r;
+				double x, y, z;
+
+				x = radius * cos((double)j / wales);
+				y = radius * sin((double) j / wales);
+				z = height * (double)i / courses;
+
+				g.vertices[v].at(0) = x;
+				g.vertices[v].at(1) = y;
+				g.vertices[v].at(2) = z;
+			}
+		}
+
+		std::vector<ak::TracedStitch> traced_stitches;
+		ak::trace_graph(g, &traced_stitches);
+		ak::save_traced("traced.st", traced_stitches);
+
+		std::vector<ak::Stitch> loaded_stitches;
 	}
 
     return 0;
