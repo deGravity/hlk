@@ -132,7 +132,7 @@ public:
     void generate_integer_grid();
     void init_curl();
     void reduce_curl();
-    void init_quad_seams();
+    void init_quad_mesh();
     void quad_helix_finding();
 
     // loops - impl in remeshing_loops.cpp

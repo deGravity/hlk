@@ -226,7 +226,7 @@ void RemeshingMenu::draw_viewer_menu() {
                         extract_quad_mesh(V, F, V_uv, F_uv, quad_mesh);
                     }
                     is_quad_meshed = true;
-                    init_quad_seams();
+                    init_quad_mesh();
                     viewing_mode = ViewingMode::QUAD_ONLY;
                     update_visualization();
                 }

@@ -383,11 +383,11 @@ void RemeshingMenu::reduce_curl() {
     }
 }
 
-void RemeshingMenu::init_quad_seams() {
+void RemeshingMenu::init_quad_mesh() {
     if (!is_quad_meshed) { return; }
 
-    igl::AABB<Eigen::MatrixXd, 3> aabb_tree;
-    aabb_tree.init(quad_mesh.V, quad_mesh.F_t);
+    igl::AABB<Eigen::MatrixXd, 3> quad_aabb;
+    quad_aabb.init(quad_mesh.V, quad_mesh.F_t);
 
     quad_mesh.is_seam_edge.clear();
     quad_mesh.is_seam_edge = std::vector<bool>(quad_mesh.e, false);
@@ -400,10 +400,25 @@ void RemeshingMenu::init_quad_seams() {
         Eigen::Vector3d nudged_midpoint = (v0 + v1) / 2. + 0.001 * mesh_size * nudge_dir;
         int fid;
         Eigen::RowVector3d C;
-        aabb_tree.squared_distance(quad_mesh.V, quad_mesh.F_t, nudged_midpoint, fid, C);
+        quad_aabb.squared_distance(quad_mesh.V, quad_mesh.F_t, nudged_midpoint, fid, C);
         quad_mesh.is_seam_edge[fid] = true;
         if (quad_mesh.flip_side(fid) > 0) {
             quad_mesh.is_seam_edge[quad_mesh.flip_side(fid)] = true;
+        }
+    }
+
+    igl::AABB<Eigen::MatrixXd, 3> tri_aabb;
+    tri_aabb.init(V, F);
+
+    for (int q = 0; q < quad_mesh.m; ++q) {
+        for (int i = 0; i < 4; ++i) {
+            Eigen::Vector3d v0 = V.row(quad_mesh.F_q(q, i));
+            Eigen::Vector3d v1 = V.row(quad_mesh.F_q(q, (i + 1) % 4));
+            int fid0, fid1;
+            Eigen::RowVector3d C0, C1;
+            tri_aabb.squared_distance(V, F, v0, fid0, C0);
+            tri_aabb.squared_distance(V, F, v1, fid1, C1);
+            quad_mesh.tri_side_lengths.push_back((C1 - C0).norm());
         }
     }
 }

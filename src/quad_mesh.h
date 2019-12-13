@@ -76,6 +76,8 @@ namespace hlk {
 		Eigen::VectorXi boundary_sides; // indices
 		Eigen::VectorXi boundary_quads; // indices
 
+        std::vector<double> tri_side_lengths;
+
 		virtual void init();
 
 		// Mesh Queries
