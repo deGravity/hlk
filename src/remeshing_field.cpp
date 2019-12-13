@@ -30,9 +30,7 @@ bool RemeshingMenu::load_raw_field() {
         directional::read_raw_field(fname, N, rawField);
     } else {
         directional::read_raw_field(fname, rosy, curlRawField);
-        if (miq_mode == MIQMode::CROSS) {
-            direction_field[1] = curlRawField.block(0, 0, F.rows(), 3);
-        }
+        direction_field[1] = curlRawField.block(0, 0, F.rows(), 3);
     }
 
     has_direction_field = true;
@@ -317,7 +315,6 @@ void RemeshingMenu::interpolate_field() {
         directional::polyvector_to_raw(V, F, polyvector_field, rosy, curlRawField);
 
     } else if (miq_mode == MIQMode::CROSS) {
-
         Eigen::VectorXd S;
         interpolate_cross_field(S);
         update_vectors_from_field();
@@ -330,6 +327,8 @@ void RemeshingMenu::interpolate_field() {
         std::cout << "Singularity Count = " << s_count << "\n";
     }
 
+    //if (viewing_mode == ViewingMode::MESH_SING) rawField = curlRawField;
+
     has_direction_field = true;
     has_integer_grid = false;
     has_curl = false;
@@ -340,11 +339,9 @@ void RemeshingMenu::interpolate_field() {
 void RemeshingMenu::generate_integer_grid() {
 
     if (miq_mode == MIQMode::INDEX) {
-        if (N == 1) {
-            directional::representative_to_raw(V, F, rawField, rosy, rawField);
-        } else if (N != 4) {
-            std::cout << "unsupported N=" << N << "\n";
-            return;
+        if (N != 4) {
+            std::cout << "[generate_integer_grid] overwriting prescribed rawField because N is not 4\n";
+            directional::representative_to_raw(V, F, direction_field[1], N, rawField);
         }
         Meshing::polyvector_parametrize(
             V, F, rosy, EV, EF, FE,
@@ -353,6 +350,7 @@ void RemeshingMenu::generate_integer_grid() {
             singVertices, singIndices,
             VMeshCut, FMeshCut, cutUV,
             1. / gradient_size, isInteger);
+        direction_field[1] = combedField.block(0, 0, F.rows(), 3);
 
     } else if (miq_mode == MIQMode::POLYVECTOR) {
         Meshing::polyvector_parametrize(
@@ -362,6 +360,7 @@ void RemeshingMenu::generate_integer_grid() {
             curlSingVertices, curlSingIndices,
             VMeshCut, FMeshCut, cutUV,
             1. / gradient_size, isInteger);
+        direction_field[1] = combedField.block(0, 0, F.rows(), 3);
 
     } else { // miq_mode == MIQMode::CROSS
         std::vector<std::vector<int>> hard_edges;
@@ -418,8 +417,9 @@ void RemeshingMenu::init_curl() {
         curl, curlSingVertices, curlSingIndices,
         AE2F, curlMax, curlMaxOrig);
 
+    direction_field[1] = combedField.block(0, 0, F.rows(), 3);
     has_curl = true;
-    if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD) {
+    if (viewing_mode == ViewingMode::MESH_ONLY || viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD) {
         update_visualization();
     }
 }
@@ -429,15 +429,13 @@ void RemeshingMenu::reduce_curl() {
 
     Meshing::reduce_curl(
         V, F, rosy, EV, EF, FE,
-        curlRawField, combedField,
+        miq_mode == MIQMode::INDEX ? rawField : curlRawField, combedField,
         combedMatching, combedEffort,
         curl, curlSingVertices, curlSingIndices,
         curlMax);
 
-    if (miq_mode == MIQMode::CROSS) {
-        direction_field[1] = combedField.block(0, 0, F.rows(), 3);
-    }
-    if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD) {
+    direction_field[1] = combedField.block(0, 0, F.rows(), 3);
+    if (viewing_mode == ViewingMode::MESH_ONLY || viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD) {
         update_visualization();
     }
 }
@@ -549,16 +547,17 @@ void RemeshingMenu::update_raw_field() {
         return;
     }
 
-    //compute_target_curvature();
-    //directional::index_prescription(
-    //    V, F, EV, innerEdges, basisCycles, targetCurvature,
-    //    cycleCurvature, cycleIndices, ldltSolver, N, field_guidance_weight,
-    //    rotationAngles, linfError);
+    Eigen::VectorXd S;
+    interpolate_cross_field(S);
+    update_vectors_from_field();
+    directional::representative_to_raw(V, F, direction_field[1], rosy, curlRawField);
+
     Eigen::VectorXd rotationAngles;
     double linfError;
+    //compute_target_curvature();
     directional::index_prescription(
-        V, F, EV, innerEdges, basisCycles,
-        cycleCurvature, cycleIndices, ldltSolver, N,
+        V, F, EV, innerEdges, basisCycles,// targetCurvature,
+        cycleCurvature, cycleIndices, ldltSolver, N, //field_guidance_weight,
         rotationAngles, linfError);
     std::cout << "Index prescription linfError: " << linfError << std::endl;
 

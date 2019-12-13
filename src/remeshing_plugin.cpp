@@ -217,7 +217,7 @@ void RemeshingMenu::draw_viewer_menu() {
             // Add threshold values.
             ImGui::DragFloat("Click Threshold", &click_threshold, 0.05f, 0.01f, 0.5f);
             ImGui::DragFloat("Soft Weight", &soft_constraint_strength, 0.0f, 0.0f, 1.0f);
-            //ImGui::DragFloat("Field Weight", &field_guidance_weight, 0.0f, 0.0f, 1.0f);
+            ImGui::DragFloat("Field Weight", &field_guidance_weight, 0.0f, 0.0f, 1.0f);
             ImGui::DragFloat("Gradient Size", &gradient_size, 1.0f, 0.0f, 150.0f);
             ImGui::DragInt("# Stiffening", &stiffen_iter, 1, 0, 10);
             if (miq_mode == MIQMode::INDEX) {
@@ -1091,6 +1091,7 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
 
     if (should_redraw) {
         interpolate_field();
+        update_raw_field();
         update_visualization();
 		save_ctrlz();
 		should_redraw = false;
