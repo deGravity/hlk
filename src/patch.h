@@ -44,6 +44,11 @@ namespace hlk {
 		std::vector<std::vector<int>> sides;
 		Eigen::MatrixXd corners;
 
+		std::pair<int, int> get_segment(int side);
+		bool is_loop(int side);
+		bool is_out(int side);
+		std::vector<std::shared_ptr<KnitGraphEdge>> get_edge(int side, bool is_out);
+
 		void make_graph(std::vector<std::vector<ChartCell>> chart);
 		void interpolate_coordinates();
 

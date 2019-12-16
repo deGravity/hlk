@@ -2,6 +2,7 @@
 
 #include "labeled_quad_mesh.h"
 #include "optimizer.h"
+#include "coarse_knit_graph.h"
 
 #include <memory>
 #include <vector>
@@ -61,6 +62,10 @@ namespace hlk {
 		std::vector<std::pair<z3::expr, std::string>> get_geometry_constraints();
 
 		void get_corners(Eigen::MatrixXd& C) const;
+		void get_generalized_corners(Eigen::MatrixXd& C) const;
+		int get_generalized_bottom_left() const;
+		void get_sides_stitches(std::vector<std::vector<int>>& sides) const;
+		int to_generalized(int side) const;
 
 		void update_texture();
 	};
@@ -79,6 +84,8 @@ namespace hlk {
 		z3::expr get_geometry_cost();
 
 		void update_texture();
+
+		int generalized_index();
 	};
 
 	struct CoarseKnitMesh : LabeledQuadMesh {
@@ -103,6 +110,8 @@ namespace hlk {
 
 		bool optimize_topology();
 		bool optimize_geometry();
+
+		CoarseKnitGraph get_dual();
 
 		// Get Constraints for seams
 		std::vector<std::pair<z3::expr, std::string>> get_seam_costs();

@@ -379,6 +379,64 @@ namespace hlk {
 			C.row(i) = mesh->V.row(mesh->F_q(index, i));
 		}
 	}
+	void CoarseKnitQuad::get_generalized_corners(Eigen::MatrixXd& C) const
+	{
+		Eigen::MatrixXd temp;
+		get_corners(temp);
+		C.resizeLike(temp);
+		for (int i = 0; i < C.rows(); ++i) {
+			C.row(to_generalized(i)) = temp.row(i);
+		}
+	}
+	int CoarseKnitQuad::get_generalized_bottom_left() const
+	{
+		std::vector<bool> is_out;
+		std::vector<bool> is_loop;
+		for (int i = 0; i < 4; ++i) {
+			is_loop.push_back(mesh->sides[index + i].is_loop->val);
+			is_out.push_back(mesh->sides[index + i].is_out->val);
+		}
+		std::vector<int> split_points;
+		std::vector<int> split_sides;
+		// Helper to get a generalized side index 0 = loop_in, 1 = yarn_out, 2 = loop_out, 3 = yarn_in
+		auto idx = [](bool is_loop, bool is_out)->int {
+			return ((is_loop ? 0 : 3) + (is_out ? 2 : 0)) % 4;
+		};
+
+		for (int n = 0; n < 4; ++n) {
+			int p = (n + 3) % 4; // Previous side
+			if (is_loop[p] != is_loop[n] || is_out[p] != is_out[n]) {
+				// Side type changes around vertex n
+				split_points.push_back(n);
+				split_sides.push_back(idx(is_loop[n], is_out[n]));
+			}
+		}
+		// split_points now contains vtx indices where generalized quad side type changes
+		// split_sides contains which generalized side comes next
+		// We want to find the corner before the first generalized side
+		// If there are no splits, we are at a source or sink and arbitrarily choose 0
+		int min_idx = 0;
+		for (int i = 0; i < split_sides.size(); ++i) {
+			if (split_sides[i] < split_sides[min_idx]) {
+				min_idx = i;
+			}
+		}
+		return split_points[min_idx];
+	}
+	void CoarseKnitQuad::get_sides_stitches(std::vector<std::vector<int>>& sides) const
+	{
+		int c = get_generalized_bottom_left();
+		sides.resize(4);
+		for (int i = 0; i < 4; ++i) {
+			auto& side = mesh->sides[index + ((c + i) % 4)];
+			sides[side.generalized_index()].push_back(side.stitches->val);
+		}
+	}
+	int CoarseKnitQuad::to_generalized(int side) const
+	{
+		int c = get_generalized_bottom_left();
+		return (side - c + 4) % 4;
+	}
 	void CoarseKnitQuad::update_texture()
 	{
 		int min_t = mesh->min_time;
@@ -492,6 +550,10 @@ namespace hlk {
 		auto& symbol = is_out->val ? line : arrow;
 		mesh->set_glyph(mesh->dual_half_edge_slots[index], symbol, s_color);
 	}
+	int CoarseKnitSide::generalized_index()
+	{
+		return ((is_loop->val ? 0 : 3) + (is_out->val ? 2 : 0)) % 4;
+	}
 	bool CoarseKnitMesh::optimize_topology()
 	{
 		if (topology_solved) return true;
@@ -594,6 +656,39 @@ namespace hlk {
 
 		geometry_optimizer.pop();
 		return result.has_result;
+	}
+	CoarseKnitGraph CoarseKnitMesh::get_dual()
+	{
+		CoarseKnitGraph graph;
+		for (int e = 0; e < edges.size(); ++e) {
+			int seam = edges[e].seam;
+			if (seam >= 0) {
+				Eigen::RowVector2i e_sides = edges_to_sides.row(e);
+				int src = e_sides[0];
+				int dst = e_sides[1];
+				if (sides[e_sides[0]].is_out->val) {
+					src = e_sides[1];
+					dst = e_sides[0];
+				}
+				CoarseKnitGraph::Edge edge;
+				edge.src = src / 4;
+				edge.dst = dst / 4;
+				edge.src_side = src % 4;
+				edge.dst_side = src % 4;
+				edge.is_loop = sides[src].is_loop->val;
+				graph.edges.push_back(edge);
+			}
+		}
+
+		for (int q = 0; q < quads.size(); ++q) {
+			Eigen::MatrixXd corners;
+			std::vector<std::vector<int>> stitch_counts;
+			quads[q].get_generalized_corners(corners);
+			quads[q].get_sides_stitches(stitch_counts);
+			graph.patches.emplace_back(stitch_counts, corners);
+		}
+
+		return CoarseKnitGraph();
 	}
 	std::vector<std::pair<z3::expr, std::string>> CoarseKnitMesh::get_seam_costs()
 	{

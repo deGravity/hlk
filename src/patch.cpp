@@ -370,6 +370,32 @@ namespace hlk {
 		}
 	}
 
+	std::pair<int, int> Patch::get_segment(int side)
+	{
+		int i = 0;
+		int j = 0;
+		while (side > 0) {
+			++j;
+			while (j >= sides[i % 4].size()) {
+				j = 0;
+				++i;
+			}
+			--side;
+		}
+		return std::make_pair(i%4, j);
+	}
+
+	bool Patch::is_loop(int side)
+	{
+		return get_segment(side).first % 2 == 0;
+	}
+
+	bool Patch::is_out(int side)
+	{
+		auto s = get_segment(side).first;
+		return s == 1 || s == 2;
+	}
+
 	void Patch::make_graph(std::vector<std::vector<ChartCell>> chart)
 	{
 		std::vector<int> side_lengths;
