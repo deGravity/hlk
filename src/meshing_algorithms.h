@@ -11,6 +11,12 @@ namespace hlk {
 
 class Meshing {
 public:
+    static void comb_field_from_connection(
+        const Eigen::MatrixXd& VMesh, const Eigen::MatrixXi& FMesh,
+        const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
+        const Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
+        Eigen::VectorXi& combedMatching, Eigen::VectorXd& combedEffort);
+
     static void polyvector_parametrize(
         const Eigen::MatrixXd& VMeshWhole, const Eigen::MatrixXi& FMeshWhole, const int N,
         const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,

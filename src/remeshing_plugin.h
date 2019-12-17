@@ -23,6 +23,7 @@ public:
 
         click_threshold = 0.1f;
         soft_constraint_strength = 0.5f;
+        field_guidance_weight = 0.5f;
         gradient_size = 50.0f;
         stiffen_iter = 0;
 
@@ -37,11 +38,11 @@ public:
         has_curl = false;
         is_quad_meshed = false;
         should_redraw = false;
-        isInteger = true;
 
         geodesic_label = false;
         existing_edge_label = false;
         multi_points_drawing = true;
+        do_matching = false;
 
         viewing_mode = ViewingMode::MESH_ONLY;
         drawing_mode = DrawingMode::WALE;
@@ -49,6 +50,11 @@ public:
         cardinal = Cardinal::N;
         line_texture(texture_R, texture_G, texture_B);
         direction_field = { Eigen::MatrixXd(), Eigen::MatrixXd() };
+
+        currCycle = 0;
+        N = 4; // degree of field
+        globalRotation = 0.;
+        singularitySelect = false;
     }
 	~RemeshingMenu() {
 		clear();
@@ -58,6 +64,8 @@ public:
             remove(temp.face.c_str());
             remove(temp.edge.c_str());
         }
+        remove(in_path.c_str());
+        remove(out_path.c_str());
 	};
 
     void init(igl::opengl::glfw::Viewer* _viewer);
@@ -107,7 +115,7 @@ public:
     void set_mesh_overlays(const int mesh_id, const bool wireframe = true, const bool overlay = true, const bool fill = true);
     void stylize_tri_mesh(const Eigen::MatrixXd& colors);
     void stylize_quad_mesh(const Eigen::MatrixXd& colors);
-    void update_visualization();
+    void update_visualization(unsigned char key = '\0');
     void update_drawing();
     void draw_direction_field();
 
@@ -122,18 +130,24 @@ public:
     std::vector<int> symmetry_axes();
 
     // field - impl in remeshing_field.cpp
+    bool load_raw_field();
+    bool save_raw_field();
     void reset_face_vectors();
     void reset_field();
     void init_curvature_field();
     void setup_boundary();
-    void update_vectors_from_field(int direction = 1);
     void interpolate_cross_field(Eigen::VectorXd& S, int direction = 1); // default wale interpolation
+    void update_vectors_from_field(int direction = 1);
     void interpolate_field();
     void generate_integer_grid();
     void init_curl();
     void reduce_curl();
     void init_quad_mesh();
     void quad_helix_finding();
+    void setup_basis_cycles();
+    void compute_target_curvature();
+    void update_raw_field();
+    void update_singularities();
 
     // loops - impl in remeshing_loops.cpp
     void clear_loops();
@@ -152,10 +166,10 @@ public:
     bool has_integer_grid;
     bool is_quad_meshed;
     bool should_redraw;
-    bool isInteger;
 
     // numbers...
     float soft_constraint_strength;
+    float field_guidance_weight;
     int stiffen_iter;
     float gradient_size;
     float loop_size;
@@ -234,15 +248,31 @@ public:
     Eigen::MatrixXi EV, EF, FE;
     Eigen::MatrixXd VField, VSings, VSeams;
     Eigen::MatrixXd CField, CSings, CSeams;
-    Eigen::MatrixXd rawField, combedField;
+    Eigen::MatrixXd curlRawField, combedField;
     Eigen::VectorXi combedMatching;
     Eigen::VectorXd combedEffort;
     Eigen::VectorXd curl; // norm of curl per edge
-    Eigen::VectorXi singVertices, singIndices;
+    Eigen::VectorXi curlSingVertices, curlSingIndices;
     Eigen::SparseMatrix<double> AE2F; // averaging curl to faces for visualization
     double curlMax, curlMaxOrig;
     Eigen::VectorXi c_b, c_blevel;
     Eigen::MatrixXd c_bc;
+
+    // trivial connections data
+    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > ldltSolver;
+    Eigen::VectorXi singVertices, singIndices;
+    Eigen::VectorXi cycleIndices;
+    Eigen::VectorXd cycleCurvature, targetCurvature;
+    Eigen::SparseMatrix<double> basisCycles;
+    Eigen::VectorXi vertex2cycle, innerEdges;
+    Eigen::MatrixXd CMesh, rawField;
+    std::vector<std::vector<int>> cycleFaces;
+    int eulerChar, numGenerators, numBoundaries;
+    int currCycle;
+    int N; // degree of field
+    Eigen::VectorXd linf;
+    double globalRotation;
+    bool singularitySelect;
 
     /////////////////// UI ///////////////////
     std::string in_path, out_path, input_model;
@@ -256,6 +286,7 @@ public:
     int rosy;
 
     bool show_axis, show_stitches, multi_points_drawing;
+    bool do_matching;
 
     bool existing_edge_label;
 

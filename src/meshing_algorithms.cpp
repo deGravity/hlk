@@ -21,6 +21,19 @@
 #include "meshing_algorithms.h"
 
 namespace hlk {
+void Meshing::comb_field_from_connection(
+    const Eigen::MatrixXd& VMesh, const Eigen::MatrixXi& FMesh,
+    const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
+    const Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
+    Eigen::VectorXi& combedMatching, Eigen::VectorXd& combedEffort) {
+
+    // combing
+    Eigen::VectorXi matching;
+    Eigen::VectorXd effort;
+    directional::principal_matching(VMesh, FMesh, EV, EF, FE, rawField, matching, effort);
+    directional::combing(VMesh, FMesh, EV, EF, FE, rawField, matching, combedField);
+    directional::principal_matching(VMesh, FMesh, EV, EF, FE, combedField, combedMatching, combedEffort);
+}
 
 void Meshing::polyvector_parametrize(
     const Eigen::MatrixXd& VMeshWhole, const Eigen::MatrixXi& FMeshWhole, const int N,
@@ -29,7 +42,7 @@ void Meshing::polyvector_parametrize(
     Eigen::VectorXi& combedMatching, Eigen::VectorXd& combedEffort,
     Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices,
     Eigen::MatrixXd& VMeshCut, Eigen::MatrixXi& FMeshCut,
-    Eigen::MatrixXd& cutUV, double gradientSize, bool isInteger) {
+    Eigen::MatrixXd& cutUV, double lengthRatio, bool isInteger) {
 
     // combing and cutting
     Eigen::VectorXi matching;
@@ -43,7 +56,7 @@ void Meshing::polyvector_parametrize(
     std::cout << "[meshing] Setting up parameterization\n";
     directional::setup_parameterization(N, VMeshWhole, FMeshWhole, EV, EF, FE, combedMatching, singVertices, pd, VMeshCut, FMeshCut);
     std::cout << "[meshing] Solving parameterization\n";
-    directional::parameterize(VMeshWhole, FMeshWhole, FE, combedField, gradientSize, pd, VMeshCut, FMeshCut, isInteger, cutUV);
+    directional::parameterize(VMeshWhole, FMeshWhole, FE, combedField, lengthRatio, pd, VMeshCut, FMeshCut, isInteger, cutUV);
     std::cout << "[meshing] Done!\n";
 }
 

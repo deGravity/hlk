@@ -102,9 +102,7 @@ namespace hlk {
         // Helix Finding
         bool is_course_loop(int curr_he, Cardinal c = Cardinal::N);
         bool perp_direction_check(
-            int curr_he,
-            std::unordered_set<int>& ortho_visited,
-            const std::map<int, Cardinal>& face_directions);
+            int curr_he, const std::map<int, Cardinal>& face_directions);
         bool helix_free(std::unordered_set<int>& helix, Cardinal c = Cardinal::N);
 	};
 

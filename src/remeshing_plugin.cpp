@@ -1,9 +1,7 @@
 #include <directional/glyph_lines_raw.h>
-#include <directional/read_raw_field.h>
 #include <directional/seam_lines.h>
 #include <directional/singularity_spheres.h>
 #include <directional/visualization_schemes.h>
-#include <directional/write_raw_field.h>
 #include <igl/AABB.h>
 #include <igl/adjacency_list.h>
 #include <igl/avg_edge_length.h>
@@ -45,17 +43,75 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
     _viewer->core().background_color = Eigen::Vector4f(0.792f, 0.792f, 0.878f, 1.000f);
     _viewer->data().line_width = 0.1f;
     _viewer->data().point_size = 0.5f;
-    _viewer->core().camera_zoom = 2.f;
+    _viewer->core().camera_zoom = 1.f;
+
+    // Set up multiple meshes for visualization.
+    _viewer->append_mesh(); // raw field mesh   = 1
+    _viewer->append_mesh(); // singularity mesh = 2
+    _viewer->append_mesh(); // seam mesh        = 3
+    _viewer->append_mesh(); // quad mesh        = 4
+    _viewer->selected_data_index = 0;
 
 	// This function is called every time a keyboard button is pressed
 	auto key_down = [&](igl::opengl::glfw::Viewer & viewer, unsigned char key, int modifier) {
-		if ((unsigned int)key == 85) czsl.ctrl = true;
-		if ((unsigned int)key == 90) czsl.z = true;
-		if ((unsigned int)key == 83) czsl.s = true;
-		if ((unsigned int)key == 76) czsl.l = true;
+        if ((unsigned int)key == 85) czsl.ctrl = true;
+        else if ((unsigned int)key == 90) czsl.z = true;
+        else if ((unsigned int)key == 83) czsl.s = true;
+        else if ((unsigned int)key == 76) czsl.l = true;
+        else if (key == '0') singularitySelect = true;
+        else if (key == 'W') {
+            if (save_raw_field()) {
+                std::cout << "Saved raw field.\n";
+            } else {
+                std::cout << "Unable to save raw field. Error: " << errno << "\n";
+            }
+        } else {
+            bool should_draw = false;
+            if (key == '1') {
+                globalRotation += 0.314;
+                update_raw_field();
+                should_draw = true;
+            } else if (key == '-' || key == '_') {
+                cycleIndices(currCycle)--;
+                update_raw_field();
+                update_singularities();
+                should_draw = true;
+            } else if (key == '+' || key == '=') {
+                cycleIndices(currCycle)++;
+                update_raw_field();
+                update_singularities();
+                should_draw = true;
+            } else if (key == 'B') {
+                if (numBoundaries) {
+                    // loop through the boundary cycles.
+                    if (currCycle >= basisCycles.rows() - numBoundaries - numGenerators && currCycle < basisCycles.rows() - numGenerators - 1) {
+                        currCycle++;
+                    } else {
+                        currCycle = basisCycles.rows() - numBoundaries - numGenerators;
+                    }
+                    should_draw = true;
+                }
+            } else if (key == 'G') {
+                if (numGenerators) {
+                    // loop through the generators cycles.
+                    if (currCycle >= basisCycles.rows() - numGenerators && currCycle < basisCycles.rows() - 1) {
+                        currCycle++;
+                    } else {
+                        currCycle = basisCycles.rows() - numGenerators;
+                    }
+                    should_draw = true;
+                }
+            } else if (key == 'R') {
+                should_draw = true;
+            }
+            if (should_draw) {
+                viewing_mode = ViewingMode::MESH_SING;
+                update_visualization(key);
+            }
+        }
+
 		if (czsl.ctrl && czsl.s) viewer.open_dialog_save_mesh();
 		if (czsl.ctrl && czsl.l) viewer.open_dialog_load_mesh();
-
 		if (czsl.ctrl && czsl.z) {
 			if (temps.size() > 1) {
 				load(temps[temps.size()-2].mesh);
@@ -70,10 +126,11 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
 	};
 
 	auto key_up = [&](igl::opengl::glfw::Viewer & viewer, unsigned char key, int modifier) {
-		if ((unsigned int)key == 85) czsl.ctrl = false;
-		if ((unsigned int)key == 90) czsl.z = false;
-		if ((unsigned int)key == 83) czsl.s = false;
-		if ((unsigned int)key == 76) czsl.l = false;
+        if ((unsigned int)key == 85) czsl.ctrl = false;
+        else if ((unsigned int)key == 90) czsl.z = false;
+        else if ((unsigned int)key == 83) czsl.s = false;
+        else if ((unsigned int)key == 76) czsl.l = false;
+        else if (key == '0') singularitySelect = false;
 		return false;
 	};
 
@@ -117,24 +174,11 @@ void RemeshingMenu::draw_viewer_menu() {
             viewer->open_dialog_save_mesh();
         }
         if (ImGui::Button("Load Field##Mesh", ImVec2((w - p) / 2.f, 0))) {
-            std::string fname = igl::file_dialog_open();
-            if (fname.length() == 0) return;
-            directional::read_raw_field(fname, rosy, rawField);
-            has_direction_field = true;
-            has_curl = false;
-            viewing_mode = ViewingMode::MESH_FIELD;
-            update_visualization();
+            load_raw_field();
         }
         ImGui::SameLine(0, p);
         if (ImGui::Button("Save Field##Mesh", ImVec2((w - p) / 2.f, 0))) {
-            std::string fname = igl::file_dialog_save();
-            if (fname.length() == 0) return;
-            if (miq_mode == MIQMode::POLYVECTOR) {
-                directional::write_raw_field(fname, combedField);
-            } else {
-                directional::representative_to_raw(V, F, direction_field[1], rosy, rawField);
-                directional::write_raw_field(fname, rawField);
-            }
+            save_raw_field();
         }
         if (ImGui::Button("Clear Loops##Mesh", ImVec2((w - p) / 2.f, 0))) {
             clear_loops();
@@ -172,58 +216,63 @@ void RemeshingMenu::draw_viewer_menu() {
             ImGui::Checkbox("Symmetrize N-RoSy", &symmetrize_nrosy);
             ImGui::Checkbox("Show Axis", &show_axis);
             ImGui::Checkbox("Multi Points", &multi_points_drawing);
+            ImGui::Checkbox("Do matching", &do_matching);
             // Add threshold values.
             ImGui::DragFloat("Click Threshold", &click_threshold, 0.05f, 0.01f, 0.5f);
             ImGui::DragFloat("Soft Weight", &soft_constraint_strength, 0.0f, 0.0f, 1.0f);
-            ImGui::DragInt("# Iter of Stiffening", &stiffen_iter, 1, 0, 10);
+            //ImGui::DragFloat("Field Weight", &field_guidance_weight, 0.0f, 0.0f, 1.0f);
             ImGui::DragFloat("Gradient Size", &gradient_size, 1.0f, 0.0f, 150.0f);
+            ImGui::DragInt("# Stiffening", &stiffen_iter, 1, 0, 10);
+            if (miq_mode == MIQMode::INDEX) {
+                ImGui::DragInt("N-vector field", &N, 1, 1, 4);
+            }
             ImGui::PopItemWidth();
             ImGui::Text("===Field Operations===");
-            if (ImGui::Button("Initialize field from principal curvatures", ImVec2(w - p, 0))) {
+            /*if (ImGui::Button("Initialize field from principal curvatures", ImVec2(w - p, 0))) {
                 init_curvature_field();
                 viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
-            }
+            }*/
             // Direction field controls
             if (has_direction_field) {
-                // drawing mode options.
+                // field interpolation mode options.
                 ImGui::Text("Click to select the type of field.");
-                if (ImGui::Button("Interpolate Cross Field", ImVec2(w - p, 0))) {
-                    miq_mode = MIQMode::CROSS; interpolate_field();
-                    viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
+                if (ImGui::RadioButton("Cross", miq_mode == MIQMode::CROSS)) {
+                    miq_mode = MIQMode::CROSS;
                 }
-                if (ImGui::Button("Interpolate Polyvector Field", ImVec2(w - p, 0))) {
-                    miq_mode = MIQMode::POLYVECTOR; interpolate_field(); 
-                    viewing_mode = ViewingMode::MESH_FIELD; update_visualization();
+                ImGui::SameLine(0, p);
+                if (ImGui::RadioButton("Polyvec", miq_mode == MIQMode::POLYVECTOR)) {
+                    miq_mode = MIQMode::POLYVECTOR;
+                }
+                ImGui::SameLine(0, p);
+                if (ImGui::RadioButton("Index", miq_mode == MIQMode::INDEX)) {
+                    miq_mode = MIQMode::INDEX;
+                }
+                if (miq_mode != MIQMode::INDEX) {
+                    if (ImGui::Button("Interpolate Field", ImVec2(w - p, 0))) {
+                        interpolate_field();
+                    }
+                    if (ImGui::Button("Init Curl", ImVec2((w - p) / 2.f, 0))) {
+                        init_curl();
+                    }
+                    ImGui::SameLine(0, p);
+                    if (ImGui::Button("Reduce Curl", ImVec2((w - p) / 2.f, 0))) {
+                        reduce_curl();
+                    }
                 }
                 if (ImGui::Button("Run MIQ parametrization", ImVec2(w - p, 0))) {
                     generate_integer_grid();
-                    viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
-                }
-                if (ImGui::Button("Init Curl", ImVec2((w - p) / 2.f, 0))) {
-                    init_curl();
-                    if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD)
-                        update_visualization();
-                }
-                ImGui::SameLine(0, p);
-                if (ImGui::Button("Reduce Curl", ImVec2((w - p) / 2.f, 0))) {
-                    reduce_curl();
-                    if (viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD)
-                        update_visualization();
                 }
             }
             // Quad controls
             ImGui::Text("===Quad Operations===");
-            if (miq_mode == MIQMode::POLYVECTOR) {
-                ImGui::Checkbox("[parameterize.h] isInteger", &isInteger);
-            }
             if (has_integer_grid) {
                 if (ImGui::Button("Extract Quad Mesh", ImVec2(w - p, 0))) {
                     std::vector<std::vector<double>> Vs, TCs;
                     std::vector<std::vector<int>> Fs;
-                    if (miq_mode == MIQMode::POLYVECTOR) {
-                        extract_quad_mesh(V, F, cutUV, FMeshCut, quad_mesh);
-                    } else {
+                    if (miq_mode == MIQMode::CROSS) {
                         extract_quad_mesh(V, F, V_uv, F_uv, quad_mesh);
+                    } else {
+                        extract_quad_mesh(V, F, cutUV, FMeshCut, quad_mesh);
                     }
                     is_quad_meshed = true;
                     init_quad_mesh();
@@ -243,7 +292,6 @@ void RemeshingMenu::draw_viewer_menu() {
                 }
                 ImGui::SameLine(0, p);
                 if (ImGui::Button("Check Helix", ImVec2((w - p) / 2.f, 0))) {
-                    stylize_quad_mesh(directional::default_mesh_color());
                     quad_helix_finding();
                 }
             }
@@ -265,6 +313,10 @@ void RemeshingMenu::draw_viewer_menu() {
         ImGui::Text("Click to select the viewing mode.");
         if (ImGui::RadioButton("Mesh Only", viewing_mode == ViewingMode::MESH_ONLY)) {
             viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
+        }
+        ImGui::SameLine(0, p);
+        if (ImGui::RadioButton("Mesh+Sing", viewing_mode == ViewingMode::MESH_SING)) {
+            viewing_mode = ViewingMode::MESH_SING; update_raw_field(); update_visualization();
         }
         if (ImGui::RadioButton("Mesh+Field", viewing_mode == ViewingMode::MESH_FIELD)) {
             viewing_mode = ViewingMode::MESH_FIELD; update_visualization();
@@ -370,11 +422,6 @@ void RemeshingMenu::setup_mesh() {
 
     // Pass through the symmetrizer to find symmetries.
     symmetrizer = Symmetrizer(V, F);
-    // symmetrizer.symmetrize_geometry(V);
-    symmetry_mode_yz = symmetrizer.has_vertex_symmetry(0);
-    symmetry_mode_xz = symmetrizer.has_vertex_symmetry(1);
-    symmetry_mode_xy = symmetrizer.has_vertex_symmetry(2);
-    symmetrize_nrosy = symmetrizer.has_face_symmetry();
 
     viewer->data().clear();
     viewer->data().set_mesh(V, F);
@@ -401,7 +448,8 @@ bool RemeshingMenu::load(std::string filename) {
  
     // Set up the field.
     setup_boundary();
-    interpolate_field();    
+    interpolate_field();
+    setup_basis_cycles();
     
     // Other viewing settings
     viewer->core().align_camera_center(V, F);
@@ -409,16 +457,13 @@ bool RemeshingMenu::load(std::string filename) {
     viewer->data().lines = Eigen::MatrixXd(0, 9);
     viewer->data().set_face_based(true);
 
-    // Set up multiple meshes for visualization.
-    viewer->append_mesh(); // quad mesh        = 1
-    viewer->append_mesh(); // deformed mesh    = 2
-    viewer->append_mesh(); // raw field mesh   = 3
-    viewer->append_mesh(); // singularity mesh = 4
-    viewer->append_mesh(); // seam mesh        = 5
-    viewer->selected_data_index = 0;
     update_visualization();
 
 	if (temps.empty()) save_ctrlz();
+<<<<<<< HEAD
+=======
+
+>>>>>>> index
     return true;
 }
 
@@ -537,6 +582,7 @@ void RemeshingMenu::clear() {
 	igl_tree.clear();
 	std::vector<std::unordered_set<int>>().swap(igl_v_faces);
 	std::vector<std::vector<double>>().swap(graph_adj);
+    cycleFaces.clear();
     clear_loops();
     // reset values
     show_axis = false;
@@ -550,7 +596,7 @@ void RemeshingMenu::clear() {
     has_curl = false;
     is_quad_meshed = false;
     should_redraw = false;
-    isInteger = true;
+    do_matching = false;
     viewing_mode = ViewingMode::MESH_ONLY;
     drawing_mode = DrawingMode::WALE;
     miq_mode = MIQMode::CROSS;
@@ -570,9 +616,9 @@ bool RemeshingMenu::save_workspace() {
     igl::serialize(has_integer_grid, "has_integer_grid", filename);
     igl::serialize(is_quad_meshed, "is_quad_meshed", filename);
     igl::serialize(should_redraw, "should_redraw", filename);
-    igl::serialize(isInteger, "isInteger", filename);
     igl::serialize(show_axis, "show_axis", filename);
     igl::serialize(multi_points_drawing, "multi_points_drawing", filename);
+    igl::serialize(do_matching, "do_matching", filename);
     igl::serialize(existing_edge_label, "existing_edge_label", filename);
     igl::serialize(geodesic_label, "geodesic_label", filename);
 
@@ -604,7 +650,7 @@ bool RemeshingMenu::save_workspace() {
     igl::serialize(cutUV, "cutUV", filename);
 
     igl::serialize(direction_field, "direction_field", filename);
-    igl::serialize(rawField, "rawField", filename);
+    igl::serialize(curlRawField, "curlRawField", filename);
     igl::serialize(c_b, "c_b", filename);
     igl::serialize(c_blevel, "c_blevel", filename);
     igl::serialize(c_bc, "c_bc", filename);
@@ -630,6 +676,23 @@ bool RemeshingMenu::save_workspace() {
     igl::serialize(loop_path, "loop_path", filename);
     igl::serialize(loop_feature_face_ids, "loop_feature_face_ids", filename);
 
+    igl::serialize(singVertices, "singVertices", filename);
+    igl::serialize(singIndices, "singIndices", filename);
+    igl::serialize(rawField, "rawField", filename);
+    igl::serialize(cycleIndices, "cycleIndices", filename);
+    igl::serialize(cycleCurvature, "cycleCurvature", filename);
+    igl::serialize(targetCurvature, "targetCurvature", filename);
+    igl::serialize(basisCycles, "basisCycles", filename);
+    igl::serialize(vertex2cycle, "vertex2cycle", filename);
+    igl::serialize(innerEdges, "innerEdges", filename);
+    igl::serialize(cycleFaces, "cycleFaces", filename);
+    igl::serialize(eulerChar, "eulerChar", filename);
+    igl::serialize(numGenerators, "numGenerators", filename);
+    igl::serialize(numBoundaries, "numBoundaries", filename);
+    igl::serialize(currCycle, "currCycle", filename);
+    igl::serialize(N, "N", filename);
+    igl::serialize(globalRotation, "globalRotation", filename);
+
     return true;
 }
 
@@ -645,9 +708,9 @@ bool RemeshingMenu::load_workspace() {
     igl::deserialize(has_integer_grid, "has_integer_grid", filename);
     igl::deserialize(is_quad_meshed, "is_quad_meshed", filename);
     igl::deserialize(should_redraw, "should_redraw", filename);
-    igl::deserialize(isInteger, "isInteger", filename);
     igl::deserialize(show_axis, "show_axis", filename);
     igl::deserialize(multi_points_drawing, "multi_points_drawing", filename);
+    igl::deserialize(do_matching, "do_matching", filename);
     igl::deserialize(existing_edge_label, "existing_edge_label", filename);
     igl::deserialize(geodesic_label, "geodesic_label", filename);
 
@@ -682,7 +745,7 @@ bool RemeshingMenu::load_workspace() {
     update_polyhedron_tree();
 
     igl::deserialize(direction_field, "direction_field", filename);
-    igl::deserialize(rawField, "rawField", filename);
+    igl::deserialize(curlRawField, "curlRawField", filename);
     igl::deserialize(c_b, "c_b", filename);
     igl::deserialize(c_blevel, "c_blevel", filename);
     igl::deserialize(c_bc, "c_bc", filename);
@@ -707,6 +770,23 @@ bool RemeshingMenu::load_workspace() {
     igl::deserialize(loop_update_polylines, "loop_update_polylines", filename);
     igl::deserialize(loop_path, "loop_path", filename);
     igl::deserialize(loop_feature_face_ids, "loop_feature_face_ids", filename);
+
+    igl::deserialize(singVertices, "singVertices", filename);
+    igl::deserialize(singIndices, "singIndices", filename);
+    igl::deserialize(rawField, "rawField", filename);
+    igl::deserialize(cycleIndices, "cycleIndices", filename);
+    igl::deserialize(cycleCurvature, "cycleCurvature", filename);
+    igl::deserialize(targetCurvature, "targetCurvature", filename);
+    igl::deserialize(basisCycles, "basisCycles", filename);
+    igl::deserialize(vertex2cycle, "vertex2cycle", filename);
+    igl::deserialize(innerEdges, "innerEdges", filename);
+    igl::deserialize(cycleFaces, "cycleFaces", filename);
+    igl::deserialize(eulerChar, "eulerChar", filename);
+    igl::deserialize(numGenerators, "numGenerators", filename);
+    igl::deserialize(numBoundaries, "numBoundaries", filename);
+    igl::deserialize(currCycle, "currCycle", filename);
+    igl::deserialize(N, "N", filename);
+    igl::deserialize(globalRotation, "globalRotation", filename);
 
     line_texture(texture_R, texture_G, texture_B);
 
@@ -844,9 +924,6 @@ bool RemeshingMenu::mouse_scroll(float delta_y) {
 	return false;
 }
 
-
-
-// TODO: remove alt_on/shift_on/ctrl_on
 bool RemeshingMenu::mouse_up(int button, int modifier) {
     if (igl::opengl::glfw::imgui::ImGuiMenu::mouse_up(button, modifier)) return true;
 
@@ -865,7 +942,16 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
     bool intersects = igl::unproject_onto_mesh(Eigen::Vector2f(x, y), viewer->core().view,
         viewer->core().proj, viewer->core().viewport, V, F, fid, bc);
 
-    if ((button == 2 || button == 1) && alt_on && !shift_on && !ctrl_on) { // loop
+    if (button == 0 && singularitySelect) { // trivial connections: select singularity
+        Eigen::Vector3d::Index maxCol;
+        bc.maxCoeff(&maxCol);
+        int currVertex = F(fid, maxCol);
+        currCycle = vertex2cycle(currVertex);
+        viewing_mode = ViewingMode::MESH_SING;
+        should_redraw = true;
+        std::cout << "sing selected\n";
+
+    } else if ((button == 2 || button == 1) && alt_on && !shift_on && !ctrl_on) { // loop
 		if (feature_points.size() > 2) {
 			auto n = face_vectors[loop_feature_face_ids[0]].normal;
             Eigen::Vector3d a = feature_points.back() - feature_points.front();
@@ -1009,6 +1095,7 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
 
     if (should_redraw) {
         interpolate_field();
+        update_raw_field();
         update_visualization();
 		save_ctrlz();
 		should_redraw = false;
@@ -1749,6 +1836,7 @@ void RemeshingMenu::cut_along_seams() {
     reset_face_vectors(); // TODO: instead of resetting, keep track of old face vectors
     setup_boundary();
     interpolate_field();
+    setup_basis_cycles();
     update_visualization();
 }
 
@@ -1887,12 +1975,12 @@ void RemeshingMenu::stylize_tri_mesh(const Eigen::MatrixXd& colors) {
     viewer->data().clear();
     viewer->data().set_mesh(V, F);
     if (has_integer_grid) {
-        if (miq_mode == MIQMode::POLYVECTOR) {
+        if (miq_mode == MIQMode::CROSS) {
+            viewer->data().set_uv(V_uv, F_uv);
+        } else {
             viewer->data().clear();
             viewer->data().set_mesh(VMeshCut, FMeshCut);
             viewer->data().set_uv(cutUV, FMeshCut);
-        } else {
-            viewer->data().set_uv(V_uv, F_uv);
         }
         viewer->data().set_texture(texture_R, texture_B, texture_G);
     }
@@ -1913,12 +2001,12 @@ void RemeshingMenu::stylize_quad_mesh(const Eigen::MatrixXd& colors) {
         TUV.row(i) = Eigen::Vector3i(0, 1, 2);
     }
 
-    viewer->data_list[1].clear();
-    viewer->data_list[1].set_mesh(verts, faces);
-    viewer->data_list[1].set_uv(TC, TUV);
-    viewer->data_list[1].set_colors(colors);
-    viewer->data_list[1].set_texture(texture_R, texture_B, texture_G);
-    viewer->data_list[1].show_texture = true;
+    viewer->data_list[4].clear();
+    viewer->data_list[4].set_mesh(verts, faces);
+    viewer->data_list[4].set_uv(TC, TUV);
+    viewer->data_list[4].set_colors(colors);
+    viewer->data_list[4].set_texture(texture_R, texture_B, texture_G);
+    viewer->data_list[4].show_texture = true;
 
     if (split_edges.empty()) return;
 
@@ -1940,16 +2028,60 @@ void RemeshingMenu::stylize_quad_mesh(const Eigen::MatrixXd& colors) {
         qv0 += se.normal * mesh_size * 0.005;
         Eigen::Vector3d qv1 = quad_mesh.V.row(quad_mesh.side_v(fid));
         qv1 += se.normal * mesh_size * 0.005;
-        draw_a_segment(qv0, qv1, 1, -1., 1);
+        draw_a_segment(qv0, qv1, 1, -1., 4);
     }
 }
 
-void RemeshingMenu::update_visualization() {
+void RemeshingMenu::update_visualization(unsigned char key) {
     for (const igl::opengl::ViewerData& data : viewer->data_list) {
         set_mesh_overlays(data.id, false, false, false);
     }
 
     switch (viewing_mode) {
+    case ViewingMode::MESH_SING:
+    {
+        if (key == 'B' || key == 'G') {
+            CMesh = directional::default_mesh_color().replicate(F.rows(), 1);
+            for (int i = 0; i < cycleFaces[currCycle].size(); i++)
+                CMesh.row(cycleFaces[currCycle][i]) << directional::selected_face_color();
+            stylize_tri_mesh(CMesh);
+
+        } else if (key == 'R') {
+            Eigen::MatrixXd linfColors;
+            Eigen::VectorXd squaredLinf = linf.array().square();
+            igl::jet(squaredLinf, squaredLinf.minCoeff(), squaredLinf.maxCoeff(), linfColors);
+            //igl::jet(squaredLinf, 0, 1, linfColors);
+            CMesh = directional::default_mesh_color().replicate(F.rows(), 1);
+            for (int c = 0; c < basisCycles.rows(); ++c) {
+                for (int i = 0; i < cycleFaces[c].size(); i++) {
+                    CMesh.row(cycleFaces[c][i]) = linfColors.row(c);
+                }
+            }
+            stylize_tri_mesh(CMesh);
+
+        } else {
+            // raw field mesh
+            directional::glyph_lines_raw(
+                V, F, rawField, directional::default_glyph_color(),
+                VField, FField, CField, 1.5);
+            viewer->data_list[1].clear();
+            viewer->data_list[1].set_mesh(VField, FField);
+            viewer->data_list[1].set_colors(CField);
+            set_mesh_overlays(1, false);
+            // singularity mesh
+            directional::singularity_spheres(
+                V, F, N, singVertices, singIndices,
+                VSings, FSings, CSings, 1.5);
+            viewer->data_list[2].clear();
+            viewer->data_list[2].set_mesh(VSings, FSings);
+            viewer->data_list[2].set_colors(CSings);
+            set_mesh_overlays(2, false);
+
+            stylize_tri_mesh(directional::default_mesh_color());
+        }
+        break;
+    }
+
     case ViewingMode::MESH_CURL:
     {
         if (!has_curl) { init_curl(); }
@@ -1963,33 +2095,32 @@ void RemeshingMenu::update_visualization() {
     case ViewingMode::MESH_FIELD:
     {
         if (!has_curl) { init_curl(); }
-
         // field mesh
         directional::glyph_lines_raw(
             V, F, combedField, directional::indexed_glyph_colors(combedField),
             VField, FField, CField, 2.0);
-        viewer->data_list[3].clear();
-        viewer->data_list[3].set_mesh(VField, FField);
-        viewer->data_list[3].set_colors(CField);
-        set_mesh_overlays(3, false);
+        viewer->data_list[1].clear();
+        viewer->data_list[1].set_mesh(VField, FField);
+        viewer->data_list[1].set_colors(CField);
+        set_mesh_overlays(1, false);
 
         // singularity mesh
         directional::singularity_spheres(
-            V, F, rosy, singVertices, singIndices,
+            V, F, rosy, curlSingVertices, curlSingIndices,
             VSings, FSings, CSings, 1.5);
-        viewer->data_list[4].clear();
-        viewer->data_list[4].set_mesh(VSings, FSings);
-        viewer->data_list[4].set_colors(CSings);
-        set_mesh_overlays(4, false);
+        viewer->data_list[2].clear();
+        viewer->data_list[2].set_mesh(VSings, FSings);
+        viewer->data_list[2].set_colors(CSings);
+        set_mesh_overlays(2, false);
 
         // seam mesh
         directional::seam_lines(
             V, F, EV, combedMatching,
             VSeams, FSeams, CSeams, 2.0);
-        viewer->data_list[5].clear();
-        viewer->data_list[5].set_mesh(VSeams, FSeams);
-        viewer->data_list[5].set_colors(CSeams);
-        set_mesh_overlays(5, false);
+        viewer->data_list[3].clear();
+        viewer->data_list[3].set_mesh(VSeams, FSeams);
+        viewer->data_list[3].set_colors(CSeams);
+        set_mesh_overlays(3, false);
     }
 
     case ViewingMode::MESH_ONLY:
@@ -2005,9 +2136,10 @@ void RemeshingMenu::update_visualization() {
     case ViewingMode::QUAD_ONLY:
     {
         stylize_quad_mesh(directional::default_mesh_color());
-        set_mesh_overlays(1, false);
-        if (viewing_mode == ViewingMode::MESH_QUAD)
+        set_mesh_overlays(4, false);
+        if (viewing_mode == ViewingMode::MESH_QUAD) {
             set_mesh_overlays(viewer->selected_data_index);
+        }
         break;
     }
     }
@@ -2086,6 +2218,7 @@ void RemeshingMenu::apply_subdivision() {
     reset_face_vectors();
     setup_boundary();
     interpolate_field();
+    setup_basis_cycles();
     update_visualization();
 }
 

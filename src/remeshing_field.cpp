@@ -1,10 +1,17 @@
+#include <directional/dual_cycles.h>
+#include <directional/index_prescription.h>
+#include <directional/read_raw_field.h>
 #include <directional/representative_to_raw.h>
+#include <directional/rotation_to_representative.h>
 #include <directional/polyvector_field.h>
 #include <directional/polyvector_to_raw.h>
+#include <directional/write_raw_field.h>
 #include <igl/AABB.h>
 #include <igl/barycenter.h>
 #include <igl/boundary_loop.h>
 #include <igl/copyleft/comiso/nrosy.h>
+#include <igl/file_dialog_open.h>
+#include <igl/file_dialog_save.h>
 #include <igl/local_basis.h>
 #include <igl/principal_curvature.h>
 #include <igl/rotate_vectors.h>
@@ -15,6 +22,33 @@
 #include "remeshing_plugin.h"
 
 namespace hlk {
+bool RemeshingMenu::load_raw_field() {
+    std::string fname = igl::file_dialog_open();
+    if (fname.length() == 0) return false;
+
+    if (miq_mode == MIQMode::INDEX) {
+        directional::read_raw_field(fname, N, rawField);
+    } else {
+        directional::read_raw_field(fname, rosy, curlRawField);
+        direction_field[1] = curlRawField.block(0, 0, F.rows(), 3);
+    }
+
+    has_direction_field = true;
+    has_curl = false;
+    return true;
+}
+
+bool RemeshingMenu::save_raw_field() {
+    std::string fname = igl::file_dialog_save();
+    if (fname.length() == 0) return false;
+
+    if (miq_mode == MIQMode::INDEX) {
+        return directional::write_raw_field(fname, rawField);
+    } else if (miq_mode == MIQMode::CROSS) {
+        directional::representative_to_raw(V, F, direction_field[1], rosy, curlRawField);
+    }
+    return directional::write_raw_field(fname, curlRawField);
+}
 
 void RemeshingMenu::reset_face_vectors() {
     face_vectors.clear();
@@ -201,6 +235,7 @@ void RemeshingMenu::update_vectors_from_field(int direction) {
     // Populate face vectors.
     const Eigen::MatrixXd& PD1 = direction_field[direction];
     for (int i = 0; i < F.rows(); ++i) {
+        if (face_vectors[i].assigned[direction]) continue;
         double x = PD1.row(i) * B1.row(i).transpose();
         double y = PD1.row(i) * B2.row(i).transpose();
         double angle = atan2(y, x);
@@ -212,15 +247,7 @@ void RemeshingMenu::update_vectors_from_field(int direction) {
 }
 
 void RemeshingMenu::interpolate_field() {
-    Eigen::VectorXd S;
-
     if (miq_mode == MIQMode::POLYVECTOR) {
-        // Interpolate both directions separately first.
-        interpolate_cross_field(S, 0);
-        update_vectors_from_field(0);
-        interpolate_cross_field(S, 1);
-        update_vectors_from_field(1);
-
         // Set up constraints.
         std::vector<int> constrained_faces;
         std::vector<int> wale_constrained_faces;
@@ -279,44 +306,55 @@ void RemeshingMenu::interpolate_field() {
         }
 
         directional::polyvector_field(V, F, p_b, p_bc, rosy, polyvector_field);
-        directional::polyvector_to_raw(V, F, polyvector_field, rosy, rawField);
+        directional::polyvector_to_raw(V, F, polyvector_field, rosy, curlRawField);
 
-        viewing_mode = ViewingMode::MESH_FIELD;
-
-    } else { // miq_mode == MIQMode::CROSS
-
+    } else if (miq_mode == MIQMode::CROSS) {
+        Eigen::VectorXd S;
         interpolate_cross_field(S);
         update_vectors_from_field();
-        directional::representative_to_raw(V, F, direction_field[1], rosy, rawField);
+        directional::representative_to_raw(V, F, direction_field[1], rosy, curlRawField);
 
         int s_count = 0;
         for (int i = 0; i < S.rows(); ++i) {
-            s_count += S(i) > 0.01 ? 1 : 0;
+            s_count += abs(S(i)) > 0.001 ? 1 : 0;
         }
         std::cout << "Singularity Count = " << s_count << "\n";
-
-        viewing_mode = ViewingMode::MESH_ONLY;
     }
 
     has_direction_field = true;
     has_integer_grid = false;
     has_curl = false;
+    viewing_mode = ViewingMode::MESH_ONLY;
     update_visualization();
 }
 
 void RemeshingMenu::generate_integer_grid() {
 
-    if (miq_mode == MIQMode::POLYVECTOR) {
+    if (miq_mode == MIQMode::INDEX) {
+        if (N != 4) {
+            std::cout << "[generate_integer_grid] overwriting prescribed rawField because N is not 4\n";
+            directional::representative_to_raw(V, F, direction_field[1], rosy, rawField);
+        }
         Meshing::polyvector_parametrize(
             V, F, rosy, EV, EF, FE,
             rawField, combedField,
             combedMatching, combedEffort,
             singVertices, singIndices,
             VMeshCut, FMeshCut, cutUV,
-            1. / gradient_size, isInteger
-        );
+            1. / gradient_size, isInteger); // SUPPOSEDLY THIS STEP COMBS THE FIELD
+        direction_field[1] = combedField.block(0, 0, F.rows(), 3);
 
-    } else {
+    } else if (miq_mode == MIQMode::POLYVECTOR) {
+        Meshing::polyvector_parametrize(
+            V, F, rosy, EV, EF, FE,
+            curlRawField, combedField,
+            combedMatching, combedEffort,
+            curlSingVertices, curlSingIndices,
+            VMeshCut, FMeshCut, cutUV,
+            1. / gradient_size, isInteger);
+        direction_field[1] = combedField.block(0, 0, F.rows(), 3);
+
+    } else { // miq_mode == MIQMode::CROSS
         std::vector<std::vector<int>> hard_edges;
 
         Eigen::MatrixXi TT, TTi;
@@ -358,28 +396,39 @@ void RemeshingMenu::generate_integer_grid() {
     }
     
     has_integer_grid = true;
+    viewing_mode = ViewingMode::MESH_ONLY;
+    update_visualization();
 }
 
 void RemeshingMenu::init_curl() {
     Meshing::init_curl(
         V, F, rosy, EV, EF, FE,
         c_b, c_bc, c_blevel,
-        rawField, combedField,
+        curlRawField, combedField,
         combedMatching, combedEffort,
-        curl, singVertices, singIndices,
+        curl, curlSingVertices, curlSingIndices,
         AE2F, curlMax, curlMaxOrig);
+
+    direction_field[1] = combedField.block(0, 0, F.rows(), 3);
     has_curl = true;
+    if (viewing_mode == ViewingMode::MESH_ONLY || viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD) {
+        update_visualization();
+    }
 }
 
 void RemeshingMenu::reduce_curl() {
+    if (!has_curl) { init_curl(); }
+
     Meshing::reduce_curl(
         V, F, rosy, EV, EF, FE,
-        rawField, combedField,
+        curlRawField, combedField,
         combedMatching, combedEffort,
-        curl, singVertices, singIndices,
+        curl, curlSingVertices, curlSingIndices,
         curlMax);
-    if (miq_mode == MIQMode::CROSS) {
-        direction_field[1] = combedField.block(0, 0, F.rows(), 3);
+
+    direction_field[1] = combedField.block(0, 0, F.rows(), 3);
+    if (viewing_mode == ViewingMode::MESH_ONLY || viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD) {
+        update_visualization();
     }
 }
 
@@ -390,7 +439,7 @@ void RemeshingMenu::init_quad_mesh() {
     quad_aabb.init(quad_mesh.V, quad_mesh.F_t);
 
     quad_mesh.is_seam_edge.clear();
-    quad_mesh.is_seam_edge = std::vector<bool>(quad_mesh.e, false);
+    quad_mesh.is_seam_edge = std::vector<bool>(4 * quad_mesh.m, false);
     for (const SplitEdge& se : split_edges) {
         Eigen::Vector3d v0 = V.row(se.index_0);
         Eigen::Vector3d v1 = V.row(se.index_1);
@@ -434,9 +483,118 @@ void RemeshingMenu::quad_helix_finding() {
         for (auto iter = longest_helix.begin(); iter != longest_helix.end(); ++iter) {
             interactive_colors.row((*iter)) = Eigen::RowVector3d(0.8, 1., 0.6);
         }
+        for (int face : quad_mesh.singular_quads) { // for debugging purposes
+            interactive_colors.row(face) = Eigen::RowVector3d(1., 0., 0.6);
+        }
         stylize_quad_mesh(interactive_colors);
+
     } else {
         std::cout << "[remeshing] helix free!\n";
+        stylize_quad_mesh(Eigen::RowVector3d::Constant(1.0));
+    }
+}
+
+void RemeshingMenu::setup_basis_cycles() {
+    directional::dual_cycles(V, F, EV, EF, basisCycles, cycleCurvature, vertex2cycle, innerEdges);
+    cycleIndices = Eigen::VectorXi::Constant(basisCycles.rows(), 0);
+
+    for (int i = 0; i < singVertices.size(); i++)
+        cycleIndices(vertex2cycle(singVertices(i))) = singIndices(i);
+
+    std::vector<std::vector<int>> boundaryLoops;
+    igl::boundary_loop(F, boundaryLoops);
+    numBoundaries = boundaryLoops.size();
+    eulerChar = V.rows() - EV.rows() + F.rows();
+    numGenerators = 2 - eulerChar - boundaryLoops.size();
+
+    std::cout << "Euler characteristic: " << eulerChar << std::endl;
+    std::cout << "#generators: " << numGenerators << std::endl;
+    std::cout << "#boundaries: " << numBoundaries << std::endl;
+
+    // collecting cycle faces for visualization
+    cycleFaces.resize(basisCycles.rows());
+    for (int k = 0; k < basisCycles.outerSize(); ++k) {
+        for (Eigen::SparseMatrix<double>::InnerIterator it(basisCycles, k); it; ++it) {
+            int f1 = EF(innerEdges(it.col()), 0);
+            int f2 = EF(innerEdges(it.col()), 1);
+            if (f1 != -1)
+                cycleFaces[it.row()].push_back(f1);
+            if (f2 != -1)
+                cycleFaces[it.row()].push_back(f2);
+        }
+    }
+}
+
+void RemeshingMenu::compute_target_curvature() {
+    // the difference in the angle representation of edge i from EF(i,0) to EF(i,1)
+    Eigen::VectorXd edgeParallelAngleChange(basisCycles.cols());
+    for (int i = 0; i < innerEdges.rows(); i++) {
+        int currEdge = innerEdges(i);
+        Eigen::RowVectorXd edgeVectors = (V.row(EV(currEdge, 1)) - V.row(EV(currEdge, 0))).normalized();
+        // instead of local basis, use the cross field
+        double x1 = edgeVectors.dot(face_vectors[EF(currEdge, 0)].base_vector);
+        double y1 = edgeVectors.dot(face_vectors[EF(currEdge, 0)].frame[1]);
+        double x2 = edgeVectors.dot(face_vectors[EF(currEdge, 1)].base_vector);
+        double y2 = edgeVectors.dot(face_vectors[EF(currEdge, 1)].frame[1]);
+        edgeParallelAngleChange(i) = atan2(y2, x2) - atan2(y1, x1);
+    }
+    targetCurvature = basisCycles * edgeParallelAngleChange;
+    for (int i = 0; i < targetCurvature.size(); i++) {
+        while (targetCurvature(i) >= M_PI) targetCurvature(i) -= 2.0 * M_PI;
+        while (targetCurvature(i) < -M_PI) targetCurvature(i) += 2.0 * M_PI;
+    }
+}
+
+void RemeshingMenu::update_raw_field() {
+    int sum = round(cycleIndices.head(cycleIndices.size() - numGenerators).sum());
+    if (eulerChar * N != sum) {
+        std::cout << "Warning: All non-generator singularities should add up to N * the Euler characteristic." << std::endl;
+        std::cout << "Total indices: " << sum << "/" << N << std::endl;
+        std::cout << "Expected: " << eulerChar * N << "/" << N << std::endl;
+        return;
+    }
+
+    Eigen::VectorXd S;
+    interpolate_cross_field(S);
+    update_vectors_from_field();
+    directional::representative_to_raw(V, F, direction_field[1], rosy, curlRawField);
+
+    Eigen::VectorXd rotationAngles;
+    double linfError;
+    //compute_target_curvature();
+    directional::index_prescription(
+        V, F, EV, innerEdges, basisCycles, //targetCurvature,
+        cycleCurvature, cycleIndices, ldltSolver, N, //field_guidance_weight,
+        rotationAngles, linf, linfError);
+    std::cout << "Index prescription linfError: " << linfError << std::endl;
+    if (linfError > 1e-12) {
+        std::cout << "Warning: trivial connection property may not be satisfied; choose whether to do matching carefully.\n";
+    }
+
+    Eigen::MatrixXd representative;
+    directional::rotation_to_representative(V, F, EV, EF, rotationAngles, N, globalRotation, representative);
+    directional::representative_to_raw(V, F, representative, N, rawField);
+    if (do_matching) {
+        Meshing::comb_field_from_connection(V, F, EV, EF, FE, rawField, combedField, combedMatching, combedEffort);
+        direction_field[1] = combedField.block(0, 0, F.rows(), 3);
+    } else {
+        direction_field[1] = representative;
+    }
+}
+
+void RemeshingMenu::update_singularities() {
+    std::vector<int> singVerticesList, singIndicesList;
+    for (int i = 0; i < V.rows(); i++) {
+        if (cycleIndices(vertex2cycle(i))) {
+            singVerticesList.push_back(i);
+            singIndicesList.push_back(cycleIndices(vertex2cycle(i)));
+        }
+    }
+    singVertices.resize(singVerticesList.size());
+    singIndices.resize(singIndicesList.size());
+    for (int i = 0; i < singVerticesList.size(); i++) {
+        singVertices(i) = singVerticesList[i];
+        singIndices(i) = singIndicesList[i];
     }
 }
 
