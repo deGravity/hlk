@@ -104,7 +104,8 @@ int main(int argc, char* argv[]) {
             "  G           Loop through generator cycles\n"
             "  +           Increase index of current cycle\n"
             "  -           Decrease index  of current cycle\n"
-            "  1           Rotate field globally\n";
+            "  1           Rotate field globally\n"
+            "  R           Recolor the mesh to show colors based on linfError\n";
         try {
             if (!input_model.empty()) {
                 remeshing_menu.set_input_model(input_model);

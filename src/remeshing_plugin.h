@@ -38,11 +38,11 @@ public:
         has_curl = false;
         is_quad_meshed = false;
         should_redraw = false;
-        isInteger = true;
 
         geodesic_label = false;
         existing_edge_label = false;
         multi_points_drawing = true;
+        do_matching = false;
 
         viewing_mode = ViewingMode::MESH_ONLY;
         drawing_mode = DrawingMode::WALE;
@@ -166,7 +166,6 @@ public:
     bool has_integer_grid;
     bool is_quad_meshed;
     bool should_redraw;
-    bool isInteger;
 
     // numbers...
     float soft_constraint_strength;
@@ -271,6 +270,7 @@ public:
     int eulerChar, numGenerators, numBoundaries;
     int currCycle;
     int N; // degree of field
+    Eigen::VectorXd linf;
     double globalRotation;
     bool singularitySelect;
 
@@ -286,6 +286,7 @@ public:
     int rosy;
 
     bool show_axis, show_stitches, multi_points_drawing;
+    bool do_matching;
 
     bool existing_edge_label;
 

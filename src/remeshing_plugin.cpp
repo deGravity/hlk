@@ -101,6 +101,8 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
                     }
                     should_draw = true;
                 }
+            } else if (key == 'R') {
+                should_draw = true;
             }
             if (should_draw) {
                 viewing_mode = ViewingMode::MESH_SING;
@@ -214,10 +216,11 @@ void RemeshingMenu::draw_viewer_menu() {
             ImGui::Checkbox("Symmetrize N-RoSy", &symmetrize_nrosy);
             ImGui::Checkbox("Show Axis", &show_axis);
             ImGui::Checkbox("Multi Points", &multi_points_drawing);
+            ImGui::Checkbox("Do matching", &do_matching);
             // Add threshold values.
             ImGui::DragFloat("Click Threshold", &click_threshold, 0.05f, 0.01f, 0.5f);
             ImGui::DragFloat("Soft Weight", &soft_constraint_strength, 0.0f, 0.0f, 1.0f);
-            ImGui::DragFloat("Field Weight", &field_guidance_weight, 0.0f, 0.0f, 1.0f);
+            //ImGui::DragFloat("Field Weight", &field_guidance_weight, 0.0f, 0.0f, 1.0f);
             ImGui::DragFloat("Gradient Size", &gradient_size, 1.0f, 0.0f, 150.0f);
             ImGui::DragInt("# Stiffening", &stiffen_iter, 1, 0, 10);
             if (miq_mode == MIQMode::INDEX) {
@@ -262,9 +265,6 @@ void RemeshingMenu::draw_viewer_menu() {
             }
             // Quad controls
             ImGui::Text("===Quad Operations===");
-            /*if (miq_mode == MIQMode::POLYVECTOR) {
-                ImGui::Checkbox("[parameterize.h] isInteger", &isInteger);
-            }*/
             if (has_integer_grid) {
                 if (ImGui::Button("Extract Quad Mesh", ImVec2(w - p, 0))) {
                     std::vector<std::vector<double>> Vs, TCs;
@@ -316,7 +316,7 @@ void RemeshingMenu::draw_viewer_menu() {
         }
         ImGui::SameLine(0, p);
         if (ImGui::RadioButton("Mesh+Sing", viewing_mode == ViewingMode::MESH_SING)) {
-            viewing_mode = ViewingMode::MESH_SING; update_visualization();
+            viewing_mode = ViewingMode::MESH_SING; update_raw_field(); update_visualization();
         }
         if (ImGui::RadioButton("Mesh+Field", viewing_mode == ViewingMode::MESH_FIELD)) {
             viewing_mode = ViewingMode::MESH_FIELD; update_visualization();
@@ -579,6 +579,7 @@ void RemeshingMenu::clear() {
 	igl_tree.clear();
 	std::vector<std::unordered_set<int>>().swap(igl_v_faces);
 	std::vector<std::vector<double>>().swap(graph_adj);
+    cycleFaces.clear();
     clear_loops();
     // reset values
     show_axis = false;
@@ -592,7 +593,7 @@ void RemeshingMenu::clear() {
     has_curl = false;
     is_quad_meshed = false;
     should_redraw = false;
-    isInteger = true;
+    do_matching = false;
     viewing_mode = ViewingMode::MESH_ONLY;
     drawing_mode = DrawingMode::WALE;
     miq_mode = MIQMode::CROSS;
@@ -612,9 +613,9 @@ bool RemeshingMenu::save_workspace() {
     igl::serialize(has_integer_grid, "has_integer_grid", filename);
     igl::serialize(is_quad_meshed, "is_quad_meshed", filename);
     igl::serialize(should_redraw, "should_redraw", filename);
-    igl::serialize(isInteger, "isInteger", filename);
     igl::serialize(show_axis, "show_axis", filename);
     igl::serialize(multi_points_drawing, "multi_points_drawing", filename);
+    igl::serialize(do_matching, "do_matching", filename);
     igl::serialize(existing_edge_label, "existing_edge_label", filename);
     igl::serialize(geodesic_label, "geodesic_label", filename);
 
@@ -704,9 +705,9 @@ bool RemeshingMenu::load_workspace() {
     igl::deserialize(has_integer_grid, "has_integer_grid", filename);
     igl::deserialize(is_quad_meshed, "is_quad_meshed", filename);
     igl::deserialize(should_redraw, "should_redraw", filename);
-    igl::deserialize(isInteger, "isInteger", filename);
     igl::deserialize(show_axis, "show_axis", filename);
     igl::deserialize(multi_points_drawing, "multi_points_drawing", filename);
+    igl::deserialize(do_matching, "do_matching", filename);
     igl::deserialize(existing_edge_label, "existing_edge_label", filename);
     igl::deserialize(geodesic_label, "geodesic_label", filename);
 
@@ -2040,6 +2041,19 @@ void RemeshingMenu::update_visualization(unsigned char key) {
             CMesh = directional::default_mesh_color().replicate(F.rows(), 1);
             for (int i = 0; i < cycleFaces[currCycle].size(); i++)
                 CMesh.row(cycleFaces[currCycle][i]) << directional::selected_face_color();
+            stylize_tri_mesh(CMesh);
+
+        } else if (key == 'R') {
+            Eigen::MatrixXd linfColors;
+            Eigen::VectorXd squaredLinf = linf.array().square();
+            igl::jet(squaredLinf, squaredLinf.minCoeff(), squaredLinf.maxCoeff(), linfColors);
+            //igl::jet(squaredLinf, 0, 1, linfColors);
+            CMesh = directional::default_mesh_color().replicate(F.rows(), 1);
+            for (int c = 0; c < basisCycles.rows(); ++c) {
+                for (int i = 0; i < cycleFaces[c].size(); i++) {
+                    CMesh.row(cycleFaces[c][i]) = linfColors.row(c);
+                }
+            }
             stylize_tri_mesh(CMesh);
 
         } else {

@@ -248,12 +248,6 @@ void RemeshingMenu::update_vectors_from_field(int direction) {
 
 void RemeshingMenu::interpolate_field() {
     if (miq_mode == MIQMode::POLYVECTOR) {
-        // Interpolate both directions separately first. <- WHY DO I NEED THIS????
-        /*interpolate_cross_field(S, 0);
-        update_vectors_from_field(0);
-        interpolate_cross_field(S, 1);
-        update_vectors_from_field(1);*/
-
         // Set up constraints.
         std::vector<int> constrained_faces;
         std::vector<int> wale_constrained_faces;
@@ -327,8 +321,6 @@ void RemeshingMenu::interpolate_field() {
         std::cout << "Singularity Count = " << s_count << "\n";
     }
 
-    //if (viewing_mode == ViewingMode::MESH_SING) rawField = curlRawField;
-
     has_direction_field = true;
     has_integer_grid = false;
     has_curl = false;
@@ -341,7 +333,7 @@ void RemeshingMenu::generate_integer_grid() {
     if (miq_mode == MIQMode::INDEX) {
         if (N != 4) {
             std::cout << "[generate_integer_grid] overwriting prescribed rawField because N is not 4\n";
-            directional::representative_to_raw(V, F, direction_field[1], N, rawField);
+            directional::representative_to_raw(V, F, direction_field[1], rosy, rawField);
         }
         Meshing::polyvector_parametrize(
             V, F, rosy, EV, EF, FE,
@@ -349,7 +341,7 @@ void RemeshingMenu::generate_integer_grid() {
             combedMatching, combedEffort,
             singVertices, singIndices,
             VMeshCut, FMeshCut, cutUV,
-            1. / gradient_size, isInteger);
+            1. / gradient_size, isInteger); // SUPPOSEDLY THIS STEP COMBS THE FIELD
         direction_field[1] = combedField.block(0, 0, F.rows(), 3);
 
     } else if (miq_mode == MIQMode::POLYVECTOR) {
@@ -429,7 +421,7 @@ void RemeshingMenu::reduce_curl() {
 
     Meshing::reduce_curl(
         V, F, rosy, EV, EF, FE,
-        miq_mode == MIQMode::INDEX ? rawField : curlRawField, combedField,
+        curlRawField, combedField,
         combedMatching, combedEffort,
         curl, curlSingVertices, curlSingIndices,
         curlMax);
@@ -556,13 +548,23 @@ void RemeshingMenu::update_raw_field() {
     double linfError;
     //compute_target_curvature();
     directional::index_prescription(
-        V, F, EV, innerEdges, basisCycles,// targetCurvature,
+        V, F, EV, innerEdges, basisCycles, //targetCurvature,
         cycleCurvature, cycleIndices, ldltSolver, N, //field_guidance_weight,
-        rotationAngles, linfError);
+        rotationAngles, linf, linfError);
     std::cout << "Index prescription linfError: " << linfError << std::endl;
+    if (linfError > 1e-12) {
+        std::cout << "Warning: trivial connection property may not be satisfied; choose whether to do matching carefully.\n";
+    }
 
-    directional::rotation_to_representative(V, F, EV, EF, rotationAngles, N, globalRotation, direction_field[1]);
-    directional::representative_to_raw(V, F, direction_field[1], N, rawField);
+    Eigen::MatrixXd representative;
+    directional::rotation_to_representative(V, F, EV, EF, rotationAngles, N, globalRotation, representative);
+    directional::representative_to_raw(V, F, representative, N, rawField);
+    if (do_matching) {
+        Meshing::comb_field_from_connection(V, F, EV, EF, FE, rawField, combedField, combedMatching, combedEffort);
+        direction_field[1] = combedField.block(0, 0, F.rows(), 3);
+    } else {
+        direction_field[1] = representative;
+    }
 }
 
 void RemeshingMenu::update_singularities() {
