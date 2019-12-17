@@ -30,6 +30,8 @@ namespace hlk {
 		// These fields are only used by loop edges
 		LoopType type;
 		LoopSign sign;
+
+		bool contracted = false; // Flag that edge has been contracted away and should be removed from edge lists
 	};
 
 	struct KnitGraphNode {
@@ -44,6 +46,8 @@ namespace hlk {
 		int index = -1; // Useful for some algorithms
 		
 		bool contractable(); // If true, this is a pass-through node that should be removed
+		bool contract();
+		bool contracted = false; // If true, this should be removed from node lists
 
 	};
 

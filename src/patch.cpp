@@ -396,6 +396,31 @@ namespace hlk {
 		return s == 1 || s == 2;
 	}
 
+	std::vector<std::shared_ptr<KnitGraphEdge>> Patch::get_edge(int side, bool is_out)
+	{
+		auto seg = get_segment(side);
+		int gen_side = seg.first;
+		int sub_side = seg.second;
+		int start_idx = 0;
+		// Loop Out and Yarn In are ordered in reverse of side order
+		if (gen_side % 4 <= 1) {
+			for (int i = 0; i < sub_side; ++i) {
+				start_idx += sides[gen_side][i];
+			}
+		}
+		else {
+			for (int i = sides[gen_side].size() - 1; i > sub_side; --i) {
+				start_idx += sides[gen_side][i];
+			}
+		}
+		std::vector<std::shared_ptr<KnitGraphEdge>> edge;
+
+		for (int i = 0; i < sides[gen_side][sub_side]; ++i) {
+			edge.push_back(boundaries[gen_side][start_idx + i]);
+		}
+		return edge;
+	}
+
 	void Patch::make_graph(std::vector<std::vector<ChartCell>> chart)
 	{
 		std::vector<int> side_lengths;

@@ -8,13 +8,14 @@
 #include "patch.h"
 
 #include "autoknit.h"
+#include "coarse_knit_graph.h"
 
 using namespace hlk;
 using namespace std;
 
 int main(void) {
 
-	int mode = 3;
+	int mode = 5;
 
 	/*
 	cout << "Choose an Interface" << endl;
@@ -79,7 +80,7 @@ int main(void) {
 		viewer.data().line_width = 2.0f;
 		viewer.launch();
 	}
-	else {
+	else if (mode ==4 ){
 		ak::RowColGraph g;
 		int courses = 30;
 		int wales = 30;
@@ -121,6 +122,79 @@ int main(void) {
 		ak::save_traced("traced.st", traced_stitches);
 
 		std::vector<ak::Stitch> loaded_stitches;
+	}
+	else {
+
+		CoarseKnitGraph G_c;
+
+		std::vector<std::vector<std::vector<int>>> sides{
+			{{5},{5},{5},{5}},
+			{{5},{5},{5},{5}},
+			{{5},{5},{5},{5}}
+		};
+
+		Eigen::MatrixXd corners(12, 3);
+		corners <<
+			-.5, 0, 0,
+			.5, 0, 0,
+			.5, 1, 0,
+			-.5, 1, 0,
+
+			.5, 0, 0,
+			0, 0, -1,
+			0, 1, -1,
+			.5, 1, 0,
+
+			0, 0, -1,
+			-.5, 0, 0,
+			-.5, 1, 0,
+			0, 1, -1;
+		
+		Eigen::MatrixXd corners_0 = corners.block(0, 0, 4, 3);
+		Eigen::MatrixXd corners_1 = corners.block(4, 0, 4, 3);
+		Eigen::MatrixXd corners_2 = corners.block(8, 0, 4, 3);
+		
+		G_c.patches.emplace_back(sides[0], corners_0);
+		G_c.patches.emplace_back(sides[1], corners_1);
+		G_c.patches.emplace_back(sides[2], corners_2);
+
+		G_c.edges.resize(3);
+		G_c.edges[0].src = 0;
+		G_c.edges[0].dst = 1;
+		G_c.edges[0].src_side = 1;
+		G_c.edges[0].dst_side = 3;
+		G_c.edges[1].src = 1;
+		G_c.edges[1].dst = 2;
+		G_c.edges[1].src_side = 1;
+		G_c.edges[1].dst_side = 3;
+		G_c.edges[2].src = 2;
+		G_c.edges[2].dst = 0;
+		G_c.edges[2].src_side = 1;
+		G_c.edges[2].dst_side = 3;
+
+		KnitGraph G = G_c.build_graph();
+
+		G.contract();
+
+		Eigen::MatrixXd V;
+		Eigen::MatrixXi E;
+		Eigen::MatrixXd C;
+
+		G.build_mesh(0.1, 4, V, E, C);
+
+		igl::opengl::glfw::Viewer viewer;
+		viewer.data().set_points(V, Eigen::RowVector3d(1.0, 1.0, 1.0));
+		for (int i = 0; i < V.rows(); ++i) {
+			viewer.data().add_label(V.row(i), std::to_string(i));
+		}
+
+		igl::opengl::glfw::imgui::ImGuiMenu menu;
+		viewer.plugins.push_back(&menu);
+		viewer.data().set_edges(V, E, C);
+		viewer.data().show_lines = true;
+		viewer.data().show_overlay = true;
+		viewer.data().line_width = 2.0f;
+		viewer.launch();
 	}
 
     return 0;

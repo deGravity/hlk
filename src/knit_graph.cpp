@@ -4,6 +4,31 @@
 #include <iostream>
 //#include <igl/copyleft/cgal/wire_mesh.h>
 
+void hlk::KnitGraph::contract()
+{
+	// Contract all contractible nodes
+	for (auto& node : nodes) {
+		node->contract();
+	}
+
+	// Delete contracted nodes and edges
+	nodes.erase(
+		std::remove_if(
+			nodes.begin(), nodes.end(),
+			[](std::shared_ptr<KnitGraphNode>& n) { return n->contracted; }),
+		nodes.end()
+	);
+
+	edges.erase(
+		std::remove_if(
+			edges.begin(), edges.end(),
+			[](std::shared_ptr<KnitGraphEdge>& e) { return e->contracted; }),
+		edges.end()
+	);
+
+	re_index();
+}
+
 void hlk::KnitGraph::re_index()
 {
 	for (int i = 0; i < nodes.size(); ++i) {
@@ -105,6 +130,27 @@ bool hlk::KnitGraphNode::contractable()
 			}
 		}
 		return do_contract;
+	}
+	return false;
+}
+
+bool hlk::KnitGraphNode::contract()
+{
+	if (contractable()) {
+		if (left && right) {
+			left->dst = right->dst;
+			right->contracted = true;
+		}
+
+		if (top.size() > 0 && bottom.size() > 0 && top.size() == bottom.size()) {
+			for (int i = 0; i < top.size(); ++i) {
+				bottom[i]->dst = top[i]->dst; // Keep bottom edge (it will have any tucks, etc. that are needed)
+				top[i]->contracted = true;
+			}
+		}
+
+		contracted = true;
+		return true;
 	}
 	return false;
 }

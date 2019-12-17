@@ -25,6 +25,8 @@ namespace hlk {
 		std::vector<Patch> patches;
 		std::vector<Edge> edges;
 
+		KnitGraph build_graph();
+
 	};
 
 	
