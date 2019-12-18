@@ -43,6 +43,7 @@ public:
         existing_edge_label = false;
         multi_points_drawing = true;
         do_matching = false;
+        use_guiding_field = false;
 
         viewing_mode = ViewingMode::MESH_ONLY;
         drawing_mode = DrawingMode::WALE;
@@ -51,6 +52,7 @@ public:
         line_texture(texture_R, texture_G, texture_B);
         direction_field = { Eigen::MatrixXd(), Eigen::MatrixXd() };
 
+        currVertex = 0;
         currCycle = 0;
         N = 4; // degree of field
         globalRotation = 0.;
@@ -127,7 +129,8 @@ public:
 
     Symmetrizer symmetrizer;
     bool highlight_symmetries();
-    std::vector<int> symmetry_axes();
+    std::vector<int> v_symmetry_axes();
+    std::vector<int> f_symmetry_axes();
 
     // field - impl in remeshing_field.cpp
     bool load_raw_field();
@@ -268,7 +271,7 @@ public:
     Eigen::MatrixXd CMesh, rawField;
     std::vector<std::vector<int>> cycleFaces;
     int eulerChar, numGenerators, numBoundaries;
-    int currCycle;
+    int currVertex, currCycle;
     int N; // degree of field
     Eigen::VectorXd linf;
     double globalRotation;
@@ -286,7 +289,7 @@ public:
     int rosy;
 
     bool show_axis, show_stitches, multi_points_drawing;
-    bool do_matching;
+    bool do_matching, use_guiding_field;
 
     bool existing_edge_label;
 
