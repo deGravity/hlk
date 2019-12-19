@@ -169,14 +169,14 @@ void RemeshingMenu::draw_viewer_menu() {
             ImGui::Checkbox("Show Axis", &show_axis);
             ImGui::Checkbox("Multi Points", &multi_points_drawing);
             // Add threshold values.
-            ImGui::DragFloat("Click Threshold", &click_threshold, 0.05f, 0.1f, 0.5f);
+            ImGui::DragFloat("Click Threshold", &click_threshold, 0.05f, 0.0f, 0.5f);
             ImGui::DragFloat("Soft Weight", &soft_constraint_strength, 0.0f, 0.0f, 1.0f);
             ImGui::DragInt("# Stiffening", &stiffen_iter, 1, 0, 10);
             ImGui::DragFloat("Gradient Size", &gradient_size, 1.0f, 0.0f, 150.0f);
             ImGui::PopItemWidth();
 
             ImGui::Text("===Seaming Operations===");
-            ImGui::DragFloat("Loops Threshold", &loops_threshold, 0.05f, 0.01f, 0.5f);
+            ImGui::DragFloat("Loops Threshold", &loops_threshold, 0.05f, 0.0f, 0.5f);
             ImGui::Checkbox("Symmetrize Seaming Loops", &symmetrize_loops);
             // seaming mode options.
             ImGui::Text("Click to select the seaming mode.");
@@ -188,7 +188,7 @@ void RemeshingMenu::draw_viewer_menu() {
                 seaming_mode = SeamingMode::NO_CUT;
             }
             if (!seams.empty()) {
-                if (ImGui::Button("Cut the last seam", ImVec2(w - p, 0))) {
+                if (ImGui::Button("Cut the current seams", ImVec2(w - p, 0))) {
                     cut_along_seams();
                     interpolate_field();
                     viewing_mode = ViewingMode::MESH_ONLY;
@@ -1720,14 +1720,16 @@ void RemeshingMenu::symmetry_split_mesh(const std::vector<Eigen::Vector3d> & fea
 // https://github.com/libigl/libigl/blob/master/tests/include/igl/cut_to_disk.cpp#L18-L54
 void RemeshingMenu::cut_along_seams() {
     std::set<std::array<int, 2>> cut_edges;
-    for (const SplitEdge& se : seams[seams.size() - 1]) {
-        std::array<int, 2> e { se.index_0, se.index_1 };
-        if (e[0] > e[1]) {
-            std::swap(e[0], e[1]);
+    for (const std::vector<SplitEdge> seam : seams) {
+        for (const SplitEdge& se : seam) {
+            std::array<int, 2> e{ se.index_0, se.index_1 };
+            if (e[0] > e[1]) {
+                std::swap(e[0], e[1]);
+            }
+            cut_edges.insert(e);
         }
-        cut_edges.insert(e);
     }
-    seams.erase(seams.begin() + seams.size() - 1);
+    seams.clear();
 
     const size_t num_faces = F.rows();
     Eigen::MatrixXi cut_mask(num_faces, 3);
