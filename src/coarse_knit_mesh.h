@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <vector>
+#include <fstream>
 
 namespace hlk {
 
@@ -44,6 +45,9 @@ namespace hlk {
 		std::vector<std::pair<z3::expr, std::string>> get_topology_constraints();
 		std::vector<std::pair<z3::expr, std::string>> get_geometry_constraints();
 		void update_texture();
+
+		void save(std::ofstream& f);
+		void load(std::ifstream& f);
 	};
 
 	struct CoarseKnitQuad {
@@ -68,6 +72,9 @@ namespace hlk {
 		int to_generalized(int side) const;
 
 		void update_texture();
+
+		void save(std::ofstream& f);
+		void load(std::ifstream& f);
 	};
 
 	struct CoarseKnitSide {
@@ -86,6 +93,9 @@ namespace hlk {
 		void update_texture();
 
 		int generalized_index();
+
+		void save(std::ofstream& f);
+		void load(std::ifstream& f);
 	};
 
 	struct CoarseKnitMesh : LabeledQuadMesh {
@@ -156,11 +166,15 @@ namespace hlk {
 
 		void update_textures();
 
+		virtual void save(std::ofstream& f);
+		virtual void load(std::ifstream& f);
+
 		// Construct Linked Structure
 		// Find base complex seams and initialize
-		// Initialize Constraints
+		// Initialize Constraints (optional)
 		// Set Initial Textures
 		virtual void init();
+		virtual void init(bool do_opt = true);
 
 		double scale = 4; // Units:Inches
 		double stitch_gauge = 6.0; // In stitches / inch 

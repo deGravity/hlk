@@ -3,6 +3,7 @@
 #include <map>
 #include <unordered_set>
 #include <vector>
+#include <fstream>
 
 #include <Eigen/Core>
 
@@ -80,6 +81,9 @@ namespace hlk {
 		Eigen::VectorXi boundary_quads; // indices
 
 		virtual void init();
+
+		virtual void save(std::ofstream& f);
+		virtual void load(std::ifstream& f);
 
 		// Mesh Queries
 		int quad(int side); // Get the quad a side belongs to

@@ -1,4 +1,5 @@
 #include "coarse_knit_mesh.h"
+#include "serialization.h"
 
 #include <algorithm>
 
@@ -56,7 +57,86 @@ namespace hlk {
 		}
 	}
 
+	void CoarseKnitMesh::save(std::ofstream& f) {
+		LabeledQuadMesh::save(f);
+
+		// Save Seams
+		f << seams.size() << std::endl;
+		for (auto& s : seams) {
+			s->save(f);
+		}
+		hlk::save(f, seam_edges);
+
+		hlk::save(f, vertex_in_seam);
+
+		hlk::save(f, size_lines);
+
+		hlk::save(f, symmetries);
+
+		hlk::save(f, side_lengths);
+		
+
+		// Poperties
+		for (auto& e : edges) {
+			e.save(f);
+		}
+		for (auto& q : quads) {
+			q.save(f);
+		}
+		for (auto& s : sides) {
+			s.save(f);
+		}
+
+		// Other State
+		f << scale << " " << stitch_gauge << " " << row_gauge << " " <<
+			tollerance << " " << min_time << " " << max_time << " " <<
+			minimizer_timeout << " " << topology_solved << " " << geometry_solved;
+	}
+
+	void CoarseKnitMesh::load(std::ifstream& f) {
+		LabeledQuadMesh::load(f);
+		// Setup the optimizers, but don't run them since we'll just be loading state
+		init(false);
+
+		// Load the Seams, creating more if the user has edited them
+		int num_seams;
+		f >> num_seams;
+		while (seams.size() < num_seams) {
+			seams.emplace_back(topology_optimizer.get_bool_prop(nth_label("seam", seams.size())));
+		}
+		hlk::load(f, seam_edges);
+
+		hlk::load(f, vertex_in_seam);
+
+		hlk::load(f, size_lines);
+
+		hlk::load(f, symmetries);
+
+		hlk::load(f, side_lengths);
+
+		// Properties
+		for (auto& e : edges) {
+			e.load(f);
+		}
+		for (auto& q : quads) {
+			q.load(f);
+		}
+		for (auto& s : sides) {
+			s.load(f);
+		}
+
+		// Other State
+		f >> scale >> stitch_gauge >>  row_gauge >>
+			tollerance  >> min_time >> max_time >> 
+			minimizer_timeout >> topology_solved >> geometry_solved;
+	}
+
 	void CoarseKnitMesh::init()
+	{
+		init(true);
+	}
+
+	void CoarseKnitMesh::init(bool do_opt)
 	{
 		LabeledQuadMesh::init();
 
@@ -149,13 +229,16 @@ namespace hlk {
 		// try changing this next.
 		update_textures();
 
-		std::cout << "Mesh Loaded, Optimizing Topology" << std::endl;
 		// Solve the SMT problem and update the textures
-		if (!optimize_topology()) {
-			std::cout << "Unable to initialize" << std::endl;
+		if (do_opt) {
+			std::cout << "Mesh Loaded, Optimizing Topology" << std::endl;
+			if (!optimize_topology()) {
+				std::cout << "Unable to initialize" << std::endl;
+			}
 		}
 
 	}
+
 
 	CoarseKnitEdge::CoarseKnitEdge(Optimizer & topo_opt, Optimizer & geo_opt, int i, CoarseKnitMesh * m)
 	{
@@ -235,6 +318,14 @@ namespace hlk {
 			}
 
 		}
+	}
+	void CoarseKnitEdge::save(std::ofstream& f)
+	{
+		f << seam << " " << index << std::endl;
+	}
+	void CoarseKnitEdge::load(std::ifstream& f)
+	{
+		f >> seam >> index;
 	}
 	CoarseKnitQuad::CoarseKnitQuad(Optimizer & topo_opt, Optimizer & geo_opt, int i, CoarseKnitMesh * m)
 	{
@@ -449,6 +540,20 @@ namespace hlk {
 		mesh->set_glyph(slot, glyphs::SOLID_LINE, color);
 		// TODO - Print Glyphs for inc/dec type
 	}
+	void CoarseKnitQuad::save(std::ofstream& f)
+	{
+		time->save(f);
+		f << index << " " << (int)shaping_distribution << " " << (int)short_row_distribution << " " << texture_id << std::endl;
+	}
+	void CoarseKnitQuad::load(std::ifstream& f)
+	{
+		time->load(f);
+		int sd, srd;
+		f >> index >> sd >> srd >> texture_id;
+		shaping_distribution = (ShapingType)sd;
+		short_row_distribution = (ShapingType)srd;
+
+	}
 	CoarseKnitSide::CoarseKnitSide(Optimizer & topo_opt, Optimizer & geo_opt, int i, CoarseKnitMesh * m)
 	{
 		is_loop = topo_opt.get_bool_prop(nth_label("is_loop", i));
@@ -553,6 +658,20 @@ namespace hlk {
 	int CoarseKnitSide::generalized_index()
 	{
 		return ((is_loop->val ? 0 : 3) + (is_out->val ? 2 : 0)) % 4;
+	}
+	void CoarseKnitSide::save(std::ofstream& f)
+	{
+		is_loop->save(f);
+		is_out->save(f);
+		stitches->save(f);
+		f << index << std::endl;
+	}
+	void CoarseKnitSide::load(std::ifstream& f)
+	{
+		is_loop->load(f);
+		is_out->load(f);
+		stitches->load(f);
+		f >> index;
 	}
 	bool CoarseKnitMesh::optimize_topology()
 	{

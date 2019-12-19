@@ -1,4 +1,5 @@
 #include "quad_mesh.h"
+#include "serialization.h"
 
 #include <igl/triangle_triangle_adjacency.h>
 #include <igl/vertex_triangle_adjacency.h>
@@ -11,6 +12,18 @@
 
 
 namespace hlk {
+
+	void QuadMesh::save(std::ofstream& f) {
+		// Ground Truth is just V and F_q - everything else can be re-computed in init
+		hlk::save(f, V);
+		hlk::save(f, F_q);
+	}
+
+	void QuadMesh::load(std::ifstream& f) {
+		hlk::load(f, V);
+		hlk::load(f, F_q);
+		init();
+	}
 	
 	void QuadMesh::init() {
 

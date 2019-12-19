@@ -16,6 +16,7 @@ namespace hlk {
 
 		bool load_quad_mesh_file();
 		void load_quad_mesh_file(std::string filename);
+		void init_quad_mesh_display();
 
 		bool mouse_down(int button, int modifier);
 
@@ -28,6 +29,10 @@ namespace hlk {
 		void update_mesh();
 
 		void generate_instructions();
+
+		void save_coarse_knit_mesh(std::string filename);
+
+		void load_coarse_knit_mesh(std::string filename);
 
 	private:
 

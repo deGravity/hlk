@@ -10,6 +10,8 @@
 #include "glyph.h"
 #include "glyphs.h"
 
+#include <fstream>
+
 namespace hlk {
 	bool LabelingUI::load_quad_mesh_file()
 	{
@@ -25,7 +27,11 @@ namespace hlk {
 	{
 		read_quad_mesh(filename, M, true);
 
+		init_quad_mesh_display();
+	}
 
+	void LabelingUI::init_quad_mesh_display()
+	{
 		// Setup the base mesh
 		viewer->data().clear();
 		viewer->data().set_mesh(M.V, M.F_t);
@@ -273,6 +279,25 @@ namespace hlk {
 			tooltip(name);
 		};
 
+
+		if (ImGui::Button("Load Quad Mesh")) {
+			load_quad_mesh_file();
+		}
+
+		if (ImGui::Button("Load Coarse Knit Mesh")) {
+			auto filename = igl::file_dialog_open();
+			if (filename.size() > 0) {
+				load_coarse_knit_mesh(filename);
+			}
+		}
+
+		if (ImGui::Button("Save Coarse Knit Mesh")) {
+			auto filename = igl::file_dialog_save();
+			if (filename.size() > 0) {
+				save_coarse_knit_mesh(filename);
+			}
+		}
+
 		mode_selector(ERASER, eraser_pressed, eraser_tex, eraser_instructions, "Eraser Tool");
 		if (current_tool == ERASER) {
 			ImGui::RadioButton("Erase Orientations", (int*)&eraser_mode, ERASE_ORIENTATIONS);
@@ -302,10 +327,6 @@ namespace hlk {
 		}
 		ImGui::Text(instructions.c_str());
 
-		if (ImGui::Button("Load Quad Mesh")) {
-			load_quad_mesh_file();
-		}
-
 		if (ImGui::Button("Generate Knitting Instructions")) {
 			generate_instructions();
 		}
@@ -327,6 +348,20 @@ namespace hlk {
 		auto KG = CKG.build_graph();
 		KG.contract();
 		KG.trace(igl::file_dialog_save());
+	}
+
+	void LabelingUI::save_coarse_knit_mesh(std::string filename)
+	{
+		std::ofstream f(filename.c_str());
+		M.save(f);
+	}
+
+	void LabelingUI::load_coarse_knit_mesh(std::string filename)
+	{
+		std::ifstream f(filename.c_str());
+		M.load(f);
+		M.update_textures();
+		init_quad_mesh_display();
 	}
 
 	bool LabelingUI::pick_face(int& fid, Eigen::Vector3f& bc)

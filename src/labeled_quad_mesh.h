@@ -26,12 +26,17 @@ namespace hlk {
 		std::vector<Eigen::VectorXi> quad_slots;
 		std::vector<Eigen::VectorXi> quadrant_slots; // labeled by vertex index for each face
 
+		double edge_width;
+		double dual_edge_width;
+
 		const Eigen::VectorXi& dual_half_edge_slot(int quad, int quad_side);
 		const Eigen::VectorXi& half_edge_slot(int quad, int quad_side);
 		//const Eigen::VectorXi& edge_slot(int u, int v);
 		const Eigen::VectorXi& quadrant_slot(int quad, int quadrant); // Numbered by corner vertex
 		const Eigen::VectorXi& quad_center_slot(int quad);
 
+		virtual void save(std::ofstream& f);
+		virtual void load(std::ifstream& f);
 		virtual void init();
 		virtual void init(double edge_width, double dual_edge_width);
 
