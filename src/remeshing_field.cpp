@@ -413,7 +413,7 @@ void RemeshingMenu::init_quad_seams() {
     quad_mesh.is_seam_edge.clear();
     quad_mesh.is_seam_edge = std::vector<bool>(4 * quad_mesh.m, false);
 
-    if (seams.empty()) return;
+    if (seams.empty() || miq_mode != MIQMode::CROSS) return;
 
     igl::AABB<Eigen::MatrixXd, 3> aabb_tree;
     aabb_tree.init(quad_mesh.V, quad_mesh.F_t);
@@ -422,13 +422,9 @@ void RemeshingMenu::init_quad_seams() {
         for (const SplitEdge& se : seam) {
             Eigen::Vector3d v0 = V.row(se.index_0);
             Eigen::Vector3d v1 = V.row(se.index_1);
-            Eigen::Vector3d edge = v1 - v0;
-            Eigen::Vector3d nudge_dir = edge.cross(se.normal);
-
-            Eigen::Vector3d nudged_midpoint = (v0 + v1) / 2. + 0.001 * mesh_size * nudge_dir;
             int fid;
             Eigen::RowVector3d C;
-            aabb_tree.squared_distance(quad_mesh.V, quad_mesh.F_t, nudged_midpoint, fid, C);
+            aabb_tree.squared_distance(quad_mesh.V, quad_mesh.F_t, (v0 + v1) / 2., fid, C);
             quad_mesh.is_seam_edge[fid] = true;
             if (quad_mesh.flip_side(fid) > 0) {
                 quad_mesh.is_seam_edge[quad_mesh.flip_side(fid)] = true;

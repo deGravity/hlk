@@ -87,30 +87,7 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
     _viewer->callback_key_down = key_down;
     _viewer->callback_key_up = key_up;
 
-    if (input_model.empty()) {
-#ifdef HAISEN
-		//load("E:\\Stitchgraph\\stitchgraph\\data\\clothing_models\\sweater.obj");
-		load("E:\\Stitchgraph\\stitchgraph\\data\\autoknit_models\\teddy-small.obj");
-		//E:\\Stitchgraph\\stitchgraph\\data\autoknit_models\\teddy-small.obj
-        //load("E:\\Stitchgraph\\stitchgraph\\data\\clothing_models\\torus.obj");
-
-		int prev_size = loop_update_polylines.size();
-		compute_elastic_loop_min_geodesic(Eigen::Vector3d(1.50704, -0.0594467, 0.822281), Eigen::Vector3d(-0.84178, 0.525713, -0.122607));
-		int prev_seam_size = seams.size();
-		for (int i = prev_size; i < loop_update_polylines.size(); ++i) {
-			feature_points = loop_update_polylines[i];
-			split_mesh();
-		}
-		should_redraw = true;
-
-#endif
-#ifdef YUXUAN
-        load("/Users/Bluefish_/Desktop/01_SU19/stitchgraph/data/clothing_models/sweater.obj");
-#endif
-#ifdef WINDOWS_YUXUAN
-        load("C:\\Users\\ym2552\\Desktop\\stitchgraph\\data\\clothing_models\\jumper.obj");
-#endif
-    } else {
+    if (!input_model.empty()) {
         load(input_model);
     }
 }
@@ -192,13 +169,14 @@ void RemeshingMenu::draw_viewer_menu() {
             ImGui::Checkbox("Show Axis", &show_axis);
             ImGui::Checkbox("Multi Points", &multi_points_drawing);
             // Add threshold values.
-            ImGui::DragFloat("Click Threshold", &click_threshold, 0.05f, 0.01f, 0.5f);
+            ImGui::DragFloat("Click Threshold", &click_threshold, 0.05f, 0.1f, 0.5f);
             ImGui::DragFloat("Soft Weight", &soft_constraint_strength, 0.0f, 0.0f, 1.0f);
             ImGui::DragInt("# Stiffening", &stiffen_iter, 1, 0, 10);
             ImGui::DragFloat("Gradient Size", &gradient_size, 1.0f, 0.0f, 150.0f);
             ImGui::PopItemWidth();
 
             ImGui::Text("===Seaming Operations===");
+            ImGui::DragFloat("Loops Threshold", &loops_threshold, 0.05f, 0.01f, 0.5f);
             ImGui::Checkbox("Symmetrize Seaming Loops", &symmetrize_loops);
             // seaming mode options.
             ImGui::Text("Click to select the seaming mode.");
@@ -632,6 +610,7 @@ bool RemeshingMenu::save_workspace() {
     igl::serialize(seaming_mode, "seaming_mode", filename);
 
     igl::serialize(click_threshold, "click_threshold", filename);
+    igl::serialize(loops_threshold, "loops_threshold", filename);
     igl::serialize(gradient_size, "gradient_size", filename);
     igl::serialize(soft_constraint_strength, "soft_constraint_strength", filename);
     igl::serialize(loop_size, "loop_size", filename);
@@ -708,6 +687,7 @@ bool RemeshingMenu::load_workspace() {
     igl::deserialize(seaming_mode, "seaming_mode", filename);
 
     igl::deserialize(click_threshold, "click_threshold", filename);
+    igl::deserialize(loops_threshold, "loops_threshold", filename);
     igl::deserialize(gradient_size, "gradient_size", filename);
     igl::deserialize(soft_constraint_strength, "soft_constraint_strength", filename);
     igl::deserialize(loop_size, "loop_size", filename);
@@ -924,12 +904,10 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
             int prev_seam_size = seams.size();
             for (int i = prev_size; i < loop_update_polylines.size(); ++i) {
 				 feature_points = loop_update_polylines[i];
-                 split_mesh();
+                 split_mesh(loops_threshold);
             }
             should_redraw = true;
         }
-        
-
 
     } else if (button == 2 && ctrl_on && alt_on) { // ctrl+alt+right
         if (mouse_d < 2) {
@@ -1033,7 +1011,7 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
             } else if (alt_on && !shift_on && !ctrl_on) { // alt
                 std::vector<Eigen::Vector3d> feature_points_save = feature_points;
                 if (existing_edge_label && geodesic_path.size() >= 2) { geodesic_split_mesh(); }
-                else { split_mesh(); }
+                else { split_mesh(click_threshold); }
                 symmetry_split_mesh(feature_points_save);
                 should_redraw = true;
             }
@@ -1345,14 +1323,14 @@ void RemeshingMenu::symmetry_assign_vector(const std::vector<Eigen::Vector3d> & 
     }
 }
 
-void RemeshingMenu::split_mesh() {
+void RemeshingMenu::split_mesh(const float threshold) {
 
     // compute cutting edges
     std::vector<std::vector<int>> cutting_faces(F.rows(), std::vector<int>());
     std::vector<int> cutting_0_edges;
     std::vector<int> cutting_1_edges;
     std::vector<Eigen::Vector3d> cutting_points;
-    CGAL_Mesh_Cutting(feature_points, mesh_edge_size * click_threshold,
+    CGAL_Mesh_Cutting(feature_points, mesh_edge_size * threshold,
         igl_tree, feature_face_ids, cutting_0_edges, cutting_1_edges, cutting_points, cutting_faces);
 
     // remesh
@@ -1607,7 +1585,7 @@ void RemeshingMenu::symmetry_split_mesh(
         }
         feature_points.push_back(sym_v);
     }
-    if (!same_line(feature_points_save, feature_points)) split_mesh();
+    if (!same_line(feature_points_save, feature_points)) split_mesh(click_threshold);
 }
 
 void RemeshingMenu::symmetry_split_mesh(const std::vector<Eigen::Vector3d> & feature_points_save) {
@@ -1778,15 +1756,6 @@ void RemeshingMenu::cut_along_seams() {
 
 ///////////////////////////////// DRAW IMPLS /////////////////////////////////
 void RemeshingMenu::update_drawing() {
-#ifdef HAISEN1
-    for (auto& node : loop_gi_nodes) {
-        draw_a_segment(V.row(node.g_n_0), V.row(node.g_n_1), 2);
-    }
-    for (auto& edge : loop_gi_edges) {
-        draw_a_segment(loop_gi_nodes[edge.n_0].m, loop_gi_nodes[edge.n_1].m, 2);
-    }
-#endif
-
     // axis
     if (show_axis) {
         draw_a_segment(mesh_center, mesh_center + Eigen::Vector3d(1.0, 0.0, 0.0) * mesh_size, 0);
@@ -1950,27 +1919,17 @@ void RemeshingMenu::stylize_quad_mesh(const Eigen::MatrixXd& colors) {
     viewer->data_list[1].set_texture(texture_R, texture_B, texture_G);
     viewer->data_list[1].show_texture = true;
 
-    if (seams.empty()) return;
+    if (seams.empty() || miq_mode != MIQMode::CROSS) return;
 
-    igl::AABB<Eigen::MatrixXd, 3> aabb_tree;
-    aabb_tree.init(quad_mesh.V, quad_mesh.F_t);
-
-    for (const std::vector<SplitEdge>& seam : seams) {
-        for (const SplitEdge& se : seam) {
-            Eigen::Vector3d v0 = V.row(se.index_0);
-            Eigen::Vector3d v1 = V.row(se.index_1);
-            Eigen::Vector3d edge = v1 - v0;
-            Eigen::Vector3d nudge_dir = edge.cross(se.normal);
-
-            Eigen::Vector3d nudged_midpoint = (v0 + v1) / 2. + 0.001 * mesh_size * nudge_dir;
-            int fid;
-            Eigen::RowVector3d C;
-            aabb_tree.squared_distance(quad_mesh.V, quad_mesh.F_t, nudged_midpoint, fid, C);
-
-            Eigen::Vector3d qv0 = quad_mesh.V.row(quad_mesh.side_u(fid));
-            qv0 += se.normal * mesh_size * 0.005;
-            Eigen::Vector3d qv1 = quad_mesh.V.row(quad_mesh.side_v(fid));
-            qv1 += se.normal * mesh_size * 0.005;
+    Eigen::MatrixX3d N;
+    igl::per_face_normals(verts, faces, N);
+    // TODO: use geodesic walking to figure out seam edges
+    for (int f = 0; f < quad_mesh.is_seam_edge.size(); ++f) {
+        if (quad_mesh.is_seam_edge[f]) {
+            Eigen::Vector3d qv0 = quad_mesh.V.row(quad_mesh.side_u(f));
+            qv0 += N.row(f) * mesh_size * 0.005;
+            Eigen::Vector3d qv1 = quad_mesh.V.row(quad_mesh.side_v(f));
+            qv1 += N.row(f) * mesh_size * 0.005;
             draw_a_segment(qv0, qv1, 1, -1., 1);
         }
     }

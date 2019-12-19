@@ -21,7 +21,8 @@ public:
         in_path = input_path;
         out_path = output_path;
 
-        click_threshold = 0.01f;
+        click_threshold = 0.1f;
+        loops_threshold = 0.01f;
         soft_constraint_strength = 0.5f;
         gradient_size = 50.0f;
         stiffen_iter = 0;
@@ -99,7 +100,7 @@ public:
     void symmetry_assign_vector(std::vector<int> axes, const std::vector<Eigen::Vector3d>& feature_points_save);
     void symmetry_assign_vector(const std::vector<Eigen::Vector3d>& feature_points_save);
 
-    void split_mesh();
+    void split_mesh(const float threshold);
     void geodesic_split_mesh();
     void split_existing_edges(int index_0, int index_1, int insert_index, std::vector<SplitEdge>& seam);
     void symmetry_split_mesh(std::vector<int> axes, int start, int end);
@@ -170,6 +171,7 @@ public:
     float gradient_size;
     float loop_size;
     float click_threshold; // a certain percentage of mesh edge size
+    float loops_threshold; // same as above, for using loops to split mesh
     double mesh_size;
     double mesh_edge_size;
     Eigen::Vector3d mesh_center;
