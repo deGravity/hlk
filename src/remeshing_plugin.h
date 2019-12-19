@@ -22,6 +22,7 @@ public:
         out_path = output_path;
 
         click_threshold = 0.1f;
+        loops_threshold = 0.01f;
         soft_constraint_strength = 0.5f;
         field_guidance_weight = 0.5f;
         gradient_size = 50.0f;
@@ -33,6 +34,8 @@ public:
         symmetry_mode_xz = false;
         symmetry_mode_xy = false;
         symmetrize_nrosy = false;
+        symmetrize_loops = false;
+        should_setup_boundary = true;
         has_direction_field = false;
         has_integer_grid = false;
         has_curl = false;
@@ -47,8 +50,8 @@ public:
 
         viewing_mode = ViewingMode::MESH_ONLY;
         drawing_mode = DrawingMode::WALE;
+        seaming_mode = SeamingMode::NO_CUT;
         miq_mode = MIQMode::CROSS;
-        cardinal = Cardinal::N;
         line_texture(texture_R, texture_G, texture_B);
         direction_field = { Eigen::MatrixXd(), Eigen::MatrixXd() };
 
@@ -58,8 +61,8 @@ public:
         globalRotation = 0.;
         singularitySelect = false;
     }
-	~RemeshingMenu() {
-		clear();
+    ~RemeshingMenu() {
+        clear();
         // remove ctrl+z saves.
         for (auto& temp : temps) {
             remove(temp.mesh.c_str());
@@ -68,7 +71,7 @@ public:
         }
         remove(in_path.c_str());
         remove(out_path.c_str());
-	};
+    };
 
     void init(igl::opengl::glfw::Viewer* _viewer);
     void draw_viewer_menu();
@@ -93,8 +96,7 @@ public:
     void setup_mesh();
     void get_mesh_information();
     bool model_loaded() { return V.rows() > 0 && F.rows() > 0; }
-    void construct_half_edge(std::vector<int>& half_edges);
-    void update_polyhedron_tree(const std::vector<int>& face_refs = std::vector<int>());
+    void update_polyhedron_tree(const std::vector<int>& face_refs = std::vector<int>(), bool is_seam_cutting = false);
     void apply_subdivision();
 
     void assign_vector(int face_id, Eigen::Vector3d n);
@@ -106,9 +108,9 @@ public:
     void symmetry_assign_vector(std::vector<int> axes, const std::vector<Eigen::Vector3d>& feature_points_save);
     void symmetry_assign_vector(const std::vector<Eigen::Vector3d>& feature_points_save);
 
-    void split_mesh();
+    void split_mesh(const float threshold);
     void geodesic_split_mesh();
-    void split_existing_edges(int index_0, int index_1, int insert_index);
+    void split_existing_edges(int index_0, int index_1, int insert_index, std::vector<SplitEdge>& seam);
     void symmetry_split_mesh(std::vector<int> axes, int start, int end);
     void symmetry_split_mesh(std::vector<int> axes, const std::vector<Eigen::Vector3d>& feature_points_save);
     void symmetry_split_mesh(const std::vector<Eigen::Vector3d>& feature_points_save);
@@ -121,9 +123,16 @@ public:
     void update_drawing();
     void draw_direction_field();
 
-	void draw_a_segment(const Eigen::Vector3d v0, const Eigen::Vector3d v1, 
+    void draw_a_segment(const Eigen::Vector3d v0, const Eigen::Vector3d v1, 
         const int color_index, const double face_dis = -1., const int data_index = 0);
-	void draw_segments(const std::vector<Eigen::Vector3d>& segments, const int color_index, const double face_dis = -1.);
+    void draw_segments(const std::vector<Eigen::Vector3d>& segments, const int color_index, const double face_dis = -1.);
+    /* Color - Index mapping:
+           red - 0
+         green - 1
+          blue - 2
+        orange - 3
+         black - 4
+     */
     void draw_a_point(const Eigen::Vector3d v, const int color_index, const double face_dis = -1.);
     void draw_points(const std::vector<Eigen::Vector3d>& vecs, const int color_index, const double face_dis = -1.);
 
@@ -154,14 +163,14 @@ public:
 
     // loops - impl in remeshing_loops.cpp
     void clear_loops();
-	void update_loop_graph();
-	void compute_elastic_loop(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_v);
-	void compute_elastic_loop_field_align(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
-	void compute_elastic_loop_min_geodesic(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
-	void symmetry_elastic_loop(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
-	void symmetry_elastic_loop(std::vector<int> axes, const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
+    void update_loop_graph();
+    void compute_elastic_loop(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_v);
+    void compute_elastic_loop_field_align(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
+    void compute_elastic_loop_min_geodesic(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
+    void symmetry_elastic_loop(const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
+    void symmetry_elastic_loop(std::vector<int> axes, const Eigen::Vector3d& plane_p, const Eigen::Vector3d& plane_n);
 
-	void save_ctrlz();
+    void save_ctrlz();
 
     // bools...
     bool has_direction_field;
@@ -177,6 +186,7 @@ public:
     float gradient_size;
     float loop_size;
     float click_threshold; // a certain percentage of mesh edge size
+    float loops_threshold; // same as above, for using loops to split mesh
     double mesh_size;
     double mesh_edge_size;
     Eigen::Vector3d mesh_center;
@@ -193,24 +203,24 @@ public:
     
     // directional faces
     std::vector<FaceVector> face_vectors;
-    std::vector<SplitEdge> split_edges;
+    std::vector<std::vector<SplitEdge>> seams;
 
-	// loops data
-	std::vector<TM_Node> loop_gi_nodes;
-	std::vector<TM_Edge> loop_gi_edges;
-	std::vector<std::unordered_set<int>> loop_g_iedges;
-	std::vector<std::vector<Eigen::Vector3d>> loop_graph_adj;
-	std::vector<bool> loop_graph_boundary;
-	std::vector<Eigen::Vector3d> igl_v_ns;
+    // loops data
+    std::vector<TM_Node> loop_gi_nodes;
+    std::vector<TM_Edge> loop_gi_edges;
+    std::vector<std::unordered_set<int>> loop_g_iedges;
+    std::vector<std::vector<Eigen::Vector3d>> loop_graph_adj;
+    std::vector<bool> loop_graph_boundary;
+    std::vector<Eigen::Vector3d> igl_v_ns;
 
-	std::vector<Eigen::Vector3d> loop_points;
-	std::vector<Eigen::Vector3d> loop_de_points;
-	std::vector<std::vector<Eigen::Vector3d>> loop_polylines;
-	std::vector<std::vector<Eigen::Vector3d>> loop_update_polylines;
+    std::vector<Eigen::Vector3d> loop_points;
+    std::vector<Eigen::Vector3d> loop_de_points;
+    std::vector<std::vector<Eigen::Vector3d>> loop_polylines;
+    std::vector<std::vector<Eigen::Vector3d>> loop_update_polylines;
 
-	int loop_start_index = -1;
-	int loop_end_index = -1;
-	std::vector<Eigen::Vector3d> loop_path;
+    int loop_start_index = -1;
+    int loop_end_index = -1;
+    std::vector<Eigen::Vector3d> loop_path;
     std::vector<int> loop_feature_face_ids;
 
     // geometry data
@@ -281,11 +291,11 @@ public:
     std::string in_path, out_path, input_model;
     ViewingMode viewing_mode;
     DrawingMode drawing_mode;
+    SeamingMode seaming_mode;
     MIQMode miq_mode;
-    Cardinal cardinal;
 
     bool symmetry_mode_yz, symmetry_mode_xz, symmetry_mode_xy;
-    bool symmetrize_nrosy;
+    bool symmetrize_nrosy, symmetrize_loops, should_setup_boundary;
     int rosy;
 
     bool show_axis, show_stitches, multi_points_drawing;
@@ -297,8 +307,8 @@ public:
     double mouse_x, mouse_y;
     bool ctrl_on, alt_on, shift_on, mouse_down_on;
 
-	CTRLZSL czsl;
-	std::vector<TEMPDATA> temps;
+    CTRLZSL czsl;
+    std::vector<TEMPDATA> temps;
 };
 
 }

@@ -9,6 +9,7 @@
 #include <igl/AABB.h>
 #include <igl/barycenter.h>
 #include <igl/boundary_loop.h>
+#include <igl/boundary_facets.h>
 #include <igl/copyleft/comiso/nrosy.h>
 #include <igl/file_dialog_open.h>
 #include <igl/file_dialog_save.h>
@@ -68,9 +69,11 @@ void RemeshingMenu::reset_face_vectors() {
 
 void RemeshingMenu::reset_field() {
     reset_face_vectors();
-    split_edges.clear();
+    seams.clear();
     setup_boundary();
     interpolate_field();
+    update_visualization();
+    save_ctrlz();
 }
 
 void RemeshingMenu::init_curvature_field() {
@@ -96,6 +99,8 @@ void RemeshingMenu::init_curvature_field() {
 }
 
 void RemeshingMenu::setup_boundary() {
+    if (!should_setup_boundary) return;
+
 	std::vector<std::vector<int>> indices;
 	igl::boundary_loop(F, indices);
 
@@ -307,12 +312,14 @@ void RemeshingMenu::interpolate_field() {
 
         directional::polyvector_field(V, F, p_b, p_bc, rosy, polyvector_field);
         directional::polyvector_to_raw(V, F, polyvector_field, rosy, curlRawField);
+        viewing_mode = ViewingMode::MESH_FIELD;
 
     } else if (miq_mode == MIQMode::CROSS) {
         Eigen::VectorXd S;
         interpolate_cross_field(S);
         update_vectors_from_field();
         directional::representative_to_raw(V, F, direction_field[1], rosy, curlRawField);
+        viewing_mode = ViewingMode::MESH_ONLY;
 
         int s_count = 0;
         for (int i = 0; i < S.rows(); ++i) {
@@ -324,7 +331,6 @@ void RemeshingMenu::interpolate_field() {
     has_direction_field = true;
     has_integer_grid = false;
     has_curl = false;
-    viewing_mode = ViewingMode::MESH_ONLY;
     update_visualization();
 }
 
@@ -357,28 +363,38 @@ void RemeshingMenu::generate_integer_grid() {
     } else { // miq_mode == MIQMode::CROSS
         std::vector<std::vector<int>> hard_edges;
 
-        Eigen::MatrixXi TT, TTi;
-        igl::triangle_triangle_adjacency(F, TT, TTi);
-        for (int f = 0; f < F.rows(); ++f) {
-            for (int i = 0; i < 3; ++i) {
-                if (TT(f, i) == -1) {
-                    hard_edges.push_back({ f,i });
+        Eigen::MatrixXi edges;
+        Eigen::VectorXi face_inds, opp_verts;
+        igl::boundary_facets(F, edges, face_inds, opp_verts);
+        for (int i = 0; i < edges.rows(); ++i) {
+            int v0 = edges(i, 0);
+            int v1 = edges(i, 1);
+            int f = face_inds(i);
+            for (int j = 0; j < 3; ++j) {
+                if ((F(f, j) == v0 && F(f, (j + 1) % 3) == v1) ||
+                    (F(f, j) == v1 && F(f, (j + 1) % 3) == v0)) {
+                    hard_edges.push_back({ f, j });
+                    break;
                 }
             }
         }
 
-        std::vector<std::vector<int>> VF, VI;
-        igl::vertex_triangle_adjacency(V.rows(), F, VF, VI);
-        for (auto& split_edge : split_edges) {
-            auto v0 = split_edge.index_0;
-            auto v1 = split_edge.index_1;
-            for (int i = 0; i < VF[v0].size(); ++i) {
-                int f = VF[v0][i];
-                int idx = VI[v0][i];
-                assert(F(f, idx) == v0);
-                if (F(f, (idx + 1) % 3) == v1) {
-                    hard_edges.push_back({ f, idx });
-                    continue;
+        if (!seams.empty()) {
+            std::vector<std::vector<int>> VF, VI;
+            igl::vertex_triangle_adjacency(V.rows(), F, VF, VI);
+            for (const std::vector<SplitEdge>& seam : seams) {
+                for (const SplitEdge& split_edge : seam) {
+                    auto v0 = split_edge.index_0;
+                    auto v1 = split_edge.index_1;
+                    for (int i = 0; i < VF[v0].size(); ++i) {
+                        int f = VF[v0][i];
+                        int idx = VI[v0][i];
+                        assert(F(f, idx) == v0);
+                        if (F(f, (idx + 1) % 3) == v1) {
+                            hard_edges.push_back({ f, idx });
+                            continue;
+                        }
+                    }
                 }
             }
         }
@@ -435,30 +451,10 @@ void RemeshingMenu::reduce_curl() {
 void RemeshingMenu::init_quad_mesh() {
     if (!is_quad_meshed) { return; }
 
-    igl::AABB<Eigen::MatrixXd, 3> quad_aabb;
-    quad_aabb.init(quad_mesh.V, quad_mesh.F_t);
-
-    quad_mesh.is_seam_edge.clear();
-    quad_mesh.is_seam_edge = std::vector<bool>(4 * quad_mesh.m, false);
-    for (const SplitEdge& se : split_edges) {
-        Eigen::Vector3d v0 = V.row(se.index_0);
-        Eigen::Vector3d v1 = V.row(se.index_1);
-        Eigen::Vector3d edge = v1 - v0;
-        Eigen::Vector3d nudge_dir = edge.cross(se.normal);
-
-        Eigen::Vector3d nudged_midpoint = (v0 + v1) / 2. + 0.001 * mesh_size * nudge_dir;
-        int fid;
-        Eigen::RowVector3d C;
-        quad_aabb.squared_distance(quad_mesh.V, quad_mesh.F_t, nudged_midpoint, fid, C);
-        quad_mesh.is_seam_edge[fid] = true;
-        if (quad_mesh.flip_side(fid) > 0) {
-            quad_mesh.is_seam_edge[quad_mesh.flip_side(fid)] = true;
-        }
-    }
-
     igl::AABB<Eigen::MatrixXd, 3> tri_aabb;
     tri_aabb.init(V, F);
-
+    
+    quad_mesh.tri_side_lengths.clear();
     for (int q = 0; q < quad_mesh.m; ++q) {
         for (int i = 0; i < 4; ++i) {
             Eigen::Vector3d v0 = V.row(quad_mesh.F_q(q, i));
@@ -470,13 +466,35 @@ void RemeshingMenu::init_quad_mesh() {
             quad_mesh.tri_side_lengths.push_back((C1 - C0).norm());
         }
     }
+
+    quad_mesh.is_seam_edge.clear();
+    quad_mesh.is_seam_edge = std::vector<bool>(4 * quad_mesh.m, false);
+
+    if (seams.empty() || miq_mode != MIQMode::CROSS) return;
+
+    igl::AABB<Eigen::MatrixXd, 3> aabb_tree;
+    aabb_tree.init(quad_mesh.V, quad_mesh.F_t);
+
+    for (const std::vector<SplitEdge>& seam : seams) {
+        for (const SplitEdge& se : seam) {
+            Eigen::Vector3d v0 = V.row(se.index_0);
+            Eigen::Vector3d v1 = V.row(se.index_1);
+            int fid;
+            Eigen::RowVector3d C;
+            aabb_tree.squared_distance(quad_mesh.V, quad_mesh.F_t, (v0 + v1) / 2., fid, C);
+            quad_mesh.is_seam_edge[fid] = true;
+            if (quad_mesh.flip_side(fid) > 0) {
+                quad_mesh.is_seam_edge[quad_mesh.flip_side(fid)] = true;
+            }
+        }
+    }
 }
 
 void RemeshingMenu::quad_helix_finding() {
     if (!is_quad_meshed) { return; }
 
     std::unordered_set<int> longest_helix;
-    if (!quad_mesh.helix_free(longest_helix, cardinal)) {
+    if (!quad_mesh.helix_free(longest_helix)) {
         std::cout << "[remeshing] there exists a helix somewhere... highlighted in green.\n";
         Eigen::MatrixXd interactive_colors(quad_mesh.m * 4, 3);
         interactive_colors.setOnes();

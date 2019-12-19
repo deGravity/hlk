@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
 #ifdef HAISEN
     mode = 1;
 #else
-    //std::cin >> mode;
+    // std::cin >> mode;
 #endif
 
     igl::opengl::glfw::Viewer viewer;

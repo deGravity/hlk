@@ -45,8 +45,8 @@ namespace hlk {
 		valence = std::vector<int>(n, 0);
 		for (int i = 0; i < F_q.rows(); ++i) {
 			for (int j = 0; j < 4; ++j) {
-				// Only count non-border sides once
-				if (F_q(i, j) < F_q(i, (j + 1) % 4)) {// || flip_side(nth_side(i,j)) < 0) {
+				// Only count each side once
+				if (F_q(i, j) < F_q(i, (j + 1) % 4)) {
 					valence[F_q(i, j)] += 1;
 					valence[F_q(i, (j + 1) % 4)] += 1;
 				}
@@ -93,8 +93,7 @@ namespace hlk {
 		for (int side = 0; side < F_t.rows(); ++side) {
 			if (is_boundary_side[side]) {
 				unique_sides.row(i++) = F_t.block(side, 0, 1, 2);
-			}
-			else {
+			} else {
 				if (F_t(side, 0) < F_t(side, 1)) {
 					unique_sides.row(i++) = F_t.block(side, 0, 1, 2);
 					sides_to_edges[side] = edge;
@@ -224,28 +223,22 @@ namespace hlk {
 	}
 
 
-    bool QuadMesh::is_course_loop(int curr_he, Cardinal c) {
+    bool QuadMesh::is_course_loop(int curr_he) {
 
-        int count = 0;
         int max_to_check = m; // disjoint_set.max_row_length;
-        std::map<int, Cardinal> face_directions;
-        std::unordered_set<int> visited_hes;
-        while (count < max_to_check) {
+        std::unordered_set<int> visited_quads;
+        int curr_he_save = curr_he;
+
+        while (visited_quads.size() < max_to_check) {
             int quad_face = quad(curr_he);
-            std::vector<int> hes = sides(quad_face);
-            for (int idx = 0; idx < 4; ++idx) {
-                visited_hes.emplace(hes[idx]);
-                face_directions[hes[idx]] = (Cardinal)((c + idx) % 4);
+            if (visited_quads.find(quad_face) != visited_quads.end()) {
+                return curr_he_save != prev_side(curr_he) && curr_he_save != next_side(curr_he);
             }
+            visited_quads.emplace(quad_face);
+            std::vector<int> hes = sides(quad_face);
             int opp_he = opposite_side(curr_he);
             if (flip_side(opp_he) < 0 || is_seam_edge[opp_he]) break;
             curr_he = flip_side(opp_he);
-            if (visited_hes.find(curr_he) != visited_hes.end()) {
-                if (face_directions.at(curr_he) == c) {
-                    return true;
-                }
-            }
-            ++count;
         }
 
         return false;
@@ -253,6 +246,11 @@ namespace hlk {
 
     bool QuadMesh::perp_direction_check(
         int curr_he, const std::map<int, Cardinal>& face_directions) {
+
+        Cardinal c = face_directions.at(curr_he);
+        Cardinal c_opp = (Cardinal)((c + 2) % 4);
+
+        std::unordered_set<int> ortho_visited;
 
         Cardinal c = face_directions.at(curr_he);
         std::unordered_set<int> ortho_visited;
@@ -268,9 +266,8 @@ namespace hlk {
             if (ortho_visited.find(curr_he) != ortho_visited.end()) break;
 
             if (face_directions.find(curr_he) != face_directions.end()) {
-                if (face_directions.at(curr_he) == c) {
+                if (face_directions.at(curr_he) == c || face_directions.at(curr_he) == c_opp)
                     return true;
-                }
             }
         }
 
@@ -285,14 +282,7 @@ namespace hlk {
 
         for (int curr_he : singular_quads) {
 
-            bool is_loop = false;
-            for (int idx = 0; idx < 4; ++idx) {
-                if (is_course_loop(curr_he, (Cardinal)((c + idx) % 4))) {
-                    is_loop = true;
-                    break;
-                }
-            }
-            if (is_loop) continue;
+            if (is_course_loop(curr_he)) continue;
 
             std::map<int, Cardinal> face_directions;
             std::unordered_set<int> visited;
@@ -311,14 +301,10 @@ namespace hlk {
                 if (flip_side(opp_he) < 0 || is_seam_edge[opp_he]) break;
 
                 if (count > nskip) {
-                    int prev_he = prev_side(curr_he);
-                    int next_he = prev_side(opp_he);
-                    if (!is_course_loop(prev_he, face_directions.at(prev_he)) &&
-                        !is_course_loop(next_he, face_directions.at(next_he))) {
-                        found = perp_direction_check(prev_he, face_directions)
-                             || perp_direction_check(next_he, face_directions);
+                    found = perp_direction_check(prev_side(curr_he), face_directions);
+                    if (!found) {
+                        found = perp_direction_check(prev_side(opp_he), face_directions);
                     }
-
                 }
                 if (found) break;
 
@@ -328,31 +314,16 @@ namespace hlk {
             }
 
             if (found) {
-                int he = curr_he_save;
                 while (true) {
-                    int quad_face = quad(he);
+                    int quad_face = quad(curr_he);
                     for (const int he : sides(quad_face)) {
                         visited.emplace(he);
                     }
-                    he = opposite_side(he);
-                    if (flip_side(he) < 0) break;
-                    he = flip_side(he);
-                    if (he == curr_he_save) break;
+                    curr_he = opposite_side(curr_he);
+                    if (flip_side(curr_he) < 0) break;
+                    curr_he = flip_side(curr_he);
+                    if (curr_he == curr_he_save) break;
                 }
-				curr_he_save = flip_side(curr_he_save);
-				if (curr_he_save >= 0) {
-					he = curr_he_save;
-					while (true) {
-						int quad_face = quad(he);
-						for (const int he : sides(quad_face)) {
-                            visited.emplace(he);
-						}
-						he = opposite_side(he);
-						if (flip_side(he) < 0) break;
-						he = flip_side(he);
-						if (he == curr_he_save) break;
-					}
-				}
                 if (helix.size() < visited.size()) {
                     helix = visited;
                     all_helices.insert(visited.begin(), visited.end());

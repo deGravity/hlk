@@ -10,27 +10,27 @@ double angle_between(Eigen::Vector3d v1,Eigen::Vector3d v2) {
 }
 
 double angle_coordinate_system(const Eigen::Vector3d& v, const Eigen::Vector3d& x, const Eigen::Vector3d& y) {
-	double angle_x = angle_between(v, x);
-	double angle_y = angle_between(v, y);
+    double angle_x = angle_between(v, x);
+    double angle_y = angle_between(v, y);
 
-	if (angle_y > M_PI / 2.0) angle_x = -angle_x;
+    if (angle_y > M_PI / 2.0) angle_x = -angle_x;
 
-	return angle_x;
+    return angle_x;
 }
 
 void graph_dijkstra(std::vector<std::vector<double>>& graph, int src, int dest, std::vector<int>& path) {
 
-	auto graph_min_dist = [](std::vector<double> & dist, std::vector<bool> & visited) {
-		double min = INT_MAX;
-		int min_index = -1;
-		for (int v = 0; v < dist.size(); v++) {
-			if (!visited[v] && dist[v] <= min) {
-				min = dist[v];
-				min_index = v;
-			}
-		}
-		return min_index;
-	};
+    auto graph_min_dist = [](std::vector<double> & dist, std::vector<bool> & visited) {
+        double min = INT_MAX;
+        int min_index = -1;
+        for (int v = 0; v < dist.size(); v++) {
+            if (!visited[v] && dist[v] <= min) {
+                min = dist[v];
+                min_index = v;
+            }
+        }
+        return min_index;
+    };
 
     path.clear();
     std::vector<int>().swap(path);
@@ -40,7 +40,7 @@ void graph_dijkstra(std::vector<std::vector<double>>& graph, int src, int dest, 
     std::vector<bool> visited(V,false);
     std::vector<int> parent(V,-1);
 
-	dist[src] = 0.0;
+    dist[src] = 0.0;
     for (int count = 0; count < V - 1; count++) {
         int u = graph_min_dist(dist, visited);
         visited[u] = true;
@@ -61,11 +61,11 @@ void graph_dijkstra(std::vector<std::vector<double>>& graph, int src, int dest, 
         }
 
         for (int v = 0; v < V; v++) {
-			auto a = visited[v];
-			auto b = graph[u][v];
-			auto c = dist[u];
-			auto d = graph[u][v];
-			auto e = dist[v];
+            auto a = visited[v];
+            auto b = graph[u][v];
+            auto c = dist[u];
+            auto d = graph[u][v];
+            auto e = dist[v];
 
             if (!visited[v] && graph[u][v]
                 && (dist[u] + graph[u][v] < dist[v])) {
@@ -231,52 +231,52 @@ int row_index_of(std::vector<std::vector<int>> arr2d, int target) {
 }
 
 Eigen::Vector3d plane_project(Eigen::Vector3d planar_location, Eigen::Vector3d planar_direction, Eigen::Vector3d p) {
-	if (is_almost_zero((planar_location-p).norm()))
-		return planar_location;
+    if (is_almost_zero((planar_location-p).norm()))
+        return planar_location;
 
-	double angle = angle_between(planar_direction, p - planar_location);
-	double length = (planar_location-p).norm();
+    double angle = angle_between(planar_direction, p - planar_location);
+    double length = (planar_location-p).norm();
 
-	if (angle <= M_PI / 2.0)
-		return p - planar_direction.normalized() * length * sin(M_PI / 2.0 - angle);
-	else
-		return p + planar_direction.normalized() * length * sin(angle - M_PI / 2.0);
+    if (angle <= M_PI / 2.0)
+        return p - planar_direction.normalized() * length * sin(M_PI / 2.0 - angle);
+    else
+        return p + planar_direction.normalized() * length * sin(angle - M_PI / 2.0);
 }
 
 double get_total_length(const std::vector<Eigen::Vector3d>& input_points) {
-	double length = 0.0;
-	if (input_points.size() >= 2)
-		for (int i = 0; i < input_points.size() - 1; i++)
-			length += (input_points[i] - input_points[i + 1]).norm();
-	return length;
+    double length = 0.0;
+    if (input_points.size() >= 2)
+        for (int i = 0; i < input_points.size() - 1; i++)
+            length += (input_points[i] - input_points[i + 1]).norm();
+    return length;
 }
 
 std::vector<Eigen::Vector3d> UniformSampling(const std::vector<Eigen::Vector3d>& input_points, const int sample_nb) {
-	std::vector<Eigen::Vector3d> output_points;
+    std::vector<Eigen::Vector3d> output_points;
 
-	if (sample_nb <= 1) return output_points;
-	double total_length = get_total_length(input_points);
-	if (total_length <= 0.0) return output_points;
-	double delta_length = total_length / (sample_nb-1);
-	double length = 0.0;
+    if (sample_nb <= 1) return output_points;
+    double total_length = get_total_length(input_points);
+    if (total_length <= 0.0) return output_points;
+    double delta_length = total_length / (sample_nb-1);
+    double length = 0.0;
 
-	output_points.emplace_back(input_points.front());
-	for (int i = 0; i < input_points.size() - 1; i++){
+    output_points.emplace_back(input_points.front());
+    for (int i = 0; i < input_points.size() - 1; i++){
 
-		double l = (input_points[i] - input_points[i + 1]).norm();
-		double d = ((int)(length / delta_length) + 1) * delta_length - length;
-		while (d >= 0 && d < l) {
-			double ll = d / l;
-			Eigen::Vector3d v = (double)(1.0 - ll) * input_points[i] + (double)(ll)* input_points[i + 1];
-			output_points.push_back(v);
-			d += delta_length;}
-		length += l;
-	}
+        double l = (input_points[i] - input_points[i + 1]).norm();
+        double d = ((int)(length / delta_length) + 1) * delta_length - length;
+        while (d >= 0 && d < l) {
+            double ll = d / l;
+            Eigen::Vector3d v = (double)(1.0 - ll) * input_points[i] + (double)(ll)* input_points[i + 1];
+            output_points.push_back(v);
+            d += delta_length;}
+        length += l;
+    }
 
-	if(!is_almost_zero((output_points.back() - input_points.back()).norm()))
-	output_points.emplace_back(input_points.back());
+    if(!is_almost_zero((output_points.back() - input_points.back()).norm()))
+    output_points.emplace_back(input_points.back());
 
-	return output_points;
+    return output_points;
 }
 
 }
