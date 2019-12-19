@@ -37,21 +37,33 @@ file(GLOB SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 file(GLOB HEADER_FILES ${PROJECT_SOURCE_DIR}/src/*.h)
 file(GLOB DEBUG_FILES ${PROJECT_SOURCE_DIR}/src/*.natvis)
 
-add_executable(${PROJECT_NAME} ${SRC_FILES} ${HEADER_FILES} ${DEBUG_FILES})
+file(GLOB VKMP_SRC ${PROJECT_SOURCE_DIR}/src/vkmp/*.cpp)
+file(GLOB XFERPLAN_SRC ${PROJECT_SOURCE_DIR}/src/vkmp/xferplan/*.cpp)
+file(GLOB VKMP_HEADER ${PROJECT_SOURCE_DIR}/src/vkmp/*.hpp)
+file(GLOB XFERPLAN_HEADER ${PROJECT_SOURCE_DIR}/src/vkmp/xferplan/*.h*)
+
+add_executable(${PROJECT_NAME} 
+	${SRC_FILES} 
+	${HEADER_FILES} 
+	${DEBUG_FILES} 
+	${VKMP_SRC} 
+	${XFERPLAN_SRC} 
+	${VKMP_HEADER} 
+	${XFERPLAN_HEADER})
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${Z3_CXX_INCLUDE_DIRS} ${QEX_INCLUDE_DIRS} ext/Directional/include)
 
 target_link_libraries(${PROJECT_NAME} 
 	Eigen3::Eigen 
 	CGAL::CGAL
-  igl::cgal
+	igl::cgal
 	igl::core 
 	igl::opengl 
 	igl::opengl_glfw 
 	igl::png
 	igl::opengl_glfw_imgui 
 	igl::comiso
-  ${Z3_LIBRARIES}
+	${Z3_LIBRARIES}
 	QEx)
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC _USE_MATH_DEFINES)
@@ -100,3 +112,7 @@ endif()
 
 source_group(HeaderFiles FILES ${HEADER_FILES})
 source_group(SourceFiles FILES ${SRC_FILES})
+source_group(HeaderFiles\\vkmp FILES ${VKMP_HEADER})
+source_group(SourceFiles\\vkmp FILES ${VKMP_SRC})
+source_group(HeaderFiles\\vkmp\\xferplan FILES ${XFERPLAN_HEADER})
+source_group(SourceFiles\\vkmp\\xferplan FILES ${XFERPLAN_SRC})

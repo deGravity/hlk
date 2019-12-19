@@ -15,7 +15,7 @@ using namespace std;
 
 int main(void) {
 
-	int mode = 5;
+	int mode = 2;
 
 	/*
 	cout << "Choose an Interface" << endl;
@@ -181,6 +181,10 @@ int main(void) {
 		Eigen::MatrixXd C;
 
 		G.build_mesh(0.1, 4, V, E, C);
+
+		ak::RowColGraph RCG = G.make_row_col_graph();
+		std::vector<ak::TracedStitch> traced_stitches;
+		ak::trace_graph(RCG, &traced_stitches);
 
 		igl::opengl::glfw::Viewer viewer;
 		viewer.data().set_points(V, Eigen::RowVector3d(1.0, 1.0, 1.0));

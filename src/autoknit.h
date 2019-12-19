@@ -84,32 +84,6 @@ namespace ak {
 	bool load_stitches(std::string const& filename, std::vector< Stitch >* into);
 	void save_stitches(std::string const& filename, std::vector< Stitch > const& from);
 
-// Parameters: used to influence various steps
-struct Parameters {
-	//stitch size in millimeters:
-	float stitch_width_mm = 3.66f;
-	float stitch_height_mm = 1.73f;
-
-	//model unit size in millimeters:
-	float model_units_mm = 1.0f;
-
-	//maximum edge length for embed_constraints:
-	float get_max_edge_length() const {
-		return 0.5f * std::min(stitch_width_mm, 2.0f * stitch_height_mm) / model_units_mm;
-	}
-
-	//sample spacing for sample_chain:
-	float get_chain_sample_spacing() const {
-		return 0.25f * stitch_width_mm / model_units_mm;
-	}
-
-	//edge sample spacing for embedded_path:
-	float get_max_path_sample_spacing() const {
-		return 0.02f * std::min(stitch_width_mm, 2.0f * stitch_height_mm) / model_units_mm;
-	}
-};
-
-
 struct RowColGraph {
 	struct Vertex {
 		Eigen::RowVector3d at;

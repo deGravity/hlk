@@ -29,6 +29,45 @@ void hlk::KnitGraph::contract()
 	re_index();
 }
 
+void hlk::KnitGraph::trace(std::string filename)
+{
+	ak::RowColGraph RCG = make_row_col_graph();
+	std::vector<ak::TracedStitch> traced_stitches;
+	ak::trace_graph(RCG, &traced_stitches);
+	ak::save_traced(filename, traced_stitches);
+}
+
+ak::RowColGraph hlk::KnitGraph::make_row_col_graph()
+{
+	ak::RowColGraph G;
+
+	G.vertices.resize(nodes.size());
+
+	for (int i = 0; i < nodes.size(); ++i) {
+		G.vertices[i].at = nodes[i]->pos;
+		if (nodes[i]->left && nodes[i]->left->src) {
+			G.vertices[i].row_in = nodes[i]->left->src->index;
+		}
+		if (nodes[i]->right && nodes[i]->right->dst) {
+			G.vertices[i].row_out = nodes[i]->right->dst->index;
+		}
+		assert(nodes[i]->bottom.size() <= 2);
+		for (auto& parent : nodes[i]->bottom) {
+			if (parent->src) {
+				G.vertices[i].add_col_in(parent->src->index);
+			}
+		}
+		assert(nodes[i]->top.size() <= 2);
+		for (auto& child : nodes[i]->top) {
+			if (child->dst) {
+				G.vertices[i].add_col_out(child->dst->index);
+			}
+		}
+	}
+
+	return G;
+}
+
 void hlk::KnitGraph::re_index()
 {
 	for (int i = 0; i < nodes.size(); ++i) {

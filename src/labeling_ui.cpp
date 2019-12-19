@@ -3,6 +3,7 @@
 #include <imgui/imgui.h>
 #include <igl/png/readPNG.h>
 #include <igl/unproject_onto_mesh.h>
+#include <igl/file_dialog_save.h>
 
 #include "read_quad_mesh.h"
 
@@ -322,6 +323,10 @@ namespace hlk {
 	void LabelingUI::generate_instructions()
 	{
 		M.optimize_geometry();
+		auto CKG = M.get_dual();
+		auto KG = CKG.build_graph();
+		KG.contract();
+		KG.trace(igl::file_dialog_save());
 	}
 
 	bool LabelingUI::pick_face(int& fid, Eigen::Vector3f& bc)

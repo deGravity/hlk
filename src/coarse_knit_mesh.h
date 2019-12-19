@@ -173,7 +173,7 @@ namespace hlk {
 		int min_time = 0;
 		int max_time = 1;
 
-		unsigned int minimizer_timeout = 15;
+		unsigned int minimizer_timeout = 5;
 
 		bool topology_solved = false;
 		bool geometry_solved = false;

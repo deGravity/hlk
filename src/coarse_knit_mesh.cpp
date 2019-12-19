@@ -46,7 +46,7 @@ namespace hlk {
 			if (quad.time->val < min_time) min_time = quad.time->val;
 			if (quad.time->val > max_time) max_time = quad.time->val;
 
-			if (sides[quad.index].is_loop->val && sides[quad.index + 1].is_loop->val && sides[quad.index + 2].is_loop->val && sides[quad.index + 3].is_loop->val) {
+			if (sides[4*quad.index].is_loop->val && sides[4*quad.index + 1].is_loop->val && sides[4*quad.index + 2].is_loop->val && sides[4*quad.index + 3].is_loop->val) {
 
 			}
 		}
@@ -246,7 +246,7 @@ namespace hlk {
 	}
 	std::vector<std::pair<z3::expr, std::string>> CoarseKnitQuad::get_topology_constraints()
 	{
-		int q = this->index;
+		int q = 4*this->index;
 		auto& s0_o = mesh->sides[q].is_out->var;
 		auto& s0_l = mesh->sides[q].is_loop->var;
 		auto& s1_o = mesh->sides[q+1].is_out->var;
@@ -393,8 +393,8 @@ namespace hlk {
 		std::vector<bool> is_out;
 		std::vector<bool> is_loop;
 		for (int i = 0; i < 4; ++i) {
-			is_loop.push_back(mesh->sides[index + i].is_loop->val);
-			is_out.push_back(mesh->sides[index + i].is_out->val);
+			is_loop.push_back(mesh->sides[4*index + i].is_loop->val);
+			is_out.push_back(mesh->sides[4*index + i].is_out->val);
 		}
 		std::vector<int> split_points;
 		std::vector<int> split_sides;
@@ -428,7 +428,7 @@ namespace hlk {
 		int c = get_generalized_bottom_left();
 		sides.resize(4);
 		for (int i = 0; i < 4; ++i) {
-			auto& side = mesh->sides[index + ((c + i) % 4)];
+			auto& side = mesh->sides[4*index + ((c + i) % 4)];
 			sides[side.generalized_index()].push_back(side.stitches->val);
 		}
 	}
@@ -662,7 +662,7 @@ namespace hlk {
 		CoarseKnitGraph graph;
 		for (int e = 0; e < edges.size(); ++e) {
 			int seam = edges[e].seam;
-			if (seam >= 0) {
+			if (seam < 0) {
 				Eigen::RowVector2i e_sides = edges_to_sides.row(e);
 				int src = e_sides[0];
 				int dst = e_sides[1];
@@ -674,7 +674,7 @@ namespace hlk {
 				edge.src = src / 4;
 				edge.dst = dst / 4;
 				edge.src_side = src % 4;
-				edge.dst_side = src % 4;
+				edge.dst_side = dst % 4;
 				edge.is_loop = sides[src].is_loop->val;
 				graph.edges.push_back(edge);
 			}
@@ -688,7 +688,7 @@ namespace hlk {
 			graph.patches.emplace_back(stitch_counts, corners);
 		}
 
-		return CoarseKnitGraph();
+		return graph;
 	}
 	std::vector<std::pair<z3::expr, std::string>> CoarseKnitMesh::get_seam_costs()
 	{

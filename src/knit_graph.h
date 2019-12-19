@@ -3,6 +3,8 @@
 #include <Eigen/Core>
 #include <vector>
 
+#include "autoknit.h"
+
 namespace hlk {
 
 	struct KnitGraphEdge;
@@ -63,6 +65,9 @@ namespace hlk {
 		void contract(); // Contract and remove all contractible edges
 		void split_doubled(); // Split all nodes into two loop-wise connected nodes - pre-req. for scheduling
 		void schedule(); // Order and assign yarns for each node. Fix yarn in/out and create shift-paths
+
+		void trace(std::string filename);
+		ak::RowColGraph make_row_col_graph();
 
 		void re_index(); // Assign each node a unique index number
 		void edge_list_graph(Eigen::MatrixXd& V, Eigen::MatrixXi& E);
