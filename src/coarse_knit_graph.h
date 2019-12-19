@@ -22,8 +22,28 @@ namespace hlk {
 			int dst_side;
 		};
 
+		struct PatchData {
+			PatchData(std::vector<std::vector<int>> side_lengths, const Eigen::MatrixXd& corners, int time);
+			Eigen::MatrixXd corners;
+			std::vector<std::vector<int>> side_lengths;
+			int time;
+		};
+
+		void visualize(
+			Eigen::MatrixXd& P,
+			Eigen::MatrixXd& P_c,
+			Eigen::MatrixXd& V,
+			Eigen::MatrixXi& E,
+			Eigen::MatrixXd& E_c,
+			std::vector<std::string>& L,
+			Eigen::MatrixXd& L_p
+		);
+
+		std::vector<PatchData> patch_data;
 		std::vector<Patch> patches;
 		std::vector<Edge> edges;
+		bool patches_initialized = false;
+		void initialize_patches();
 
 		KnitGraph build_graph();
 

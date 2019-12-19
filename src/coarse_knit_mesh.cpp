@@ -286,7 +286,7 @@ namespace hlk {
 		std::vector<std::pair<z3::expr, std::string>> constraints;
 
 		// TODO - consider doing something regarding direction matching here instead
-		if (!mesh->seams[seam]->val) {
+		if (seam < 0 || !mesh->seams[seam]->val) {
 			auto& a = mesh->sides[mesh->edges_to_sides(index, 0)];
 			auto& b = mesh->sides[mesh->edges_to_sides(index, 1)];
 			constraints.push_back(std::make_pair(
@@ -396,19 +396,36 @@ namespace hlk {
 
 		std::vector<std::pair<z3::expr, std::string>> constraints;
 
+		std::vector<std::vector<z3::expr>> side_exprs(4);
+		for (int i = 0; i < 4; ++i) {
+			int s = 4 * index + i;
+			auto& side = mesh->sides[s];
+			side_exprs[side.generalized_index()].push_back(side.stitches->var);
+		}
+
 		std::vector<z3::expr> side_stitches;
 		for (int i = 0; i < 4; ++i) {
-			side_stitches.push_back(mesh->geometry_optimizer.zero());
+			if (side_exprs[i].size() == 0) {
+				side_stitches.push_back(mesh->geometry_optimizer.zero());
+			}
+			else {
+				side_stitches.push_back(side_exprs[i][0]);
+			}
+			for (int j = 1; j < side_exprs[i].size(); ++j) {
+				side_stitches.back() = side_stitches.back() + side_exprs[i][j];
+			}
+
+			//side_stitches.push_back(mesh->geometry_optimizer.zero());
 		}
 		//std::vector<std::vector<z3::expr>> side_vars(4);
+		/*
 		for (int i = 0; i < 4; ++i) {
 			auto& side = mesh->sides[4 * index + i];
-			int side_idx = side.is_loop->val ? 0 : 3;
-			side_idx += side.is_out ? 2 : 0;
-			side_idx = side_idx % 4;
+			int side_idx = side.generalized_index();
 			side_stitches[side_idx] = side_stitches[side_idx] + side.stitches->var;
 			//side_vars[side_idx].push_back(side.stitches->var);
 		}
+		*/
 
 		auto& loop_in = side_stitches[0];
 		auto& yarn_out = side_stitches[1];
@@ -422,12 +439,14 @@ namespace hlk {
 		auto loop_max = z3::ite(loop_in > loop_out, loop_in, loop_out);
 		auto yarn_min = z3::ite(yarn_in > yarn_out, yarn_out, yarn_in);
 		auto yarn_max = z3::ite(yarn_in > yarn_out, yarn_in, yarn_out);
-
+		
+		
 		constraints.push_back(std::make_pair(
 			one_shaping_type,
 			"one_shaping_type_" + std::to_string(index)
 		));
-
+		
+		/*
 		if (shaping_distribution == ShapingType::NONE) {
 			constraints.push_back(std::make_pair(
 				loop_in == loop_out,
@@ -459,7 +478,7 @@ namespace hlk {
 				"no_short_row_" + std::to_string(index)
 			));
 		}
-
+		*/
 
 		return constraints;
 	}
@@ -680,7 +699,7 @@ namespace hlk {
 
 		std::vector<z3::expr> seam_costs;
 		int i = 0;
-		std::cout << "Num possible seams = " << seams.size();
+		std::cout << "Num possible seams = " << seams.size() << std::endl;
 		for (auto& seam : seams) {
 			std::string cost_name = "seam_cost_" + std::to_string(i);
 			z3::expr s_cost = topology_optimizer.context.int_const(cost_name.c_str());
@@ -745,20 +764,37 @@ namespace hlk {
 		for (int i = 1; i < sides.size(); ++i) {
 			cost = cost + sides[i].get_geometry_cost();
 		}
-		std::cout << "Cost Function = " << cost.to_string() << std::endl;
+		std::cout << "Cost Function = " << std::endl << cost.to_string() << std::endl;
 
 		for (auto& side : sides) {
 			for (auto constraint : side.get_geometry_constraints()) {
 				geometry_optimizer.add_constraint(constraint.first, constraint.second);
+				std::cout << "Added Constraint: " << constraint.second << std::endl << constraint.first.to_string() << std::endl;
+			}
+		}
+
+		for (auto& quad : quads) {
+			for (auto constraint : quad.get_geometry_constraints()) {
+				geometry_optimizer.add_constraint(constraint.first, constraint.second);
+				std::cout << "Added Constraint: " << constraint.second << std::endl << constraint.first.to_string() << std::endl;
+			}
+		}
+
+		for (auto& edge : edges) {
+			for (auto constraint : edge.get_geometry_constraints()) {
+				geometry_optimizer.add_constraint(constraint.first, constraint.second);
+				std::cout << "Added Constraint: " << constraint.second << std::endl << constraint.first.to_string() << std::endl;
 			}
 		}
 
 		for (auto constraint : size_line_constraints()) {
 			geometry_optimizer.add_constraint(constraint.first, constraint.second);
+			std::cout << "Added Constraint: " << constraint.second << std::endl << constraint.first.to_string() << std::endl;
 		}
 
 		for (auto constraint : get_symmetry_constraints()) {
 			geometry_optimizer.add_constraint(constraint.first, constraint.second);
+			std::cout << "Added Constraint: " << constraint.second << std::endl << constraint.first.to_string() << std::endl;
 		}
 
 		auto result = geometry_optimizer.minimize(cost, minimizer_timeout);
@@ -805,7 +841,7 @@ namespace hlk {
 			std::vector<std::vector<int>> stitch_counts;
 			quads[q].get_generalized_corners(corners);
 			quads[q].get_sides_stitches(stitch_counts);
-			graph.patches.emplace_back(stitch_counts, corners);
+			graph.patch_data.emplace_back(stitch_counts, corners, quads[q].time->val);
 		}
 
 		return graph;

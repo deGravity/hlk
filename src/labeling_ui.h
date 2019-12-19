@@ -30,11 +30,16 @@ namespace hlk {
 
 		void optimize_geometry();
 
+		void extract_coarse_graph();
+
 		void generate_instructions();
 
 		void save_coarse_knit_mesh(std::string filename);
 
 		void load_coarse_knit_mesh(std::string filename);
+		
+		void set_layer(int layer, bool on);
+
 
 	private:
 
@@ -42,6 +47,13 @@ namespace hlk {
 		bool mesh_loaded = false;
 		int base_index = 0;
 		int overlay_index = -1;
+		int graph_index = -1;
+
+		int minimizer_timeout = (int) M.minimizer_timeout;
+
+		bool show_mesh = true;
+		bool show_graph = true;
+		bool planarize = false;
 
 		enum Tool {
 			ERASER, // Remove constraints

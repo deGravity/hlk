@@ -25,7 +25,7 @@ namespace hlk {
 
 	void LabelingUI::load_quad_mesh_file(std::string filename)
 	{
-		read_quad_mesh(filename, M, true);
+		read_quad_mesh(filename, M, planarize);
 
 		init_quad_mesh_display();
 	}
@@ -35,7 +35,10 @@ namespace hlk {
 		// Setup the base mesh
 		viewer->data().clear();
 		viewer->data().set_mesh(M.V, M.F_t);
-		viewer->data().set_colors(Eigen::RowVector4d(1.0, 1.0, 1.0, 0.0));
+		viewer->data().set_colors(Eigen::RowVector4d(1.0, 1.0, 1.0, 1.0));
+		viewer->data().show_faces = false;
+		viewer->data().show_lines = false;
+		viewer->data().show_texture = false;
 
 		base_index = viewer->selected_data_index;
 
@@ -52,6 +55,11 @@ namespace hlk {
 		viewer->data().show_texture = true;
 		viewer->data().show_lines = false;
 		viewer->data().set_colors(M.C);
+
+		// Add a mesh-data object for a graph overlay. Don't use it yet
+		graph_index = viewer->append_mesh();
+		viewer->data().show_faces = false;
+		viewer->data().show_texture = false;
 
 		// Set the data index back to the underlying mesh
 		viewer->selected_data_index = base_index;
@@ -334,6 +342,26 @@ namespace hlk {
 		if (ImGui::Button("Generate Knitting Instructions")) {
 			generate_instructions();
 		}
+
+		if (ImGui::Checkbox("Show Mesh", &show_mesh)) {
+			set_layer(overlay_index, show_mesh);
+		}
+
+		if (ImGui::Checkbox("Show Graph", &show_graph)) {
+			set_layer(graph_index, show_graph);
+		}
+
+		if (ImGui::DragInt("Minimizer Timeout", &minimizer_timeout, 1.0, 1, 60)) {
+			M.minimizer_timeout = (unsigned int)minimizer_timeout;
+		}
+
+		if (ImGui::InputDouble("Tolerance", &M.tollerance)) {
+			M.geometry_solved = false;
+		}
+
+		if (ImGui::InputDouble("Scale", &M.scale)) {
+			M.geometry_solved = false;
+		}
 	
 	}
 
@@ -348,6 +376,23 @@ namespace hlk {
 	void LabelingUI::optimize_geometry()
 	{
 		M.optimize_geometry();
+		extract_coarse_graph();
+	}
+
+	void LabelingUI::extract_coarse_graph()
+	{
+		Eigen::MatrixXd P, P_c, V, E_c, L_p;
+		Eigen::MatrixXi E;
+		std::vector<std::string> L;
+
+		auto CKG = M.get_dual();
+		CKG.visualize(P, P_c, V, E, E_c, L, L_p);
+
+		viewer->data(graph_index).set_points(P, P_c);
+		viewer->data(graph_index).set_edges(V, E, E_c);
+		viewer->data(graph_index).labels_positions = L_p;
+		viewer->data(graph_index).labels_strings = L;
+		
 	}
 
 	void LabelingUI::generate_instructions()
@@ -371,6 +416,21 @@ namespace hlk {
 		M.load(f);
 		M.update_textures();
 		init_quad_mesh_display();
+		extract_coarse_graph();
+	}
+
+	void LabelingUI::set_layer(int layer, bool on)
+	{
+		viewer->data(layer).show_faces = on;
+		viewer->data(layer).show_lines = on;
+		viewer->data(layer).show_overlay = on;
+		viewer->data(layer).show_texture = on;
+		if (on) {
+			viewer->data(layer).label_color(3) = 1.0;
+		}
+		else {
+			viewer->data(layer).label_color(3) = 0.0; 
+		}
 	}
 
 	bool LabelingUI::pick_face(int& fid, Eigen::Vector3f& bc)

@@ -191,7 +191,10 @@ namespace hlk {
                 solver.pop();
             }
             cout << "Success after " << count << " trials\n";
-        }
+		}
+		else {
+			cout << "Not SAT!" << std::endl;
+		}
 
         solver.pop();
         return result;

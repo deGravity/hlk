@@ -608,7 +608,7 @@ namespace hlk {
 		}
 	}
 
-	Patch::Patch(std::vector<std::vector<int>> sides, Eigen::MatrixXd corners)
+	Patch::Patch(std::vector<std::vector<int>> sides, const Eigen::MatrixXd& corners)
 	{
 		this->corners = corners;
 		this->sides = sides;
