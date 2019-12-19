@@ -28,6 +28,8 @@ namespace hlk {
 
 		void update_mesh();
 
+		void optimize_geometry();
+
 		void generate_instructions();
 
 		void save_coarse_knit_mesh(std::string filename);

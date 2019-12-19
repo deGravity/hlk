@@ -35,7 +35,7 @@ namespace hlk {
 		// Setup the base mesh
 		viewer->data().clear();
 		viewer->data().set_mesh(M.V, M.F_t);
-		viewer->data().set_colors(Eigen::RowVector4d(1.0, 1.0, 1.0, 1.0));
+		viewer->data().set_colors(Eigen::RowVector4d(1.0, 1.0, 1.0, 0.0));
 
 		base_index = viewer->selected_data_index;
 
@@ -326,6 +326,10 @@ namespace hlk {
 
 		}
 		ImGui::Text(instructions.c_str());
+		
+		if (ImGui::Button("Optimize Geometry")) {
+			optimize_geometry();
+		}
 
 		if (ImGui::Button("Generate Knitting Instructions")) {
 			generate_instructions();
@@ -341,9 +345,14 @@ namespace hlk {
 		}
 	}
 
-	void LabelingUI::generate_instructions()
+	void LabelingUI::optimize_geometry()
 	{
 		M.optimize_geometry();
+	}
+
+	void LabelingUI::generate_instructions()
+	{
+		optimize_geometry();
 		auto CKG = M.get_dual();
 		auto KG = CKG.build_graph();
 		KG.contract();

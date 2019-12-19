@@ -736,6 +736,7 @@ namespace hlk {
 
 	bool CoarseKnitMesh::optimize_geometry()
 	{
+		if (geometry_solved) return true;
 		if (!topology_solved) return false;
 		
 		geometry_optimizer.push();
