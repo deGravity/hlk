@@ -252,8 +252,6 @@ namespace hlk {
 
         std::unordered_set<int> ortho_visited;
 
-        Cardinal c = face_directions.at(curr_he);
-        std::unordered_set<int> ortho_visited;
         while (true) {
             int quad_face = quad(curr_he);
             std::vector<int> hes = sides(quad_face);

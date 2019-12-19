@@ -478,17 +478,8 @@ bool RemeshingMenu::load(std::string filename) {
     viewer->data().set_face_based(true);
 
     update_visualization();
-
-<<<<<<< HEAD
-    if (temps.empty()) save_ctrlz();
-<<<<<<< HEAD
-=======
-
->>>>>>> index
-=======
     if (temps.empty()) save_ctrlz();
 
->>>>>>> cut_seams
     return true;
 }
 
@@ -607,18 +598,6 @@ void RemeshingMenu::clear() {
     std::vector<Eigen::Vector3d>().swap(feature_points);
     std::vector<int>().swap(feature_face_ids);
     std::vector<int>().swap(loop_feature_face_ids);
-<<<<<<< HEAD
-    // directional faces
-    std::vector<FaceVector>().swap(face_vectors);
-    std::vector<SplitEdge>().swap(split_edges);
-    // other geometry data
-    std::vector<int>().swap(geodesic_path);
-    igl_polyhedron.clear();
-    igl_tree.clear();
-    std::vector<std::unordered_set<int>>().swap(igl_v_faces);
-    std::vector<std::vector<double>>().swap(graph_adj);
-    cycleFaces.clear();
-=======
     // directional faces
     std::vector<FaceVector>().swap(face_vectors);
     std::vector<std::vector<SplitEdge>>().swap(seams);
@@ -628,7 +607,7 @@ void RemeshingMenu::clear() {
     igl_tree.clear();
     std::vector<std::unordered_set<int>>().swap(igl_v_faces);
     std::vector<std::vector<double>>().swap(graph_adj);
->>>>>>> cut_seams
+    cycleFaces.clear();
     clear_loops();
     // reset values
     show_axis = false;
@@ -665,12 +644,9 @@ bool RemeshingMenu::save_workspace() {
     igl::serialize(should_redraw, "should_redraw", filename);
     igl::serialize(show_axis, "show_axis", filename);
     igl::serialize(multi_points_drawing, "multi_points_drawing", filename);
-<<<<<<< HEAD
     igl::serialize(do_matching, "do_matching", filename);
     igl::serialize(use_guiding_field, "use_guiding_field", filename);
-=======
     igl::serialize(symmetrize_loops, "symmetrize_loops", filename);
->>>>>>> cut_seams
     igl::serialize(existing_edge_label, "existing_edge_label", filename);
     igl::serialize(geodesic_label, "geodesic_label", filename);
 
@@ -764,12 +740,9 @@ bool RemeshingMenu::load_workspace() {
     igl::deserialize(should_redraw, "should_redraw", filename);
     igl::deserialize(show_axis, "show_axis", filename);
     igl::deserialize(multi_points_drawing, "multi_points_drawing", filename);
-<<<<<<< HEAD
     igl::deserialize(do_matching, "do_matching", filename);
     igl::deserialize(use_guiding_field, "use_guiding_field", filename);
-=======
     igl::deserialize(symmetrize_loops, "symmetrize_loops", filename);
->>>>>>> cut_seams
     igl::deserialize(existing_edge_label, "existing_edge_label", filename);
     igl::deserialize(geodesic_label, "geodesic_label", filename);
 
@@ -1003,7 +976,6 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
     bool intersects = igl::unproject_onto_mesh(Eigen::Vector2f(x, y), viewer->core().view,
         viewer->core().proj, viewer->core().viewport, V, F, fid, bc);
 
-<<<<<<< HEAD
     if (button == 0 && singularitySelect) { // trivial connections: select singularity
         Eigen::Vector3d::Index maxCol;
         bc.maxCoeff(&maxCol);
@@ -1016,11 +988,6 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
     } else if ((button == 2 || button == 1) && alt_on && !shift_on && !ctrl_on) { // loop
         if (feature_points.size() > 2) {
             auto n = face_vectors[loop_feature_face_ids[0]].normal;
-=======
-    if ((button == 2 || button == 1) && alt_on && !shift_on && !ctrl_on) { // loop
-        if (feature_points.size() > 2) {
-            auto n = face_vectors[loop_feature_face_ids[0]].normal;
->>>>>>> cut_seams
             Eigen::Vector3d a = feature_points.back() - feature_points.front();
             int prev_size = loop_update_polylines.size();
             if (button == 2) {
@@ -1886,12 +1853,9 @@ void RemeshingMenu::cut_along_seams() {
     setup_mesh();
     update_polyhedron_tree(std::vector<int>(), true); // is seam cutting, don't reset face vectors
     setup_boundary();
-<<<<<<< HEAD
     interpolate_field();
     setup_basis_cycles();
     update_visualization();
-=======
->>>>>>> cut_seams
 }
 
 ///////////////////////////////// DRAW IMPLS /////////////////////////////////
@@ -2059,29 +2023,6 @@ void RemeshingMenu::stylize_quad_mesh(const Eigen::MatrixXd& colors) {
     viewer->data_list[4].set_texture(texture_R, texture_B, texture_G);
     viewer->data_list[4].show_texture = true;
 
-<<<<<<< HEAD
-    if (split_edges.empty()) return;
-
-    igl::AABB<Eigen::MatrixXd, 3> aabb_tree;
-    aabb_tree.init(quad_mesh.V, quad_mesh.F_t);
-
-    for (const SplitEdge& se : split_edges) {
-        Eigen::Vector3d v0 = V.row(se.index_0);
-        Eigen::Vector3d v1 = V.row(se.index_1);
-        Eigen::Vector3d edge = v1 - v0;
-        Eigen::Vector3d nudge_dir = edge.cross(se.normal);
-
-        Eigen::Vector3d nudged_midpoint = (v0 + v1) / 2. + 0.001 * mesh_size * nudge_dir;
-        int fid;
-        Eigen::RowVector3d C;
-        aabb_tree.squared_distance(quad_mesh.V, quad_mesh.F_t, nudged_midpoint, fid, C);
-
-        Eigen::Vector3d qv0 = quad_mesh.V.row(quad_mesh.side_u(fid));
-        qv0 += se.normal * mesh_size * 0.005;
-        Eigen::Vector3d qv1 = quad_mesh.V.row(quad_mesh.side_v(fid));
-        qv1 += se.normal * mesh_size * 0.005;
-        draw_a_segment(qv0, qv1, 1, -1., 4);
-=======
     if (seams.empty() || miq_mode != MIQMode::CROSS) return;
 
     Eigen::MatrixX3d N;
@@ -2095,7 +2036,6 @@ void RemeshingMenu::stylize_quad_mesh(const Eigen::MatrixXd& colors) {
             qv1 += N.row(f) * mesh_size * 0.005;
             draw_a_segment(qv0, qv1, 1, -1., 1);
         }
->>>>>>> cut_seams
     }
 }
 
