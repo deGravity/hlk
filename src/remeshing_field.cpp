@@ -341,7 +341,7 @@ void RemeshingMenu::generate_integer_grid() {
             combedMatching, combedEffort,
             singVertices, singIndices,
             VMeshCut, FMeshCut, cutUV,
-            1. / gradient_size, isInteger); // SUPPOSEDLY THIS STEP COMBS THE FIELD
+            1. / gradient_size, true); // SUPPOSEDLY THIS STEP COMBS THE FIELD
         direction_field[1] = combedField.block(0, 0, F.rows(), 3);
 
     } else if (miq_mode == MIQMode::POLYVECTOR) {
@@ -351,7 +351,7 @@ void RemeshingMenu::generate_integer_grid() {
             combedMatching, combedEffort,
             curlSingVertices, curlSingIndices,
             VMeshCut, FMeshCut, cutUV,
-            1. / gradient_size, isInteger);
+            1. / gradient_size, true);
         direction_field[1] = combedField.block(0, 0, F.rows(), 3);
 
     } else { // miq_mode == MIQMode::CROSS
@@ -526,17 +526,25 @@ void RemeshingMenu::setup_basis_cycles() {
 }
 
 void RemeshingMenu::compute_target_curvature() {
+    Eigen::VectorXd S;
+    interpolate_cross_field(S);
     // the difference in the angle representation of edge i from EF(i,0) to EF(i,1)
+    const Eigen::MatrixXd& PD1 = direction_field[1];
     Eigen::VectorXd edgeParallelAngleChange(basisCycles.cols());
     for (int i = 0; i < innerEdges.rows(); i++) {
         int currEdge = innerEdges(i);
+        // cross field angle change
+        double xx1 = PD1.row(EF(currEdge, 0)).dot(B1.row(EF(currEdge, 0)));
+        double yy1 = PD1.row(EF(currEdge, 0)).dot(B2.row(EF(currEdge, 0)));
+        double xx2 = PD1.row(EF(currEdge, 1)).dot(B1.row(EF(currEdge, 1)));
+        double yy2 = PD1.row(EF(currEdge, 1)).dot(B2.row(EF(currEdge, 1)));
+        // edge angle change
         Eigen::RowVectorXd edgeVectors = (V.row(EV(currEdge, 1)) - V.row(EV(currEdge, 0))).normalized();
-        // instead of local basis, use the cross field
-        double x1 = edgeVectors.dot(face_vectors[EF(currEdge, 0)].base_vector);
-        double y1 = edgeVectors.dot(face_vectors[EF(currEdge, 0)].frame[1]);
-        double x2 = edgeVectors.dot(face_vectors[EF(currEdge, 1)].base_vector);
-        double y2 = edgeVectors.dot(face_vectors[EF(currEdge, 1)].frame[1]);
-        edgeParallelAngleChange(i) = atan2(y2, x2) - atan2(y1, x1);
+        double x1 = edgeVectors.dot(B1.row(EF(currEdge, 0)));
+        double y1 = edgeVectors.dot(B2.row(EF(currEdge, 0)));
+        double x2 = edgeVectors.dot(B1.row(EF(currEdge, 1)));
+        double y2 = edgeVectors.dot(B2.row(EF(currEdge, 1)));
+        edgeParallelAngleChange(i) = atan2(y2, x2) + atan2(yy2, xx2) - atan2(y1, x1) - atan2(yy1, xx1);
     }
     targetCurvature = basisCycles * edgeParallelAngleChange;
     for (int i = 0; i < targetCurvature.size(); i++) {
@@ -547,28 +555,31 @@ void RemeshingMenu::compute_target_curvature() {
 
 void RemeshingMenu::update_raw_field() {
     int sum = round(cycleIndices.head(cycleIndices.size() - numGenerators).sum());
+    std::cout << "Total indices: " << sum << "/" << N << std::endl;
+    std::cout << "Expected: " << eulerChar * N << "/" << N << std::endl;
     if (eulerChar * N != sum) {
         std::cout << "Warning: All non-generator singularities should add up to N * the Euler characteristic." << std::endl;
-        std::cout << "Total indices: " << sum << "/" << N << std::endl;
-        std::cout << "Expected: " << eulerChar * N << "/" << N << std::endl;
-        return;
     }
-
-    Eigen::VectorXd S;
-    interpolate_cross_field(S);
-    update_vectors_from_field();
-    directional::representative_to_raw(V, F, direction_field[1], rosy, curlRawField);
 
     Eigen::VectorXd rotationAngles;
     double linfError;
-    //compute_target_curvature();
-    directional::index_prescription(
-        V, F, EV, innerEdges, basisCycles, //targetCurvature,
-        cycleCurvature, cycleIndices, ldltSolver, N, //field_guidance_weight,
-        rotationAngles, linf, linfError);
+    if (use_guiding_field) {
+        compute_target_curvature();
+        directional::index_prescription(
+            V, F, EV, innerEdges, basisCycles, targetCurvature,
+            cycleCurvature, cycleIndices, ldltSolver, N, field_guidance_weight,
+            rotationAngles, linf, linfError);
+    } else {
+        directional::index_prescription(
+            V, F, EV, innerEdges, basisCycles,
+            cycleCurvature, cycleIndices, ldltSolver, N,
+            rotationAngles, linf, linfError);
+    }
     std::cout << "Index prescription linfError: " << linfError << std::endl;
     if (linfError > 1e-12) {
-        std::cout << "Warning: trivial connection property may not be satisfied; choose whether to do matching carefully.\n";
+        std::cout << "[Warn] trivial connection property may not be satisfied; choose whether to do matching carefully.\n";
+    } else {
+        std::cout << "[Info] trivial connection found.\n";
     }
 
     Eigen::MatrixXd representative;

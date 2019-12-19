@@ -72,12 +72,15 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
                 update_raw_field();
                 should_draw = true;
             } else if (key == '-' || key == '_') {
-                cycleIndices(currCycle)--;
+                std::vector<int> symmetric_verts = symmetrizer.symmetric_vertices(currVertex, v_symmetry_axes());
+                for (int v : symmetric_verts) { cycleIndices(vertex2cycle(v))--; }
+                std::cout << std::endl;
                 update_raw_field();
                 update_singularities();
                 should_draw = true;
             } else if (key == '+' || key == '=') {
-                cycleIndices(currCycle)++;
+                std::vector<int> symmetric_verts = symmetrizer.symmetric_vertices(currVertex, v_symmetry_axes());
+                for (int v : symmetric_verts) { cycleIndices(vertex2cycle(v))++; }
                 update_raw_field();
                 update_singularities();
                 should_draw = true;
@@ -217,10 +220,13 @@ void RemeshingMenu::draw_viewer_menu() {
             ImGui::Checkbox("Show Axis", &show_axis);
             ImGui::Checkbox("Multi Points", &multi_points_drawing);
             ImGui::Checkbox("Do matching", &do_matching);
+            ImGui::Checkbox("Use Guiding Field", &use_guiding_field);
             // Add threshold values.
             ImGui::DragFloat("Click Threshold", &click_threshold, 0.05f, 0.01f, 0.5f);
             ImGui::DragFloat("Soft Weight", &soft_constraint_strength, 0.0f, 0.0f, 1.0f);
-            //ImGui::DragFloat("Field Weight", &field_guidance_weight, 0.0f, 0.0f, 1.0f);
+            if (use_guiding_field) {
+                ImGui::DragFloat("Field Weight", &field_guidance_weight, 0.0f, 0.0f, 1.0f);
+            }
             ImGui::DragFloat("Gradient Size", &gradient_size, 1.0f, 0.0f, 150.0f);
             ImGui::DragInt("# Stiffening", &stiffen_iter, 1, 0, 10);
             if (miq_mode == MIQMode::INDEX) {
@@ -597,6 +603,7 @@ void RemeshingMenu::clear() {
     is_quad_meshed = false;
     should_redraw = false;
     do_matching = false;
+    use_guiding_field = false;
     viewing_mode = ViewingMode::MESH_ONLY;
     drawing_mode = DrawingMode::WALE;
     miq_mode = MIQMode::CROSS;
@@ -619,6 +626,7 @@ bool RemeshingMenu::save_workspace() {
     igl::serialize(show_axis, "show_axis", filename);
     igl::serialize(multi_points_drawing, "multi_points_drawing", filename);
     igl::serialize(do_matching, "do_matching", filename);
+    igl::serialize(use_guiding_field, "use_guiding_field", filename);
     igl::serialize(existing_edge_label, "existing_edge_label", filename);
     igl::serialize(geodesic_label, "geodesic_label", filename);
 
@@ -689,6 +697,7 @@ bool RemeshingMenu::save_workspace() {
     igl::serialize(eulerChar, "eulerChar", filename);
     igl::serialize(numGenerators, "numGenerators", filename);
     igl::serialize(numBoundaries, "numBoundaries", filename);
+    igl::serialize(currVertex, "currVertex", filename);
     igl::serialize(currCycle, "currCycle", filename);
     igl::serialize(N, "N", filename);
     igl::serialize(globalRotation, "globalRotation", filename);
@@ -711,6 +720,7 @@ bool RemeshingMenu::load_workspace() {
     igl::deserialize(show_axis, "show_axis", filename);
     igl::deserialize(multi_points_drawing, "multi_points_drawing", filename);
     igl::deserialize(do_matching, "do_matching", filename);
+    igl::deserialize(use_guiding_field, "use_guiding_field", filename);
     igl::deserialize(existing_edge_label, "existing_edge_label", filename);
     igl::deserialize(geodesic_label, "geodesic_label", filename);
 
@@ -784,6 +794,7 @@ bool RemeshingMenu::load_workspace() {
     igl::deserialize(eulerChar, "eulerChar", filename);
     igl::deserialize(numGenerators, "numGenerators", filename);
     igl::deserialize(numBoundaries, "numBoundaries", filename);
+    igl::deserialize(currVertex, "currVertex", filename);
     igl::deserialize(currCycle, "currCycle", filename);
     igl::deserialize(N, "N", filename);
     igl::deserialize(globalRotation, "globalRotation", filename);
@@ -945,7 +956,7 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
     if (button == 0 && singularitySelect) { // trivial connections: select singularity
         Eigen::Vector3d::Index maxCol;
         bc.maxCoeff(&maxCol);
-        int currVertex = F(fid, maxCol);
+        currVertex = F(fid, maxCol);
         currCycle = vertex2cycle(currVertex);
         viewing_mode = ViewingMode::MESH_SING;
         should_redraw = true;
@@ -971,7 +982,7 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
 	} else if (button == 2 && ctrl_on && alt_on) { // ctrl+alt+right
         if (mouse_d < 2) {
             if (intersects) {
-                auto faces_to_deselect = symmetrizer.symmetric_faces(fid, symmetry_axes());
+                auto faces_to_deselect = symmetrizer.symmetric_faces(fid, f_symmetry_axes());
                 for (auto face : faces_to_deselect) face_vectors[face].assigned[drawing_mode] = false;
             }
         } else if (mouse_d > 10 && feature_points.size() > 2) {
@@ -985,7 +996,7 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
             if (!cutting_0_edges.empty()) {
                 for (int fid = 0; fid < cutting_faces.size(); fid++) {
                     if (!cutting_faces[fid].empty()) {
-                        auto faces_to_deselect = symmetrizer.symmetric_faces(fid, symmetry_axes());
+                        auto faces_to_deselect = symmetrizer.symmetric_faces(fid, f_symmetry_axes());
                         for (auto face : faces_to_deselect) face_vectors[face].assigned[drawing_mode] = false;
                     }
                 }
@@ -2383,7 +2394,23 @@ bool RemeshingMenu::highlight_symmetries() {
     return false;
 }
 
-std::vector<int> RemeshingMenu::symmetry_axes() {
+std::vector<int> RemeshingMenu::v_symmetry_axes() {
+    std::vector<int> symmetries;
+    if (symmetrizer.has_vertex_symmetry()) {
+        if (symmetry_mode_yz && symmetrizer.has_vertex_symmetry(0)) {
+            symmetries.push_back(0);
+        }
+        if (symmetry_mode_xz && symmetrizer.has_vertex_symmetry(1)) {
+            symmetries.push_back(1);
+        }
+        if (symmetry_mode_xy && symmetrizer.has_vertex_symmetry(2)) {
+            symmetries.push_back(2);
+        }
+    }
+    return symmetries;
+}
+
+std::vector<int> RemeshingMenu::f_symmetry_axes() {
 	std::vector<int> symmetries;
 	if (symmetrizer.has_face_symmetry()) {
 		if (symmetry_mode_yz && symmetrizer.has_face_symmetry(0)) {
