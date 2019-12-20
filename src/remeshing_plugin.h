@@ -272,7 +272,6 @@ public:
     Eigen::MatrixXd c_bc;
 
     // trivial connections data
-    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > ldltSolver;
     Eigen::VectorXi singVertices, singIndices;
     Eigen::VectorXi cycleIndices;
     Eigen::VectorXd cycleCurvature, targetCurvature;

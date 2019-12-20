@@ -187,28 +187,25 @@ std::vector<Eigen::Vector3d> CGAL_Mesh_Projection(
     int iteration = 0;
     int idx = 1;
 
-    // TODO: there are still bugs here!!!!!
+    // note: still buggy......
     while (true) {
         // search for the outside point of the current triangle
         bool goon = false;
         Halfedge_handle handle;
         Eigen::Vector3d intersection;
-        while (true) {
+        while (idx < new_features.size()) {
             if (cur_face_id == project_faces[idx]->id()) {
                 inside = new_features[idx];
                 ++idx;
-                if (idx > new_features.size() - 1) break;
             } else {
                 if (point_inside_triangle(cur_face, new_features[idx])) {
                     ++idx;
-                    if (idx > new_features.size() - 1) break;
                 } else {
                     if (first_intersection(cur_handle, (iteration == 0) ? 3 : 2, inside, new_features[idx], handle, intersection)) {
                         goon = true;
                         break;
                     } else {
                         ++idx;
-                        if (idx > new_features.size() - 1) break;
                     }
                 }
             }
@@ -304,21 +301,20 @@ void CGAL_Mesh_Cutting(
 	//CGAL_Export_Segments("D:\\merge_feature.obj", 1.0, 0.0, 0.0, 0.005, merge_feature);
 	//CGAL_Export_Segments("D:\\new_features.obj", 1.0, 0.0, 0.0, 0.005, new_features);
 
-    // TODO: there are still bugs here!!!!!
-    while (true) {
+    // note: still buggy......
+    while (iteration < tree.size()) {
+
         std::cout << "[cgal remesh] " << iteration << "/" << new_features.size() << "\n";
+
         // search for the outside point of the current triangle
         bool goon = false;
-
-		while (true) {
+		while (idx < new_features.size()) {
             if (cur_face_id == project_faces[idx]->id()) {
                 inside = new_features[idx];
                 ++idx;
-                if (idx > new_features.size() - 1) break;
             } else {
                 if (point_inside_triangle(cur_face, new_features[idx])) {
                     ++idx;
-                    if (idx > new_features.size() - 1) break;
                 } else {
 					goon = true;
 					break;
@@ -360,7 +356,7 @@ void CGAL_Mesh_Cutting(
 				break;
 			}
 
-		} else {
+		} else if (!process_cutting_points.empty()) {
 			inside = process_cutting_points.back();
 			cur_handle = process_handles.back();
 
@@ -372,10 +368,13 @@ void CGAL_Mesh_Cutting(
 			process_cutting_points.erase(process_cutting_points.begin() + process_cutting_points.size() - 1);
 			process_handles.erase(process_handles.begin() + process_handles.size() - 1);
 			process_adds.erase(process_adds.begin() + process_adds.size() - 1);
-
 		}
 
         ++iteration;
+    }
+
+    if (iteration == tree.size()) {
+        std::cerr << "[cgal remesh] fail to find cutting path\n";
     }
     
 	//CGAL_Export_Segments("D:\\igl_cutting_points.obj", 1.0, 0.0, 0.0, 0.005, igl_cutting_points);

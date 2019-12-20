@@ -73,7 +73,6 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
             } else if (key == '-' || key == '_') {
                 std::vector<int> symmetric_verts = symmetrizer.symmetric_vertices(currVertex, v_symmetry_axes());
                 for (int v : symmetric_verts) { cycleIndices(vertex2cycle(v))--; }
-                std::cout << std::endl;
                 update_raw_field();
                 update_singularities();
                 should_draw = true;
@@ -107,6 +106,7 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
                 should_draw = true;
             }
             if (should_draw) {
+                //std::cout << currVertex << " " << currCycle << std::endl;
                 viewing_mode = ViewingMode::MESH_SING;
                 update_visualization(key);
             }
@@ -171,21 +171,23 @@ void RemeshingMenu::draw_viewer_menu() {
         if (ImGui::Button("Save Field##Mesh", ImVec2((w - p) / 2.f, 0))) {
             save_raw_field();
         }*/
-        if (ImGui::Button("Clear Loops##Mesh", ImVec2((w - p) / 2.f, 0))) {
-            clear_loops();
-            update_visualization();
-        }
-        ImGui::SameLine(0, p);
-        if (ImGui::Button("Reset Field##Mesh", ImVec2((w - p) / 2.f, 0))) {
-            reset_field();
-        }
-        if (ImGui::Button("Subdivide Mesh", ImVec2(w - p, 0))) {
-            apply_subdivision();
+        if (model_loaded()) {
+            if (ImGui::Button("Clear Loops##Mesh", ImVec2((w - p) / 2.f, 0))) {
+                clear_loops();
+                update_visualization();
+            }
+            ImGui::SameLine(0, p);
+            if (ImGui::Button("Reset Field##Mesh", ImVec2((w - p) / 2.f, 0))) {
+                reset_field();
+            }
+            if (ImGui::Button("Subdivide Mesh", ImVec2(w - p, 0))) {
+                apply_subdivision();
+            }
         }
     }
 
-    if (ImGui::CollapsingHeader("Remeshing", ImGuiTreeNodeFlags_DefaultOpen)) {
-        if (model_loaded()) {
+    if (model_loaded()) {
+        if (ImGui::CollapsingHeader("Remeshing", ImGuiTreeNodeFlags_DefaultOpen)) {
             // Expose symmetry variables.
             ImGui::PushItemWidth(80 * menu_scaling());
             if (symmetrizer.has_vertex_symmetry(2)) {
@@ -279,10 +281,6 @@ void RemeshingMenu::draw_viewer_menu() {
                 if (ImGui::Button("Run MIQ parametrization", ImVec2(w - p, 0))) {
                     generate_integer_grid();
                 }
-                if (ImGui::Button("Run MIQ parametrization", ImVec2(w - p, 0))) {
-                    generate_integer_grid();
-                }
-
             }
             // Quad controls
             ImGui::Text("===Quad Operations===");
@@ -358,7 +356,7 @@ void RemeshingMenu::draw_viewer_menu() {
     }
 
     // Viewing options
-    if (ImGui::CollapsingHeader("Viewing Options", ImGuiTreeNodeFlags_OpenOnArrow)) {
+    if (ImGui::CollapsingHeader("Viewing Options", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (ImGui::Button("Center object", ImVec2(-1, 0))) {
             viewer->core().align_camera_center(V, F);
         }
@@ -478,6 +476,7 @@ bool RemeshingMenu::load(std::string filename) {
     viewer->data().set_face_based(true);
 
     update_visualization();
+
     if (temps.empty()) save_ctrlz();
 
     return true;
@@ -981,9 +980,10 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
         bc.maxCoeff(&maxCol);
         currVertex = F(fid, maxCol);
         currCycle = vertex2cycle(currVertex);
+        //std::cout << currVertex << " " << currCycle << std::endl;
         viewing_mode = ViewingMode::MESH_SING;
         should_redraw = true;
-        std::cout << "sing selected\n";
+        //std::cout << "sing selected\n";
 
     } else if ((button == 2 || button == 1) && alt_on && !shift_on && !ctrl_on) { // loop
         if (feature_points.size() > 2) {
@@ -1135,7 +1135,6 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
             cut_along_seams();
         }
         interpolate_field();
-        update_raw_field();
         update_visualization();
         save_ctrlz();
         should_redraw = false;
@@ -1628,6 +1627,9 @@ void RemeshingMenu::split_mesh(const float threshold) {
 
     setup_mesh();
     update_polyhedron_tree(face_refs);
+    setup_boundary();
+    interpolate_field();
+    setup_basis_cycles();
 }
 
 void RemeshingMenu::geodesic_split_mesh() {

@@ -528,6 +528,13 @@ void RemeshingMenu::setup_basis_cycles() {
     std::cout << "Euler characteristic: " << eulerChar << std::endl;
     std::cout << "#generators: " << numGenerators << std::endl;
     std::cout << "#boundaries: " << numBoundaries << std::endl;
+    /*for (int i = 0; i < boundaryLoops.size(); ++i) {
+        std::cout << "boundary loop " << i << ": " << std::endl;
+        for (int j : boundaryLoops[i]) {
+            std::cout << j << " ";
+        }
+        std::cout << std::endl;
+    }*/
 
     // collecting cycle faces for visualization
     cycleFaces.resize(basisCycles.rows());
@@ -584,13 +591,13 @@ void RemeshingMenu::update_raw_field() {
     if (use_guiding_field) {
         compute_target_curvature();
         directional::index_prescription(
-            V, F, EV, innerEdges, basisCycles, targetCurvature,
-            cycleCurvature, cycleIndices, ldltSolver, N, field_guidance_weight,
+            V, F, innerEdges, basisCycles, targetCurvature,
+            cycleCurvature, cycleIndices, N, field_guidance_weight,
             rotationAngles, linf, linfError);
     } else {
         directional::index_prescription(
-            V, F, EV, innerEdges, basisCycles,
-            cycleCurvature, cycleIndices, ldltSolver, N,
+            V, F, innerEdges, basisCycles,
+            cycleCurvature, cycleIndices, N,
             rotationAngles, linf, linfError);
     }
     std::cout << "Index prescription linfError: " << linfError << std::endl;
