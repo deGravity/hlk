@@ -2,6 +2,23 @@
 
 namespace hlk {
 
+void get_edge_face_path(const std::string& filename, std::string& mesh_path_temp,
+    std::string& face_path_temp, std::string& edge_path_temp, std::string& sing_path_temp) {
+
+    std::size_t found = filename.find(".obj");
+    if (found != std::string::npos) {
+        face_path_temp = filename.substr(0, found) + "_temp.face";
+        edge_path_temp = filename.substr(0, found) + "_temp.edge";
+        sing_path_temp = filename.substr(0, found) + "_temp.sing";
+        mesh_path_temp = filename;
+    } else {
+        face_path_temp = filename + "_temp.face";
+        edge_path_temp = filename + "_temp.edge";
+        sing_path_temp = filename + "_temp.sing";
+        mesh_path_temp = filename + ".obj";
+    }
+};
+
 double angle_between(Eigen::Vector3d v1,Eigen::Vector3d v2) {
     double d = v1.dot(v2) / (v1.norm() * v2.norm());
     if (is_almost_zero(d - 1.0)) { return 0.0; }

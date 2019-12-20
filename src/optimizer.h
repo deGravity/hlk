@@ -30,17 +30,17 @@ namespace hlk {
         friend z3::expr operator&&(const BoolProp& l, const BoolProp& r) { return l.var && r.var; }
         friend z3::expr operator||(const BoolProp& l, const BoolProp& r) { return l.var || r.var; }
         friend z3::expr operator==(const BoolProp& l, const BoolProp& r) { return l.var == r.var; }
-		friend z3::expr operator!=(const BoolProp& l, const BoolProp& r) { return l.var != r.var; }
+        friend z3::expr operator!=(const BoolProp& l, const BoolProp& r) { return l.var != r.var; }
 
         friend z3::expr operator&&(const z3::expr& l, const BoolProp& r) { return l && r.var; }
         friend z3::expr operator||(const z3::expr& l, const BoolProp& r) { return l || r.var; }
         friend z3::expr operator==(const z3::expr& l, const BoolProp& r) { return l == r.var; }
-		friend z3::expr operator!=(const z3::expr& l, const BoolProp& r) { return l != r.var; }
+        friend z3::expr operator!=(const z3::expr& l, const BoolProp& r) { return l != r.var; }
 
         friend z3::expr operator&&(const BoolProp& l, const z3::expr& r) { return l.var && r; }
         friend z3::expr operator||(const BoolProp& l, const z3::expr& r) { return l.var || r; }
         friend z3::expr operator==(const BoolProp& l, const z3::expr& r) { return l.var == r; }
-		friend z3::expr operator!=(const BoolProp& l, const z3::expr& r) { return l.var != r; }
+        friend z3::expr operator!=(const BoolProp& l, const z3::expr& r) { return l.var != r; }
 
         friend z3::expr operator&&(const std::shared_ptr<BoolProp>& l, const std::shared_ptr<BoolProp>& r) {
             return l->var == r->var;
@@ -51,9 +51,9 @@ namespace hlk {
         friend z3::expr operator==(const std::shared_ptr<BoolProp>& l, const std::shared_ptr<BoolProp>& r) {
             return l->var == r->var;
         }
-		friend z3::expr operator!=(const std::shared_ptr<BoolProp>& l, const std::shared_ptr<BoolProp>& r) {
-			return l->var != r->var;
-		}
+        friend z3::expr operator!=(const std::shared_ptr<BoolProp>& l, const std::shared_ptr<BoolProp>& r) {
+            return l->var != r->var;
+        }
 
         friend z3::expr operator&&(const z3::expr& l, const std::shared_ptr<BoolProp>& r) {
             return l == r->var;
@@ -64,9 +64,9 @@ namespace hlk {
         friend z3::expr operator==(const z3::expr& l, const std::shared_ptr<BoolProp>& r) {
             return l == r->var;
         }
-		friend z3::expr operator!=(const z3::expr& l, const std::shared_ptr<BoolProp>& r) {
-			return l != r->var;
-		}
+        friend z3::expr operator!=(const z3::expr& l, const std::shared_ptr<BoolProp>& r) {
+            return l != r->var;
+        }
 
         friend z3::expr operator&&(const std::shared_ptr<BoolProp>& l, const z3::expr& r) {
             return l->var == r;
@@ -77,9 +77,9 @@ namespace hlk {
         friend z3::expr operator==(const std::shared_ptr<BoolProp>& l, const z3::expr& r) {
             return l->var == r;
         }
-		friend z3::expr operator!=(const std::shared_ptr<BoolProp>& l, const z3::expr& r) {
-			return l->var != r;
-		}
+        friend z3::expr operator!=(const std::shared_ptr<BoolProp>& l, const z3::expr& r) {
+            return l->var != r;
+        }
 
     };
 
@@ -107,7 +107,7 @@ namespace hlk {
         friend z3::expr operator<=(const IntProp& l, const IntProp& r) { return l.var <= r.var; }
         friend z3::expr operator>=(const IntProp& l, const IntProp& r) { return l.var >= r.var; }
         friend z3::expr operator==(const IntProp& l, const IntProp& r) { return l.var == r.var; }
-		friend z3::expr operator!=(const IntProp& l, const IntProp& r) { return l.var != r.var; }
+        friend z3::expr operator!=(const IntProp& l, const IntProp& r) { return l.var != r.var; }
 
         friend z3::expr operator+(const z3::expr& l, const IntProp& r) { return l + r.var; }
         friend z3::expr operator-(const z3::expr& l, const IntProp& r) { return l - r.var; }
@@ -117,7 +117,7 @@ namespace hlk {
         friend z3::expr operator<=(const z3::expr& l, const IntProp& r) { return l <= r.var; }
         friend z3::expr operator>=(const z3::expr& l, const IntProp& r) { return l >= r.var; }
         friend z3::expr operator==(const z3::expr& l, const IntProp& r) { return l == r.var; }
-		friend z3::expr operator!=(const z3::expr& l, const IntProp& r) { return l != r.var; }
+        friend z3::expr operator!=(const z3::expr& l, const IntProp& r) { return l != r.var; }
 
         friend z3::expr operator+(const IntProp& l, const z3::expr& r) { return l.var + r; }
         friend z3::expr operator-(const IntProp& l, const z3::expr& r) { return l.var - r; }
@@ -127,7 +127,7 @@ namespace hlk {
         friend z3::expr operator<=(const IntProp& l, const z3::expr& r) { return l.var <= r; }
         friend z3::expr operator>=(const IntProp& l, const z3::expr& r) { return l.var >= r; }
         friend z3::expr operator==(const IntProp& l, const z3::expr& r) { return l.var == r; }
-		friend z3::expr operator!=(const IntProp& l, const z3::expr& r) { return l.var != r; }
+        friend z3::expr operator!=(const IntProp& l, const z3::expr& r) { return l.var != r; }
 
         friend z3::expr operator+(const std::shared_ptr<IntProp>& l, const std::shared_ptr<IntProp>& r) { return l->var + r->var; }
         friend z3::expr operator-(const std::shared_ptr<IntProp>& l, const std::shared_ptr<IntProp>& r) { return l->var - r->var; }
@@ -137,7 +137,7 @@ namespace hlk {
         friend z3::expr operator<=(const std::shared_ptr<IntProp>& l, const std::shared_ptr<IntProp>& r) { return l->var <= r->var; }
         friend z3::expr operator>=(const std::shared_ptr<IntProp>& l, const std::shared_ptr<IntProp>& r) { return l->var >= r->var; }
         friend z3::expr operator==(const std::shared_ptr<IntProp>& l, const std::shared_ptr<IntProp>& r) { return l->var == r->var; }
-		friend z3::expr operator!=(const std::shared_ptr<IntProp>& l, const std::shared_ptr<IntProp>& r) { return l->var != r->var; }
+        friend z3::expr operator!=(const std::shared_ptr<IntProp>& l, const std::shared_ptr<IntProp>& r) { return l->var != r->var; }
 
         friend z3::expr operator+(const z3::expr& l, const std::shared_ptr<IntProp>& r) { return l + r->var; }
         friend z3::expr operator-(const z3::expr& l, const std::shared_ptr<IntProp>& r) { return l - r->var; }
@@ -147,7 +147,7 @@ namespace hlk {
         friend z3::expr operator<=(const z3::expr& l, const std::shared_ptr<IntProp>& r) { return l <= r->var; }
         friend z3::expr operator>=(const z3::expr& l, const std::shared_ptr<IntProp>& r) { return l >= r->var; }
         friend z3::expr operator==(const z3::expr& l, const std::shared_ptr<IntProp>& r) { return l == r->var; }
-		friend z3::expr operator!=(const z3::expr& l, const std::shared_ptr<IntProp>& r) { return l != r->var; }
+        friend z3::expr operator!=(const z3::expr& l, const std::shared_ptr<IntProp>& r) { return l != r->var; }
 
         friend z3::expr operator+(const std::shared_ptr<IntProp>& l, const z3::expr& r) { return l->var + r; }
         friend z3::expr operator-(const std::shared_ptr<IntProp>& l, const z3::expr& r) { return l->var - r; }
@@ -157,7 +157,7 @@ namespace hlk {
         friend z3::expr operator<=(const std::shared_ptr<IntProp>& l, const z3::expr& r) { return l->var <= r; }
         friend z3::expr operator>=(const std::shared_ptr<IntProp>& l, const z3::expr& r) { return l->var >= r; }
         friend z3::expr operator==(const std::shared_ptr<IntProp>& l, const z3::expr& r) { return l->var == r; }
-		friend z3::expr operator!=(const std::shared_ptr<IntProp>& l, const z3::expr& r) { return l->var != r; }
+        friend z3::expr operator!=(const std::shared_ptr<IntProp>& l, const z3::expr& r) { return l->var != r; }
 
         friend z3::expr operator+(int l, const std::shared_ptr<IntProp>& r) { return l + r->var; }
         friend z3::expr operator-(int l, const std::shared_ptr<IntProp>& r) { return l - r->var; }
@@ -167,7 +167,7 @@ namespace hlk {
         friend z3::expr operator<=(int l, const std::shared_ptr<IntProp>& r) { return l <= r->var; }
         friend z3::expr operator>=(int l, const std::shared_ptr<IntProp>& r) { return l >= r->var; }
         friend z3::expr operator==(int l, const std::shared_ptr<IntProp>& r) { return l == r->var; }
-		friend z3::expr operator!=(int l, const std::shared_ptr<IntProp>& r) { return l != r->var; }
+        friend z3::expr operator!=(int l, const std::shared_ptr<IntProp>& r) { return l != r->var; }
 
         friend z3::expr operator+(const std::shared_ptr<IntProp>& l, int r) { return l->var + r; }
         friend z3::expr operator-(const std::shared_ptr<IntProp>& l, int r) { return l->var - r; }
@@ -177,7 +177,7 @@ namespace hlk {
         friend z3::expr operator<=(const std::shared_ptr<IntProp>& l, int r) { return l->var <= r; }
         friend z3::expr operator>=(const std::shared_ptr<IntProp>& l, int r) { return l->var >= r; }
         friend z3::expr operator==(const std::shared_ptr<IntProp>& l, int r) { return l->var == r; }
-		friend z3::expr operator!=(const std::shared_ptr<IntProp>& l, int r) { return l->var != r; }
+        friend z3::expr operator!=(const std::shared_ptr<IntProp>& l, int r) { return l->var != r; }
     };
 
     class Optimizer {
@@ -185,11 +185,11 @@ namespace hlk {
 
         struct Result {
             void set_model(z3::model m);
-			void set_unsat_core(z3::expr_vector u);
+            void set_unsat_core(z3::expr_vector u);
             bool has_result = false;
-			bool has_unsat_core = false;
+            bool has_unsat_core = false;
             std::unique_ptr<z3::model> result_model;
-			std::unique_ptr<z3::expr_vector> unsat_core;
+            std::unique_ptr<z3::expr_vector> unsat_core;
         };
 
         enum Strategy {
@@ -203,7 +203,7 @@ namespace hlk {
         Result minimize(z3::expr objective, unsigned int timeout = -1U, Strategy strategy = BINARY_SEARCH);
         bool update_all_props(z3::model model);
         void add_constraint(z3::expr constraint);
-		void add_constraint(z3::expr constraint, std::string name);
+        void add_constraint(z3::expr constraint, std::string name);
         void push();
         void pop();
         std::shared_ptr<BoolProp> get_bool_prop(std::string id);

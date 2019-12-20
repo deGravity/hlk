@@ -45,12 +45,13 @@ public:
         geodesic_label = false;
         existing_edge_label = false;
         multi_points_drawing = true;
+        use_optim_loop = true;
         do_matching = false;
         use_guiding_field = false;
 
         viewing_mode = ViewingMode::MESH_ONLY;
         drawing_mode = DrawingMode::WALE;
-        seaming_mode = SeamingMode::NO_CUT;
+        seaming_mode = SeamingMode::SEAM;
         miq_mode = MIQMode::CROSS;
         line_texture(texture_R, texture_G, texture_B);
         direction_field = { Eigen::MatrixXd(), Eigen::MatrixXd() };
@@ -68,6 +69,7 @@ public:
             remove(temp.mesh.c_str());
             remove(temp.face.c_str());
             remove(temp.edge.c_str());
+            remove(temp.sing.c_str());
         }
         remove(in_path.c_str());
         remove(out_path.c_str());
@@ -283,7 +285,7 @@ public:
     int currVertex, currCycle;
     int N; // degree of field
     Eigen::VectorXd linf;
-    double globalRotation;
+    float globalRotation;
     bool singularitySelect;
 
     /////////////////// UI ///////////////////
@@ -298,7 +300,7 @@ public:
     int rosy;
 
     bool show_axis, show_stitches, multi_points_drawing;
-    bool do_matching, use_guiding_field;
+    bool do_matching, use_guiding_field, use_optim_loop;
 
     bool existing_edge_label;
 

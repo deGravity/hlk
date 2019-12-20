@@ -112,10 +112,10 @@ namespace hlk {
         Result result;
         if (is_sat) {
             result.set_model(solver.get_model());
-		}
-		else {
-			result.set_unsat_core(solver.unsat_core());
-		}
+        }
+        else {
+            result.set_unsat_core(solver.unsat_core());
+        }
         solver.pop();
         return result;
     }
@@ -292,10 +292,10 @@ namespace hlk {
     }
 
 
-	void Optimizer::add_constraint(z3::expr constraint, std::string name)
-	{
-		solver.add(constraint, name.c_str());
-	}
+    void Optimizer::add_constraint(z3::expr constraint, std::string name)
+    {
+        solver.add(constraint, name.c_str());
+    }
 
     void Optimizer::add_constraint(z3::expr constraint)
     {
@@ -362,10 +362,10 @@ namespace hlk {
         has_result = true;
     }
 
-	void Optimizer::Result::set_unsat_core(z3::expr_vector u)
-	{
-		unsat_core = make_unique<expr_vector>(u);
-		has_unsat_core = true;
-	}
+    void Optimizer::Result::set_unsat_core(z3::expr_vector u)
+    {
+        unsat_core = make_unique<expr_vector>(u);
+        has_unsat_core = true;
+    }
 
 };

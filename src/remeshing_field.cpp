@@ -101,75 +101,75 @@ void RemeshingMenu::init_curvature_field() {
 void RemeshingMenu::setup_boundary() {
     if (!should_setup_boundary) return;
 
-	std::vector<std::vector<int>> indices;
-	igl::boundary_loop(F, indices);
+    std::vector<std::vector<int>> indices;
+    igl::boundary_loop(F, indices);
 
-	int top_index = 0;
-	double maximal_y = -100000.0;
-	for (int i = 0; i < indices.size(); i++) {
-		Eigen::Vector3d center(0.0, 0.0, 0.0);
-		for (int j = 0; j < indices[i].size(); j++) {
-			center += V.row(indices[i][j]);
-		}
-		center /= indices[i].size();
-		if (maximal_y < center[1]) {
-			maximal_y = center[1];
-			top_index = i;
-		}
-	}
+    int top_index = 0;
+    double maximal_y = -100000.0;
+    for (int i = 0; i < indices.size(); i++) {
+        Eigen::Vector3d center(0.0, 0.0, 0.0);
+        for (int j = 0; j < indices[i].size(); j++) {
+            center += V.row(indices[i][j]);
+        }
+        center /= indices[i].size();
+        if (maximal_y < center[1]) {
+            maximal_y = center[1];
+            top_index = i;
+        }
+    }
 
-	for (int i = 0; i < F.rows(); i++) {
-		int index_0 = F.row(i)[0];
-		int index_1 = F.row(i)[1];
-		int index_2 = F.row(i)[2];
-		int b0 = row_index_of(indices, index_0);
-		int b1 = row_index_of(indices, index_1);
-		int b2 = row_index_of(indices, index_2);
+    for (int i = 0; i < F.rows(); i++) {
+        int index_0 = F.row(i)[0];
+        int index_1 = F.row(i)[1];
+        int index_2 = F.row(i)[2];
+        int b0 = row_index_of(indices, index_0);
+        int b1 = row_index_of(indices, index_1);
+        int b2 = row_index_of(indices, index_2);
 
-		int index_00;
-		int index_11;
-		int index_22;
-		bool goon = false;
-		bool opposite = false;
-		if (b0 >= 0 && b1 >= 0) { // NOTE: maybe these can be connected with else
-			index_00 = index_0;
-			index_11 = index_1;
-			index_22 = index_2;
-			goon = true;
-			if (b0 == top_index) opposite = true;
-		}
-		if (b1 >= 0 && b2 >= 0) {
-			index_00 = index_1;
-			index_11 = index_2;
-			index_22 = index_0;
-			goon = true;
-			if (b1 == top_index) opposite = true;
-		}
-		if (b2 >= 0 && b0 >= 0) {
-			index_00 = index_2;
-			index_11 = index_0;
-			index_22 = index_1;
-			goon = true;
-			if (b2 == top_index) opposite = true;
-		}
+        int index_00;
+        int index_11;
+        int index_22;
+        bool goon = false;
+        bool opposite = false;
+        if (b0 >= 0 && b1 >= 0) { // NOTE: maybe these can be connected with else
+            index_00 = index_0;
+            index_11 = index_1;
+            index_22 = index_2;
+            goon = true;
+            if (b0 == top_index) opposite = true;
+        }
+        if (b1 >= 0 && b2 >= 0) {
+            index_00 = index_1;
+            index_11 = index_2;
+            index_22 = index_0;
+            goon = true;
+            if (b1 == top_index) opposite = true;
+        }
+        if (b2 >= 0 && b0 >= 0) {
+            index_00 = index_2;
+            index_11 = index_0;
+            index_22 = index_1;
+            goon = true;
+            if (b2 == top_index) opposite = true;
+        }
 
-		if (goon) {
-			Eigen::Vector3d edge = V.row(index_00) - V.row(index_11);
-			Eigen::Vector3d v1 = face_vectors[i].normal.cross(edge);
-			Eigen::Vector3d center = (V.row(index_00) + V.row(index_11)) / 2.0;
-			Eigen::Vector3d v2 = (Eigen::Vector3d) V.row(index_22) - center;
+        if (goon) {
+            Eigen::Vector3d edge = V.row(index_00) - V.row(index_11);
+            Eigen::Vector3d v1 = face_vectors[i].normal.cross(edge);
+            Eigen::Vector3d center = (V.row(index_00) + V.row(index_11)) / 2.0;
+            Eigen::Vector3d v2 = (Eigen::Vector3d) V.row(index_22) - center;
 
-			double angle = angle_between(v1, v2);
-			if (angle > M_PI / 2.0) v1 = -v1;
-			if (opposite) v1 = -v1;
+            double angle = angle_between(v1, v2);
+            if (angle > M_PI / 2.0) v1 = -v1;
+            if (opposite) v1 = -v1;
 
             face_vectors[i].frame[1] = v1; // still set to be wale
-			face_vectors[i].assigned[1] = true;
+            face_vectors[i].assigned[1] = true;
             // initialize the course direction to be perpendicular
             face_vectors[i].frame[0] = face_vectors[i].frame[1].cross(face_vectors[i].normal);
             face_vectors[i].assigned[0] = true;
         }
-	}
+    }
 }
 
 void RemeshingMenu::interpolate_cross_field(Eigen::VectorXd& S, int direction) {

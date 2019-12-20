@@ -38,7 +38,7 @@ struct FaceVector {
     
     std::vector<bool> assigned; // size 2, using stl for serialization
     std::vector<Eigen::Vector3d> frame; // size 2, using stl for serialization
-	Eigen::Vector3d base_vector; // perpendicular to frame[1]
+    Eigen::Vector3d base_vector; // perpendicular to frame[1]
 
     Eigen::Vector3d center;
     Eigen::Vector3d normal;
@@ -66,7 +66,8 @@ enum DrawingMode {
 
 enum SeamingMode {
     CUT,
-    NO_CUT
+    SEAM,
+    SPLIT
 };
 
 enum MIQMode {
@@ -76,17 +77,21 @@ enum MIQMode {
 };
 
 struct CTRLZSL {
-	bool ctrl = false;
-	bool z = false;
-	bool s = false;
-	bool l = false;
+    bool ctrl = false;
+    bool z = false;
+    bool s = false;
+    bool l = false;
 };
 
 struct TEMPDATA {
-	std::string mesh;
-	std::string face;
-	std::string edge;
+    std::string mesh;
+    std::string face;
+    std::string edge;
+    std::string sing;
 };
+
+void get_edge_face_path(const std::string& filename, std::string& mesh_path_temp,
+    std::string& face_path_temp, std::string& edge_path_temp, std::string& sing_path_temp);
 
 double angle_between(Eigen::Vector3d v1, Eigen::Vector3d v2);
 double angle_coordinate_system(const Eigen::Vector3d& v, const Eigen::Vector3d& x, const Eigen::Vector3d& y);
@@ -113,12 +118,12 @@ void line_texture(
 
 Eigen::Vector3d plane_project(
     Eigen::Vector3d planar_location, 
-	Eigen::Vector3d planar_direction, 
+    Eigen::Vector3d planar_direction, 
     Eigen::Vector3d p);
 
 std::vector<Eigen::Vector3d> UniformSampling(
-	const std::vector<Eigen::Vector3d>& input_points, 
-	const int sample_nb);
+    const std::vector<Eigen::Vector3d>& input_points, 
+    const int sample_nb);
 
 }
 
