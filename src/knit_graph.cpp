@@ -71,15 +71,14 @@ void hlk::KnitGraph::trace(std::string filename)
 	
 	//vkmp::load_stitches(filename, &s.stitches);
 	
-	/*
+	vkmp::save_stitches(filename + ".st", stitches);
+
 	std::map<int, std::pair<int, int>> yarn_mappings;
 	yarn_mappings[0] = std::make_pair(1, -1);
 	yarn_mappings[1] = std::make_pair(2, -1);
 	s.do_schedule(yarn_mappings, true, - 1);
-	s.write_schedule(filename);
-	*/
+	s.write_schedule(filename + ".js");
 	
-	vkmp::save_stitches(filename, stitches);
 	//ak::save_traced(filename, traced_stitches);
 }
 
