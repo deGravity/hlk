@@ -889,7 +889,7 @@ namespace hlk {
 				Eigen::RowVector2i e_sides = edges_to_sides.row(e);
 				int src = e_sides[0];
 				int dst = e_sides[1];
-				if (sides[e_sides[0]].is_out->val) {
+				if (!sides[e_sides[0]].is_out->val) {
 					src = e_sides[1];
 					dst = e_sides[0];
 				}

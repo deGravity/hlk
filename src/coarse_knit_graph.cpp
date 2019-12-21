@@ -159,6 +159,22 @@ namespace hlk {
 			for (int i = 0; i < src_edges.size(); ++i) {
 				src_edges[i]->dst = dst_edges[i]->dst;
 				dst_edges[i]->contracted = true; // Only keep src edge
+
+				// Update the node's edge-pointer
+				// We only need to update the pointer on the dst side
+				if (src_edges[i]->is_loop) {
+					// There should only every be one loop in due to simple patch borders
+					// but searching for the right one to replace is more flexible
+					auto& candidates = src_edges[i]->dst->bottom;
+					for (int j = 0; j < candidates.size(); ++j) {
+						if (candidates[j] == dst_edges[i]) {
+							candidates[j] = src_edges[i];
+						}
+					}
+				}
+				else {
+					src_edges[i]->dst->left = src_edges[i];
+				}
 			}
 		}
 

@@ -32,6 +32,8 @@ namespace hlk {
 
 		void extract_coarse_graph();
 
+		void extract_fine_graph();
+
 		void generate_instructions();
 
 		void save_coarse_knit_mesh(std::string filename);

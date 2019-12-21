@@ -676,6 +676,7 @@ bool Scheduler::do_schedule( std::map<int, std::pair<int,int>> yarn_mappings, bo
                 }
             }
 
+			// Ben: Modification from original - we default to anti-clockwise
             if (stitches[step.begin].direction == Stitch::CW) {
                 std::reverse(in_chain.begin(), in_chain.end());
                 std::reverse(out_chain.begin(), out_chain.end());

@@ -61,6 +61,10 @@ namespace hlk {
 		viewer->data().show_faces = false;
 		viewer->data().show_texture = false;
 
+		knit_graph_index = viewer->append_mesh();
+		viewer->data().show_faces = false;
+		viewer->data().show_texture = false;
+
 		// Set the data index back to the underlying mesh
 		viewer->selected_data_index = base_index;
 
@@ -343,6 +347,10 @@ namespace hlk {
 			generate_instructions();
 		}
 
+		if (ImGui::Button("Generate Knit Graph")) {
+			extract_fine_graph();
+		}
+
 		if (ImGui::Checkbox("Show Mesh", &show_mesh)) {
 			set_layer(overlay_index, show_mesh);
 		}
@@ -397,6 +405,26 @@ namespace hlk {
 		viewer->data(graph_index).labels_positions = L_p;
 		viewer->data(graph_index).labels_strings = L;
 		
+	}
+
+	void LabelingUI::extract_fine_graph()
+	{
+		auto CKG = M.get_dual();
+		auto G = CKG.build_graph();
+		G.contract();
+
+		Eigen::MatrixXd V;
+		Eigen::MatrixXi E;
+		Eigen::MatrixXd C;
+
+		G.build_mesh(0.1, 4, V, E, C);
+		viewer->data(knit_graph_index).set_points(V, Eigen::RowVector3d(1.0, 1.0, 1.0));
+		for (int i = 0; i < V.rows(); ++i) {
+			viewer->data(knit_graph_index).add_label(V.row(i), std::to_string(i));
+		}
+
+		viewer->data(knit_graph_index).set_edges(V, E, C);
+		viewer->data(knit_graph_index).line_width = 2.0f;
 	}
 
 	void LabelingUI::generate_instructions()
