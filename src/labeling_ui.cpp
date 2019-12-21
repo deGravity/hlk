@@ -351,6 +351,10 @@ namespace hlk {
 			set_layer(graph_index, show_graph);
 		}
 
+		if (ImGui::Checkbox("Show Knit Graph", &show_knit_graph)) {
+			set_layer(knit_graph_index, show_knit_graph);
+		}
+
 		if (ImGui::DragInt("Minimizer Timeout", &minimizer_timeout, 1.0, 1, 60)) {
 			M.minimizer_timeout = (unsigned int)minimizer_timeout;
 		}

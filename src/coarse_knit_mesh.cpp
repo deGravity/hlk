@@ -160,6 +160,11 @@ namespace hlk {
 			}
 		}
 
+		// Put Edges First so Sides can reference their stitch-counts
+		for (int i = 0; i < e; ++i) {
+			edges.emplace_back(topology_optimizer, geometry_optimizer, i, this);
+		}
+
 		for (int q = 0; q < m; ++q) {
 			
 			for (int j = 0; j < 4; ++j) {
@@ -168,9 +173,7 @@ namespace hlk {
 			quads.emplace_back(topology_optimizer, geometry_optimizer, q, this);
 			
 		}
-		for (int i = 0; i < e; ++i) {
-			edges.emplace_back(topology_optimizer, geometry_optimizer, i, this);
-		}
+		
 
 		vertex_in_seam.resize(n, false);
 
@@ -245,6 +248,7 @@ namespace hlk {
 		seam = -1;
 		index = i;
 		mesh = m;
+		stitches = geo_opt.get_int_prop(nth_label("edge_stitches", i));
 	}
 	std::vector<std::pair<z3::expr, std::string>> CoarseKnitEdge::get_topology_constraints()
 	{
@@ -285,7 +289,35 @@ namespace hlk {
 	{
 		std::vector<std::pair<z3::expr, std::string>> constraints;
 
+		// Arbitrarily base off side 0.
+		// TODO - Do something intelligent for seams
+		auto& side = mesh->sides[mesh->edges_to_sides(index, 0)];
+
+		double target_length = mesh->side_lengths[side.index];
+		double gauge = side.is_loop->val ? mesh->stitch_gauge : mesh->row_gauge;
+		int target_stitches = round(target_length * gauge / mesh->scale);
+		target_stitches = target_stitches > 0 ? target_stitches : 1; // At least 1 stitch per side
+		int tollerance = ceil(mesh->tollerance * target_stitches);
+		int min_sts = target_stitches - tollerance;
+		int max_sts = target_stitches + tollerance;
+		min_sts = min_sts > 0 ? min_sts : 1;
+
+
+		constraints.push_back(std::make_pair(
+			min_sts <= stitches->var,
+			"min_sts_edge_" + std::to_string(index)
+		));
+
+		constraints.push_back(std::make_pair(
+			max_sts >= stitches->var,
+			"max_sts_edge_" + std::to_string(index)
+		));
+
 		// TODO - consider doing something regarding direction matching here instead
+		// These are currently reduced since there is a shared variable. If we wish
+		// to relax this we will need to either temporarily add new variables, or
+		// have some other trick
+		/*
 		if (seam < 0 || !mesh->seams[seam]->val) {
 			auto& a = mesh->sides[mesh->edges_to_sides(index, 0)];
 			auto& b = mesh->sides[mesh->edges_to_sides(index, 1)];
@@ -294,8 +326,18 @@ namespace hlk {
 				"consistent_sizing_" + std::to_string(index)
 			));
 		}
+		*/
 
 		return constraints;
+	}
+	z3::expr CoarseKnitEdge::get_geometry_cost()
+	{
+		auto& side = mesh->sides[mesh->edges_to_sides(index, 0)];
+		double target_length = mesh->side_lengths[side.index];
+		double gauge = side.is_loop->val ? mesh->stitch_gauge : mesh->row_gauge;
+		int target_stitches = round(target_length * gauge / mesh->scale);
+		target_stitches = target_stitches > 0 ? target_stitches : 1; // At least 1 stitch per side
+		return (stitches->var - target_stitches) * (stitches->var - target_stitches);
 	}
 	void CoarseKnitEdge::update_texture()
 	{
@@ -577,9 +619,15 @@ namespace hlk {
 	{
 		is_loop = topo_opt.get_bool_prop(nth_label("is_loop", i));
 		is_out = topo_opt.get_bool_prop(nth_label("is_out", i));
-		stitches = geo_opt.get_int_prop(nth_label("stitches", i));
 		index = i;
 		mesh = m;
+		// Check if there is an associated edge - if so just copy a reference to its stitch count
+		if (mesh->sides_to_edges[index] < 0) {
+			stitches = geo_opt.get_int_prop(nth_label("side_stitches", i));
+		}
+		else {
+			stitches = mesh->edges[mesh->sides_to_edges[index]].stitches;
+		}
 	}
 
 	std::vector<std::pair<z3::expr,std::string>> CoarseKnitSide::get_topology_constraints()
@@ -635,26 +683,30 @@ namespace hlk {
 	}
 	std::vector<std::pair<z3::expr, std::string>> CoarseKnitSide::get_geometry_constraints()
 	{
-		double target_length = mesh->side_lengths[index];
-		double gauge = is_loop->val ? mesh->stitch_gauge : mesh->row_gauge;
-		int target_stitches = round(target_length * gauge / mesh->scale);
-		target_stitches = target_stitches > 0 ? target_stitches : 1; // At least 1 stitch per side
-		int tollerance = ceil(mesh->tollerance * target_stitches);
-		int min_sts = target_stitches - tollerance;
-		int max_sts = target_stitches + tollerance;
-		min_sts = min_sts > 0 ? min_sts : 1;
-
 		std::vector<std::pair<z3::expr, std::string>> constraints;
 
-		constraints.push_back(std::make_pair(
-			min_sts <= stitches->var,
-			"min_sts_" + std::to_string(index)
-		));
+		// Only add for boundary edges
+		if (mesh->sides_to_edges[index] < 0) {
+			double target_length = mesh->side_lengths[index];
+			double gauge = is_loop->val ? mesh->stitch_gauge : mesh->row_gauge;
+			int target_stitches = round(target_length * gauge / mesh->scale);
+			target_stitches = target_stitches > 0 ? target_stitches : 1; // At least 1 stitch per side
+			int tollerance = ceil(mesh->tollerance * target_stitches);
+			int min_sts = target_stitches - tollerance;
+			int max_sts = target_stitches + tollerance;
+			min_sts = min_sts > 0 ? min_sts : 1;
 
-		constraints.push_back(std::make_pair(
-			max_sts >= stitches->var,
-			"max_sts_" + std::to_string(index)
-		));
+		
+			constraints.push_back(std::make_pair(
+				min_sts <= stitches->var,
+				"min_sts_side_" + std::to_string(index)
+			));
+
+			constraints.push_back(std::make_pair(
+				max_sts >= stitches->var,
+				"max_sts_side_" + std::to_string(index)
+			));
+		}
 
 		return constraints;
 	}
@@ -760,9 +812,14 @@ namespace hlk {
 		
 		geometry_optimizer.push();
 
-		z3::expr cost = sides[0].get_geometry_cost();
-		for (int i = 1; i < sides.size(); ++i) {
-			cost = cost + sides[i].get_geometry_cost();
+		z3::expr cost = edges[0].get_geometry_cost();
+		for (int i = 1; i < edges.size(); ++i) {
+			cost = cost + edges[i].get_geometry_cost();
+		}
+		for (int i = 0; i < sides.size(); ++i) {
+			if (sides_to_edges[i] < 0) {
+				cost = cost + sides[i].get_geometry_cost();
+			}
 		}
 		std::cout << "Cost Function = " << std::endl << cost.to_string() << std::endl;
 
@@ -816,6 +873,16 @@ namespace hlk {
 	CoarseKnitGraph CoarseKnitMesh::get_dual()
 	{
 		CoarseKnitGraph graph;
+		
+
+		for (int q = 0; q < quads.size(); ++q) {
+			Eigen::MatrixXd corners;
+			std::vector<std::vector<int>> stitch_counts;
+			quads[q].get_generalized_corners(corners);
+			quads[q].get_sides_stitches(stitch_counts);
+			graph.patch_data.emplace_back(stitch_counts, corners, quads[q].time->val);
+		}
+
 		for (int e = 0; e < edges.size(); ++e) {
 			int seam = edges[e].seam;
 			if (seam < 0) {
@@ -829,19 +896,18 @@ namespace hlk {
 				CoarseKnitGraph::Edge edge;
 				edge.src = src / 4;
 				edge.dst = dst / 4;
-				edge.src_side = src % 4;
-				edge.dst_side = dst % 4;
+				
+				int raw_src_side = src % 4;
+				int raw_dst_side = dst % 4;
+
+				int src_c = quads[edge.src].get_generalized_bottom_left();
+				int dst_c = quads[edge.dst].get_generalized_bottom_left();
+
+				edge.src_side = (raw_src_side - src_c + 4) % 4;
+				edge.dst_side = (raw_dst_side - dst_c + 4) % 4;
 				edge.is_loop = sides[src].is_loop->val;
 				graph.edges.push_back(edge);
 			}
-		}
-
-		for (int q = 0; q < quads.size(); ++q) {
-			Eigen::MatrixXd corners;
-			std::vector<std::vector<int>> stitch_counts;
-			quads[q].get_generalized_corners(corners);
-			quads[q].get_sides_stitches(stitch_counts);
-			graph.patch_data.emplace_back(stitch_counts, corners, quads[q].time->val);
 		}
 
 		return graph;

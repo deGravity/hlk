@@ -36,14 +36,16 @@ namespace hlk {
 	struct CoarseKnitSide;
 
 	struct CoarseKnitEdge {
-		// Data We Definitely Want
 		CoarseKnitEdge(Optimizer& topo_opt, Optimizer& geo_opt, int i, CoarseKnitMesh* m);
 		int seam;
 		int index;
+		std::shared_ptr<IntProp> stitches;
 		CoarseKnitMesh* mesh;
 
 		std::vector<std::pair<z3::expr, std::string>> get_topology_constraints();
 		std::vector<std::pair<z3::expr, std::string>> get_geometry_constraints();
+		z3::expr get_geometry_cost();
+		
 		void update_texture();
 
 		void save(std::ofstream& f);

@@ -48,11 +48,13 @@ namespace hlk {
 		int base_index = 0;
 		int overlay_index = -1;
 		int graph_index = -1;
+		int knit_graph_index = -1;
 
 		int minimizer_timeout = (int) M.minimizer_timeout;
 
 		bool show_mesh = true;
 		bool show_graph = true;
+		bool show_knit_graph = true;
 		bool planarize = false;
 
 		enum Tool {
