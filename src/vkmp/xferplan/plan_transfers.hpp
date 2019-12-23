@@ -52,7 +52,7 @@ namespace vkmp {
 struct Constraints {
 	int32_t min_free = std::numeric_limits< int32_t >::min();
 	int32_t max_free = std::numeric_limits< int32_t >::max();
-    uint32_t max_racking = 3;
+    uint32_t max_racking = 2;
 };
 
 struct Transfer {
