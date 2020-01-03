@@ -9,6 +9,7 @@
 
 #include "autoknit.h"
 #include "coarse_knit_graph.h"
+#include "vkmp/scheduler.hpp"
 
 using namespace hlk;
 using namespace std;
@@ -123,7 +124,7 @@ int main(void) {
 
 		std::vector<ak::Stitch> loaded_stitches;
 	}
-	else {
+	else if (mode == 5) {
 
 		CoarseKnitGraph G_c;
 
@@ -199,6 +200,29 @@ int main(void) {
 		viewer.data().show_overlay = true;
 		viewer.data().line_width = 2.0f;
 		viewer.launch();
+	}
+	else {
+		std::vector<std::vector<int>> sides{ {3},{3},{3},{3} };
+		Eigen::MatrixXd corners(4, 3);
+		corners <<
+			0, 0, 0,
+			1, 0, 0,
+			1, 1, 0,
+			0, 1, 0;
+		Patch p(sides, corners);
+		p.graph.contract();
+		p.graph.trace("test_trace");
+
+		/*
+		vkmp::Scheduler s;
+		std::vector<vkmp::Stitch>& stitches = s.stitches;
+		for (int r = 0; r < 5; ++r) {
+			for (int c = 0; c < 5; ++c) {
+			}
+		}
+		*/
+
+
 	}
 
     return 0;

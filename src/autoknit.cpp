@@ -536,6 +536,7 @@ namespace ak {
 				//find next-most parent stitch with a next neighbor:
 				uint32_t par = at;
 				uint32_t par_next = -1U;
+				int par_depth = 0;
 				while (par_next == -1U) {
 					bool found = false;
 					for (uint32_t n : {get_next_parent(par), get_prev_parent(par)}) {
@@ -547,10 +548,16 @@ namespace ak {
 					}
 					if (!found) return false; //ran out of parents
 					par_next = get_next(par);
+					++par_depth;
 				}
 				assert(par_next != -1U);
 
 				if (info[par_next].knits == 2) return false;
+
+				// BEN'S ADDITION - only allow certain short-row depths before starting a new yarn
+				int max_par_depth = 3;
+				if (par_depth > max_par_depth) return false;
+
 				knit(par_next);
 
 				return true;

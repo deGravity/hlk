@@ -42,7 +42,6 @@ void hlk::KnitGraph::trace(std::string filename)
 	vkmp::Scheduler s;
 	std::vector< vkmp::Stitch >& stitches = s.stitches;
 	stitches.reserve(traced_stitches.size());
-	int i = 0;
 	for (auto const& ts : traced_stitches) {
 		stitches.emplace_back();
 		stitches.back().yarn = ts.yarn;
@@ -54,19 +53,27 @@ void hlk::KnitGraph::trace(std::string filename)
 		stitches.back().out[1] = ts.outs[1];
 		stitches.back().at = ts.at;
 
-		stitches.back().data.id = 1;
-		stitches.back().data.name = "knit";
-		stitches.back().data.is_basic_type = 0;
-		if (i == 0 || i == traced_stitches.size() - 1) {
-			stitches.back().data.id = 0;
-			stitches.back().data.name = "yarnend";
+		stitches.back().data = nodes[ts.vertex]->get_data();
+	}
+	// Now go back and put in yarn-ends at the first and last instances of
+	// each yarn
+	typedef struct {
+		uint32_t first = -1U;
+		uint32_t last = -1U;
+	} yarn_endpoints;
+	std::map<int, yarn_endpoints> yarn_ends;
+	std::set<int> yarn_ids;
+	for (int i = 0; i < traced_stitches.size(); ++i) {
+		int yarn = traced_stitches[i].yarn;
+		if (yarn_ends[yarn].first == -1U) {
+			yarn_ends[yarn].first = i;
 		}
-
-		if (stitches.back().type == 'd') {
-			stitches.back().data.id = 2;
-			stitches.back().data.name = "tuck";
-		}
-		++i;
+		yarn_ends[yarn].last = i;
+		yarn_ids.insert(yarn);
+	}
+	for (int yarn : yarn_ids) {
+		stitches[yarn_ends[yarn].first].data = STITCH::YARNEND;
+		stitches[yarn_ends[yarn].last].data = STITCH::YARNEND;
 	}
 	
 	//vkmp::load_stitches(filename, &s.stitches);
@@ -255,4 +262,59 @@ bool hlk::KnitGraphNode::contract()
 		return true;
 	}
 	return false;
+}
+
+vkmp::StData hlk::KnitGraphNode::get_data()
+{
+	vkmp::StData data;
+
+	data = STITCH::KNIT; // Default to a knit stitch
+	// Knit and Purl
+	if (top.size() == 1 && bottom.size() == 1 && left && right) {
+		auto type = top[0]->type;
+		switch (type) {
+		case LoopType::KNIT:
+			data = STITCH::KNIT;
+			break;
+		case LoopType::PURL:
+			data = STITCH::PURL;
+			break;
+		case LoopType::SLIP:
+			data = STITCH::MISS;
+			break;
+		case LoopType::YARNOVER:
+			// This would be a 2-pass: first drop, then tuck
+			// Doesn't make a lot of sense
+			break;
+		}
+	}
+	// Increases
+	if (top.size() > bottom.size()) {
+		data = STITCH::CASTON;
+		if (top.size() == 2 && bottom.size() == 1 && left && right) {
+			// TODO - How to make hidden (split) increases?
+			data = STITCH::INCREASE;
+			if (top[1]->type == LoopType::YARNOVER) {
+				data = STITCH::INCREASE_R;
+			}
+			else if (top[0]->type == LoopType::YARNOVER) {
+				data = STITCH::INCREASE_L;
+			}
+		}
+	}
+	// Decreases
+	if (bottom.size() == 2 && top.size() == 1 && left && right) {
+		data = STITCH::BINDOFF;
+		if (top.size() == 1 && bottom.size() == 2 && left && right) {
+			data = STITCH::DECREASE;
+			if (loop_stacking[0] == 0) {
+				data = STITCH::DEC_R;
+			}
+			else {
+				data = STITCH::DEC_L;
+			}
+		}
+	}
+
+	return data;
 }
