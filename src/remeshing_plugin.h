@@ -61,6 +61,7 @@ public:
         N = 4; // degree of field
         globalRotation = 0.;
         singularitySelect = false;
+        constrainedRoot = false;
     }
     ~RemeshingMenu() {
         clear();
@@ -158,6 +159,7 @@ public:
     void reduce_curl();
     void init_quad_mesh();
     void quad_helix_finding();
+    std::vector<FaceVector> hard_faces();
     void setup_basis_cycles();
     void compute_target_curvature();
     void update_raw_field();
@@ -249,6 +251,7 @@ public:
 
     // cross field data
     std::vector<Eigen::MatrixXd> direction_field; // size 2, using stl for serialization
+    Eigen::VectorXd field_sings;
 
     // polyvector field data
     Eigen::MatrixXcd polyvector_field;
@@ -285,8 +288,9 @@ public:
     int currVertex, currCycle;
     int N; // degree of field
     Eigen::VectorXd linf;
+    float constrainedRootAngle = -1;
     float globalRotation;
-    bool singularitySelect;
+    bool singularitySelect, constrainedRoot;
 
     /////////////////// UI ///////////////////
     std::string in_path, out_path, input_model;

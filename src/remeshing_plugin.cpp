@@ -207,13 +207,13 @@ void RemeshingMenu::draw_viewer_menu() {
             ImGui::Checkbox("Use Optimized Loops", &use_optim_loop);
             /*ImGui::Checkbox("Show Axis", &show_axis);
             ImGui::Checkbox("Multi Points", &multi_points_drawing);
-            ImGui::Checkbox("Do matching", &do_matching);
-            ImGui::Checkbox("Use Guiding Field", &use_guiding_field);*/
+            ImGui::Checkbox("Do matching", &do_matching);*/
+            ImGui::Checkbox("Use Guiding Field", &use_guiding_field);
             // Add threshold values.
             ImGui::DragFloat("Click Threshold", &click_threshold, 0.05f, 0.0f, 0.5f);
-            ImGui::DragFloat("Soft Weight", &soft_constraint_strength, 0.0f, 0.0f, 1.0f);
+            ImGui::DragFloat("Soft Weight", &soft_constraint_strength, 0.01f, 0.0f, 1.0f);
             if (use_guiding_field) {
-                ImGui::DragFloat("Field Weight", &field_guidance_weight, 0.0f, 0.0f, 1.0f);
+                ImGui::DragFloat("Field Weight", &field_guidance_weight, 0.01f, 0.0f, 100.0f);
             }
             ImGui::DragFloat("Gradient Size", &gradient_size, 1.0f, 0.0f, 150.0f);
             ImGui::DragInt("# Stiffening", &stiffen_iter, 1, 0, 10);
@@ -255,15 +255,15 @@ void RemeshingMenu::draw_viewer_menu() {
             }
 
             // Direction field controls
-            ImGui::Text("===Field Operations===");
-            ImGui::Checkbox("Should setup boundary", &should_setup_boundary);
-            /*if (ImGui::Button("Initialize field from principal curvatures", ImVec2(w - p, 0))) {
+            /*ImGui::Checkbox("Should setup boundary", &should_setup_boundary);
+            if (ImGui::Button("Initialize field from principal curvatures", ImVec2(w - p, 0))) {
                 init_curvature_field();
                 viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
             }*/
             if (has_direction_field) {
                 // field interpolation mode options.
-                ImGui::Text("Click to select the type of field.");
+                ImGui::Text("===Field Operations===");
+                // ImGui::Text("Click to select the type of field.");
                 if (ImGui::RadioButton("Cross", miq_mode == MIQMode::CROSS)) {
                     miq_mode = MIQMode::CROSS;
                 }
@@ -961,12 +961,14 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
         viewer->core().proj, viewer->core().viewport, V, F, fid, bc);
 
     if (button == 0 && singularitySelect) { // trivial connections: select singularity
-        Eigen::Vector3d::Index maxCol;
-        bc.maxCoeff(&maxCol);
-        currVertex = F(fid, maxCol);
-        currCycle = vertex2cycle(currVertex);
-        viewing_mode = ViewingMode::MESH_SING;
-        should_redraw = true;
+        if (intersects) {
+            Eigen::Vector3d::Index maxCol;
+            bc.maxCoeff(&maxCol);
+            currVertex = F(fid, maxCol);
+            currCycle = vertex2cycle(currVertex);
+            viewing_mode = ViewingMode::MESH_SING;
+            should_redraw = true;
+        }
 
     } else if ((button == 2 || button == 1) && alt_on && !shift_on && !ctrl_on) { // loop
         if (feature_points.size() > 2) {
@@ -991,10 +993,14 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
         }
 
     } else if (button == 2 && ctrl_on && alt_on) { // ctrl+alt+right
+        bool has_hard = false;
         if (mouse_d < 2) {
             if (intersects) {
                 auto faces_to_deselect = symmetrizer.symmetric_faces(fid, f_symmetry_axes());
-                for (auto face : faces_to_deselect) face_vectors[face].assigned[drawing_mode] = false;
+                for (auto face : faces_to_deselect) {
+                    if (face_vectors[face].is_hard) has_hard = true;
+                    face_vectors[face].assigned[drawing_mode] = false;
+                }
             }
         } else if (mouse_d > 10 && feature_points.size() > 2) {
             std::vector<std::vector<int>> cutting_faces(F.rows(), std::vector<int>());
@@ -1008,10 +1014,16 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
                 for (int fid = 0; fid < cutting_faces.size(); fid++) {
                     if (!cutting_faces[fid].empty()) {
                         auto faces_to_deselect = symmetrizer.symmetric_faces(fid, f_symmetry_axes());
-                        for (auto face : faces_to_deselect) face_vectors[face].assigned[drawing_mode] = false;
+                        for (auto face : faces_to_deselect) {
+                            if (face_vectors[face].is_hard) has_hard = true;
+                            face_vectors[face].assigned[drawing_mode] = false;
+                        }
                     }
                 }
             }
+        }
+        if (has_hard) {
+            setup_basis_cycles(); // update hard directional constraints
         }
 
     } else if (button == 0) { // left
@@ -1086,6 +1098,7 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
                 if (existing_edge_label && geodesic_path.size() >= 2) { geodesic_assign_vector(); }
                 else { assign_vector(); }
                 symmetry_assign_vector(feature_points_save);
+                if (ctrl_on) setup_basis_cycles(); // update hard directional constraints
                 should_redraw = true;
 
             // seaming line
@@ -1907,6 +1920,14 @@ void RemeshingMenu::update_drawing() {
         }
     }
 
+    for (int i = 0; i < field_sings.rows(); ++i) {
+        if (field_sings(i) > 0.001) {
+            draw_a_point(V.row(i), 2, mesh_size * 0.001);
+        } else if (field_sings(i) < -0.001) {
+            draw_a_point(V.row(i), 3, mesh_size * 0.001);
+        }
+    }
+         
     if (viewing_mode == ViewingMode::MESH_SING) {
         draw_a_point(V.row(currVertex), 4);
     }

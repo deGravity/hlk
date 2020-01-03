@@ -315,17 +315,17 @@ void RemeshingMenu::interpolate_field() {
         viewing_mode = ViewingMode::MESH_FIELD;
 
     } else if (miq_mode == MIQMode::CROSS) {
-        Eigen::VectorXd S;
-        interpolate_cross_field(S);
+        interpolate_cross_field(field_sings);
         update_vectors_from_field();
         directional::representative_to_raw(V, F, direction_field[1], rosy, curlRawField);
         viewing_mode = ViewingMode::MESH_ONLY;
 
         int s_count = 0;
-        for (int i = 0; i < S.rows(); ++i) {
-            s_count += abs(S(i)) > 0.001 ? 1 : 0;
+        for (int i = 0; i < field_sings.rows(); ++i) {
+            s_count += abs(field_sings(i)) > 0.001 ? 1 : 0;
         }
         std::cout << "Singularity Count = " << s_count << "\n";
+        std::cout << "Total index: " << field_sings.sum() << "\n";
     }
 
     has_direction_field = true;
@@ -512,8 +512,37 @@ void RemeshingMenu::quad_helix_finding() {
     }
 }
 
+std::vector<FaceVector> RemeshingMenu::hard_faces() {
+    std::vector<FaceVector> faces;
+    for (const FaceVector& fv : face_vectors) {
+        if (fv.is_hard && fv.assigned[1]) {
+            faces.push_back(fv);
+        }
+    }
+    return faces;
+}
+
 void RemeshingMenu::setup_basis_cycles() {
-    directional::dual_cycles(V, F, EV, EF, basisCycles, cycleCurvature, vertex2cycle, innerEdges);
+    std::vector<FaceVector> directional_constraints = hard_faces();
+    if (directional_constraints.empty()) {
+        directional::dual_cycles(V, F, EV, EF, basisCycles, cycleCurvature, vertex2cycle, innerEdges);
+        constrainedRoot = false;
+    } else {
+        std::vector<int> face_inds;
+        std::vector<double> constraint_angles;
+        interpolate_cross_field(field_sings);
+        const Eigen::MatrixXd& PD1 = direction_field[1];
+        for (const FaceVector& fv : directional_constraints) {
+            face_inds.push_back(fv.face_id);
+            double x = PD1.row(fv.face_id) * B1.row(fv.face_id).transpose();
+            double y = PD1.row(fv.face_id) * B2.row(fv.face_id).transpose();
+            double angle = atan2(y, x);
+            constraint_angles.push_back(angle);
+        }
+        directional::dual_cycles(V, F, EV, EF, basisCycles, cycleCurvature, vertex2cycle, innerEdges, face_inds, constraint_angles);
+        constrainedRoot = true;
+        constrainedRootAngle = constraint_angles[0];
+    }
     cycleIndices = Eigen::VectorXi::Constant(basisCycles.rows(), 0);
 
     for (int i = 0; i < singVertices.size(); i++)
@@ -528,13 +557,7 @@ void RemeshingMenu::setup_basis_cycles() {
     std::cout << "Euler characteristic: " << eulerChar << std::endl;
     std::cout << "#generators: " << numGenerators << std::endl;
     std::cout << "#boundaries: " << numBoundaries << std::endl;
-    /*for (int i = 0; i < boundaryLoops.size(); ++i) {
-        std::cout << "boundary loop " << i << ": " << std::endl;
-        for (int j : boundaryLoops[i]) {
-            std::cout << j << " ";
-        }
-        std::cout << std::endl;
-    }*/
+    std::cout << "#directional constraints: " << directional_constraints.size() << std::endl;
 
     // collecting cycle faces for visualization
     cycleFaces.resize(basisCycles.rows());
@@ -551,31 +574,41 @@ void RemeshingMenu::setup_basis_cycles() {
 }
 
 void RemeshingMenu::compute_target_curvature() {
-    Eigen::VectorXd S;
-    interpolate_cross_field(S);
-    // the difference in the angle representation of edge i from EF(i,0) to EF(i,1)
+    interpolate_cross_field(field_sings);
     const Eigen::MatrixXd& PD1 = direction_field[1];
+    // the difference in the angle representation of edge i from EF(i,0) to EF(i,1)
     Eigen::VectorXd edgeParallelAngleChange(basisCycles.cols());
     for (int i = 0; i < innerEdges.rows(); i++) {
         int currEdge = innerEdges(i);
-        // cross field angle change
-        double xx1 = PD1.row(EF(currEdge, 0)).dot(B1.row(EF(currEdge, 0)));
-        double yy1 = PD1.row(EF(currEdge, 0)).dot(B2.row(EF(currEdge, 0)));
-        double xx2 = PD1.row(EF(currEdge, 1)).dot(B1.row(EF(currEdge, 1)));
-        double yy2 = PD1.row(EF(currEdge, 1)).dot(B2.row(EF(currEdge, 1)));
-        // edge angle change
         Eigen::RowVectorXd edgeVectors = (V.row(EV(currEdge, 1)) - V.row(EV(currEdge, 0))).normalized();
-        double x1 = edgeVectors.dot(B1.row(EF(currEdge, 0)));
-        double y1 = edgeVectors.dot(B2.row(EF(currEdge, 0)));
-        double x2 = edgeVectors.dot(B1.row(EF(currEdge, 1)));
-        double y2 = edgeVectors.dot(B2.row(EF(currEdge, 1)));
-        edgeParallelAngleChange(i) = atan2(y2, x2) + atan2(yy2, xx2) - atan2(y1, x1) - atan2(yy1, xx1);
+        // cross field bases
+        Eigen::VectorXd b1_0 = PD1.row(EF(currEdge, 0)).normalized();
+        double xx1 = b1_0.dot(B1.row(EF(currEdge, 0)));
+        double yy1 = b1_0.dot(B2.row(EF(currEdge, 0)));
+        double angle1 = atan2(yy1, xx1);
+        angle1 += 2 * igl::PI / (double)N;
+        Eigen::VectorXd b2_0 = cos(angle1) * B1.row(EF(currEdge, 0)) + sin(angle1) * B2.row(EF(currEdge, 0));
+
+        Eigen::VectorXd b1_1 = PD1.row(EF(currEdge, 1)).normalized();
+        double xx2 = b1_1.dot(B1.row(EF(currEdge, 1)));
+        double yy2 = b1_1.dot(B2.row(EF(currEdge, 1)));
+        double angle2 = atan2(yy2, xx2);
+        angle2 += 2 * igl::PI / (double)N;
+        Eigen::VectorXd b2_1 = cos(angle2) * B1.row(EF(currEdge, 1)) + sin(angle2) * B2.row(EF(currEdge, 1));
+
+        // edge angle change
+        double x1 = edgeVectors.dot(b1_0);
+        double y1 = edgeVectors.dot(b2_0);
+        double x2 = edgeVectors.dot(b1_1);
+        double y2 = edgeVectors.dot(b2_1);
+        edgeParallelAngleChange(i) = atan2(y2, x2) - atan2(y1, x1);
     }
     targetCurvature = basisCycles * edgeParallelAngleChange;
     for (int i = 0; i < targetCurvature.size(); i++) {
         while (targetCurvature(i) >= M_PI) targetCurvature(i) -= 2.0 * M_PI;
         while (targetCurvature(i) < -M_PI) targetCurvature(i) += 2.0 * M_PI;
     }
+    //std::cout << targetCurvature << "\n";
 }
 
 void RemeshingMenu::update_raw_field() {
@@ -608,7 +641,8 @@ void RemeshingMenu::update_raw_field() {
     }
 
     Eigen::MatrixXd representative;
-    directional::rotation_to_representative(V, F, EV, EF, rotationAngles, N, globalRotation, representative);
+    directional::rotation_to_representative(
+        V, F, EV, EF, rotationAngles, N, constrainedRoot ? constrainedRootAngle : globalRotation, representative);
     directional::representative_to_raw(V, F, representative, N, rawField);
     if (do_matching) {
         Meshing::comb_field_from_connection(V, F, EV, EF, FE, rawField, combedField, combedMatching, combedEffort);
