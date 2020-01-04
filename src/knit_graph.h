@@ -92,7 +92,7 @@ namespace hlk {
 		bool contract();
 		bool contracted = false; // If true, this should be removed from node lists
 
-		vkmp::StData get_data();
+		vkmp::StData get_data(bool first_tracing);
 
 	};
 

@@ -7,6 +7,9 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake
                       ${CMAKE_CURRENT_SOURCE_DIR}/ext/libQEx/cmake
                       ${CMAKE_MODULE_PATH})
 
+# Get path to scripts directory for calling node with dsl.js
+add_definitions(-DSCRIPTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/scripts")
+
 # LibIGL options - may neet to use option instead of set
 option(LIBIGL_WITH_PNG "Use PNG" ON)
 option(LIBIGL_WITH_OPENGL "Use OpenGL" ON)

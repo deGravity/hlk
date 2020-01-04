@@ -42,6 +42,7 @@ void hlk::KnitGraph::trace(std::string filename)
 	vkmp::Scheduler s;
 	std::vector< vkmp::Stitch >& stitches = s.stitches;
 	stitches.reserve(traced_stitches.size());
+	std::vector<bool> first_trace(nodes.size(), true);
 	for (auto const& ts : traced_stitches) {
 		stitches.emplace_back();
 		stitches.back().yarn = ts.yarn;
@@ -53,7 +54,9 @@ void hlk::KnitGraph::trace(std::string filename)
 		stitches.back().out[1] = ts.outs[1];
 		stitches.back().at = ts.at;
 
-		stitches.back().data = nodes[ts.vertex]->get_data();
+		// First tracing gets a
+		stitches.back().data = nodes[ts.vertex]->get_data(first_trace[ts.vertex]);
+		first_trace[ts.vertex] = false;
 	}
 	// Now go back and put in yarn-ends at the first and last instances of
 	// each yarn
@@ -85,6 +88,16 @@ void hlk::KnitGraph::trace(std::string filename)
 	yarn_mappings[1] = std::make_pair(2, -1);
 	s.do_schedule(yarn_mappings, true, - 1);
 	s.write_schedule(filename + ".js");
+	std::string scripts_dir = SCRIPTS_DIR;
+	std::string node_path = "NODE_PATH=" + scripts_dir + "\\";
+	putenv(node_path.c_str());
+	std::string command_1 = "node " + filename + ".js";
+	std::cout << "Trying to run:\n" << command_1 << std::endl;
+	system(command_1.c_str());
+	std::string command_2 = "node " + scripts_dir + "\\knitout-to-dat.js " + filename + ".k " + filename + ".dat";
+	std::cout << "Trying to run:\n" << command_2 << std::endl;
+	system(command_2.c_str());
+
 	
 	//ak::save_traced(filename, traced_stitches);
 }
@@ -264,7 +277,7 @@ bool hlk::KnitGraphNode::contract()
 	return false;
 }
 
-vkmp::StData hlk::KnitGraphNode::get_data()
+vkmp::StData hlk::KnitGraphNode::get_data(bool first_tracing)
 {
 	vkmp::StData data;
 
@@ -301,6 +314,11 @@ vkmp::StData hlk::KnitGraphNode::get_data()
 				data = STITCH::INCREASE_L;
 			}
 		}
+		// Don't output the increase on the first tracing
+		// TODO - Should choose appropriately between knit and purl
+		if (first_tracing) {
+			data = STITCH::KNIT;
+		}
 	}
 	// Decreases
 	if (bottom.size() == 2 && top.size() == 1 && left && right) {
@@ -313,6 +331,11 @@ vkmp::StData hlk::KnitGraphNode::get_data()
 			else {
 				data = STITCH::DEC_L;
 			}
+		}
+		// Don't output the increase on the second tracing
+		// TODO - Should choose appropriately between knit and purl
+		if (!first_tracing) {
+			data = STITCH::KNIT;
 		}
 	}
 
