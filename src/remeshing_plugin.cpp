@@ -207,8 +207,9 @@ void RemeshingMenu::draw_viewer_menu() {
             ImGui::Checkbox("Use Optimized Loops", &use_optim_loop);
             /*ImGui::Checkbox("Show Axis", &show_axis);
             ImGui::Checkbox("Multi Points", &multi_points_drawing);
-            ImGui::Checkbox("Do matching", &do_matching);*/
             ImGui::Checkbox("Use Guiding Field", &use_guiding_field);
+            */
+            ImGui::Checkbox("Do matching", &do_matching);
             // Add threshold values.
             ImGui::DragFloat("Click Threshold", &click_threshold, 0.05f, 0.0f, 0.5f);
             ImGui::DragFloat("Soft Weight", &soft_constraint_strength, 0.01f, 0.0f, 1.0f);

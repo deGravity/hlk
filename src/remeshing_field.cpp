@@ -539,9 +539,8 @@ void RemeshingMenu::setup_basis_cycles() {
             double angle = atan2(y, x);
             constraint_angles.push_back(angle);
         }
-        directional::dual_cycles(V, F, EV, EF, basisCycles, cycleCurvature, vertex2cycle, innerEdges, face_inds, constraint_angles);
+        constrainedRootAngle = directional::dual_cycles(V, F, EV, EF, basisCycles, cycleCurvature, vertex2cycle, innerEdges, face_inds, constraint_angles);
         constrainedRoot = true;
-        constrainedRootAngle = constraint_angles[0];
     }
     cycleIndices = Eigen::VectorXi::Constant(basisCycles.rows(), 0);
 
@@ -641,8 +640,13 @@ void RemeshingMenu::update_raw_field() {
     }
 
     Eigen::MatrixXd representative;
-    directional::rotation_to_representative(
-        V, F, EV, EF, rotationAngles, N, constrainedRoot ? constrainedRootAngle : globalRotation, representative);
+    if (constrainedRoot) {
+        while (constrainedRootAngle >= M_PI) constrainedRootAngle -= 2.0 * M_PI;
+        while (constrainedRootAngle < -M_PI) constrainedRootAngle += 2.0 * M_PI;
+        globalRotation = -constrainedRootAngle;
+    }
+
+    directional::rotation_to_representative(V, F, EV, EF, rotationAngles, N, globalRotation, representative);
     directional::representative_to_raw(V, F, representative, N, rawField);
     if (do_matching) {
         Meshing::comb_field_from_connection(V, F, EV, EF, FE, rawField, combedField, combedMatching, combedEffort);
