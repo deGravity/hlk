@@ -163,6 +163,7 @@ Helpers.prototype.xfer = function xfer(from, to, target = EmitStyle.IMM) {
 	if(target == EmitStyle.IMM){
 		this.pass_commit();
 		this.out("xfer " + bnToHalf(from) + " " + bnToHalf(to));
+		this.out("xfer " + bnToHalf(from) + " " + bnToHalf(to));
 	}
 	else{
 		let instr = ("xfer " + bnToHalf(from) + " " + bnToHalf(to));
@@ -171,6 +172,7 @@ Helpers.prototype.xfer = function xfer(from, to, target = EmitStyle.IMM) {
 		let pack = {'i':instr, 'p':is_knitting, 'b':on_bed};
 
 
+		emitted_instructions[target].push(pack);
 		emitted_instructions[target].push(pack);
 	}
 	anchors.delete(from); // what you planned on dropping is gone, don't drop something arbitrary
