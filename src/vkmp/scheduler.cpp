@@ -573,6 +573,9 @@ bool Scheduler::do_schedule( std::map<int, std::pair<int,int>> yarn_mappings, bo
         return ret;
     };
 
+	// TODO BEN: Possible Scheduler Improvement - try to make passes
+	// end with yarn-carrier maximally left or right
+
     { //build steps:
         //current yarn position w.r.t. active loops:
         struct YarnInfo {
@@ -610,6 +613,13 @@ bool Scheduler::do_schedule( std::map<int, std::pair<int,int>> yarn_mappings, bo
 
                     else return '|';
                 };
+
+				// BEN ADDITION - KEEP TRACK OF # OF BASIC TYPES!
+				int num_basics = 0;
+				if (stitches[step.begin].data.is_basic_type) {
+					++num_basics;
+				}
+
                 while (step.end < stitches.size()) {
                     //same basic type:
                     if (basic_type(stitches[step.end]) != basic_type(stitches[step.begin])) break;
@@ -618,6 +628,12 @@ bool Scheduler::do_schedule( std::map<int, std::pair<int,int>> yarn_mappings, bo
 
                     if(stitches[step.end].data.is_basic_type &&
                             stitches[step.end].data.id != stitches[step.begin].data.id) break;
+
+					// BEN ADDITION - DON'T ALLOW MULTIPLE BASIC TYPES!
+					if (stitches[step.end].data.is_basic_type) {
+						++num_basics;
+					}
+					if (num_basics > 1) break;
 
                     //cable info (all non cable stitches have a cable id -1):
                     //should be dealt with basic types
@@ -676,7 +692,6 @@ bool Scheduler::do_schedule( std::map<int, std::pair<int,int>> yarn_mappings, bo
                 }
             }
 
-			// Ben: Modification from original - we default to anti-clockwise
             if (stitches[step.begin].direction == Stitch::CW) {
                 std::reverse(in_chain.begin(), in_chain.end());
                 std::reverse(out_chain.begin(), out_chain.end());
@@ -724,6 +739,13 @@ bool Scheduler::do_schedule( std::map<int, std::pair<int,int>> yarn_mappings, bo
                     outs.emplace_back(storages[storage_idx]);
                 }
 
+				// BEN:
+				//     This function takes in two loops, and makes sure that they are next-to each other a->b in ccw
+				//     order, in the storages. This may mean splitting up an existing storage, or merging two
+				//     storages in order for them to be adjacent
+				// Q:
+				//     Doesn't merging or splitting loops invalidate the active_loops storage index for all of the
+				//     other yarns?
                 //flip and re-jigger yarn storages:
                 auto link_ccw = [&outs](Loop const &a, Loop const &b) {
                     //std::cout << "Linking " << a.to_string() << " -> " << b.to_string() << std::endl; //DEBUG
@@ -853,6 +875,7 @@ bool Scheduler::do_schedule( std::map<int, std::pair<int,int>> yarn_mappings, bo
                     }
                     assert(s != outs.end());
                     assert(l < s->size());
+					// Ben: Put in_chain[0] at the back of the storage
                     std::rotate(s->begin(), s->begin() + l, s->end());
 
                     //move 's' to outs[0]:

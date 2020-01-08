@@ -488,13 +488,17 @@ namespace hlk {
 			"one_shaping_type_" + std::to_string(index)
 		));
 		
-		/*
+		//shaping_distribution = ShapingType::NONE;
+		//short_row_distribution = ShapingType::NONE;
+
+		
 		if (shaping_distribution == ShapingType::NONE) {
 			constraints.push_back(std::make_pair(
 				loop_in == loop_out,
 				"no_inc_dec_" + std::to_string(index)
 			));
 		}
+		/*
 		else if (shaping_distribution == ShapingType::DISTRIBUTED) {
 			constraints.push_back(std::make_pair(
 				loop_min * z3::pw(2, rows - 1) >= loop_max,
@@ -513,14 +517,14 @@ namespace hlk {
 				"single_side_increase_" + std::to_string(index)
 			));
 		}
-
+		*/
 		if (short_row_distribution == ShapingType::NONE) {
 			constraints.push_back(std::make_pair(
 				yarn_in == yarn_out,
 				"no_short_row_" + std::to_string(index)
 			));
 		}
-		*/
+		
 
 		return constraints;
 	}

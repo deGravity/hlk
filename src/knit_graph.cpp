@@ -54,10 +54,30 @@ void hlk::KnitGraph::trace(std::string filename)
 		stitches.back().out[1] = ts.outs[1];
 		stitches.back().at = ts.at;
 
-		// First tracing gets a
 		stitches.back().data = nodes[ts.vertex]->get_data(first_trace[ts.vertex]);
+
+		// Force ribbing-like pattern
+		/*
+		if (nodes[ts.vertex]->index % 4 < 2) {
+			stitches.back().data = STITCH::PURL;
+		}
+		*/
+		
+		/*
+		if (stitches.back().in[0] == -1U && stitches.back().in[1] == -1U) {
+			stitches.back().data = STITCH::CASTON;
+		}
+		*/
+
+		/*
+		if (stitches.back().out[0] == -1U && stitches.back().out[1] == -1U) {
+			stitches.back().data = STITCH::BINDOFF;
+		}
+		*/
 		first_trace[ts.vertex] = false;
+
 	}
+
 	// Now go back and put in yarn-ends at the first and last instances of
 	// each yarn
 	typedef struct {
@@ -325,12 +345,16 @@ vkmp::StData hlk::KnitGraphNode::get_data(bool first_tracing)
 		data = STITCH::BINDOFF;
 		if (top.size() == 1 && bottom.size() == 2 && left && right) {
 			data = STITCH::DECREASE;
+			
+			/*
 			if (loop_stacking[0] == 0) {
 				data = STITCH::DEC_R;
 			}
 			else {
 				data = STITCH::DEC_L;
 			}
+			*/
+			
 		}
 		// Don't output the increase on the second tracing
 		// TODO - Should choose appropriately between knit and purl
