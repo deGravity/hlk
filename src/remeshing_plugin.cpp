@@ -83,20 +83,30 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
             } else if (key == 'B') {
                 if (numBoundaries) {
                     // loop through the boundary cycles.
-                    if (currCycle >= basisCycles.rows() - numBoundaries - numGenerators && currCycle < basisCycles.rows() - numGenerators - 1) {
+                    if (currCycle >= basisCycles.rows() - numBoundaries - numGenerators - numDirectionConstraints && currCycle < basisCycles.rows() - numGenerators - numDirectionConstraints - 1) {
                         currCycle++;
                     } else {
-                        currCycle = basisCycles.rows() - numBoundaries - numGenerators;
+                        currCycle = basisCycles.rows() - numBoundaries - numGenerators - numDirectionConstraints;
                     }
                     should_draw = true;
                 }
             } else if (key == 'G') {
                 if (numGenerators) {
                     // loop through the generators cycles.
-                    if (currCycle >= basisCycles.rows() - numGenerators && currCycle < basisCycles.rows() - 1) {
+                    if (currCycle >= basisCycles.rows() - numDirectionConstraints - numGenerators && currCycle < basisCycles.rows() - numDirectionConstraints - 1) {
                         currCycle++;
                     } else {
-                        currCycle = basisCycles.rows() - numGenerators;
+                        currCycle = basisCycles.rows() - numDirectionConstraints - numGenerators;
+                    }
+                    should_draw = true;
+                }
+            } else if (key == 'D') {
+                if (numDirectionConstraints) {
+                    // loop through the constrained paths.
+                    if (currCycle >= basisCycles.rows() - numDirectionConstraints && currCycle < basisCycles.rows() - 1) {
+                        currCycle++;
+                    } else {
+                        currCycle = basisCycles.rows() - numDirectionConstraints;
                     }
                     should_draw = true;
                 }
@@ -2056,7 +2066,7 @@ void RemeshingMenu::update_visualization(unsigned char key) {
     switch (viewing_mode) {
     case ViewingMode::MESH_SING:
     {
-        if (key == 'B' || key == 'G') {
+        if (key == 'B' || key == 'G' || key == 'D') {
             CMesh = directional::default_mesh_color().replicate(F.rows(), 1);
             for (int i = 0; i < cycleFaces[currCycle].size(); i++)
                 CMesh.row(cycleFaces[currCycle][i]) << directional::selected_face_color();

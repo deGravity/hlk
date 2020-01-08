@@ -552,11 +552,12 @@ void RemeshingMenu::setup_basis_cycles() {
     numBoundaries = boundaryLoops.size();
     eulerChar = V.rows() - EV.rows() + F.rows();
     numGenerators = 2 - eulerChar - boundaryLoops.size();
+    numDirectionConstraints = directional_constraints.empty() ? 0 : directional_constraints.size() - 1;
 
     std::cout << "Euler characteristic: " << eulerChar << std::endl;
     std::cout << "#generators: " << numGenerators << std::endl;
     std::cout << "#boundaries: " << numBoundaries << std::endl;
-    std::cout << "#directional constraints: " << directional_constraints.size() << std::endl;
+    std::cout << "#directional constraints: " << numDirectionConstraints << std::endl;
 
     // collecting cycle faces for visualization
     cycleFaces.resize(basisCycles.rows());

@@ -284,7 +284,7 @@ public:
     Eigen::VectorXi vertex2cycle, innerEdges;
     Eigen::MatrixXd CMesh, rawField;
     std::vector<std::vector<int>> cycleFaces;
-    int eulerChar, numGenerators, numBoundaries;
+    int eulerChar, numGenerators, numBoundaries, numDirectionConstraints;
     int currVertex, currCycle;
     int N; // degree of field
     Eigen::VectorXd linf;
