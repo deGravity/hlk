@@ -524,6 +524,8 @@ std::vector<FaceVector> RemeshingMenu::hard_faces() {
 
 void RemeshingMenu::setup_basis_cycles() {
     std::vector<FaceVector> directional_constraints = hard_faces();
+    numDirectionConstraints = directional_constraints.empty() ? 0 : directional_constraints.size() - 1;
+
     if (directional_constraints.empty()) {
         directional::dual_cycles(V, F, EV, EF, basisCycles, cycleCurvature, vertex2cycle, innerEdges);
         constrainedRoot = false;
@@ -552,7 +554,6 @@ void RemeshingMenu::setup_basis_cycles() {
     numBoundaries = boundaryLoops.size();
     eulerChar = V.rows() - EV.rows() + F.rows();
     numGenerators = 2 - eulerChar - boundaryLoops.size();
-    numDirectionConstraints = directional_constraints.empty() ? 0 : directional_constraints.size() - 1;
 
     std::cout << "Euler characteristic: " << eulerChar << std::endl;
     std::cout << "#generators: " << numGenerators << std::endl;
@@ -641,13 +642,7 @@ void RemeshingMenu::update_raw_field() {
     }
 
     Eigen::MatrixXd representative;
-    if (constrainedRoot) {
-        while (constrainedRootAngle >= M_PI) constrainedRootAngle -= 2.0 * M_PI;
-        while (constrainedRootAngle < -M_PI) constrainedRootAngle += 2.0 * M_PI;
-        globalRotation = -constrainedRootAngle;
-    }
-
-    directional::rotation_to_representative(V, F, EV, EF, rotationAngles, N, globalRotation, representative);
+    directional::rotation_to_representative(V, F, EV, EF, rotationAngles, N, constrainedRoot ? constrainedRootAngle : globalRotation, representative);
     directional::representative_to_raw(V, F, representative, N, rawField);
     if (do_matching) {
         Meshing::comb_field_from_connection(V, F, EV, EF, FE, rawField, combedField, combedMatching, combedEffort);
