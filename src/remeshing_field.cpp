@@ -532,16 +532,14 @@ void RemeshingMenu::setup_basis_cycles() {
     } else {
         std::vector<int> face_inds;
         std::vector<double> constraint_angles;
-        interpolate_cross_field(field_sings);
-        const Eigen::MatrixXd& PD1 = direction_field[1];
         for (const FaceVector& fv : directional_constraints) {
             face_inds.push_back(fv.face_id);
-            double x = PD1.row(fv.face_id) * B1.row(fv.face_id).transpose();
-            double y = PD1.row(fv.face_id) * B2.row(fv.face_id).transpose();
+            double x = fv.frame[1].dot(B1.row(fv.face_id));
+            double y = fv.frame[1].dot(B2.row(fv.face_id));
             double angle = atan2(y, x);
             constraint_angles.push_back(angle);
         }
-        constrainedRootAngle = directional::dual_cycles(V, F, EV, EF, basisCycles, cycleCurvature, vertex2cycle, innerEdges, face_inds, constraint_angles);
+        directional::dual_cycles(V, F, EV, EF, basisCycles, cycleCurvature, vertex2cycle, innerEdges, face_inds, constraint_angles, N);
         constrainedRoot = true;
     }
     cycleIndices = Eigen::VectorXi::Constant(basisCycles.rows(), 0);
@@ -609,7 +607,6 @@ void RemeshingMenu::compute_target_curvature() {
         while (targetCurvature(i) >= M_PI) targetCurvature(i) -= 2.0 * M_PI;
         while (targetCurvature(i) < -M_PI) targetCurvature(i) += 2.0 * M_PI;
     }
-    //std::cout << targetCurvature << "\n";
 }
 
 void RemeshingMenu::update_raw_field() {
@@ -641,6 +638,20 @@ void RemeshingMenu::update_raw_field() {
         std::cout << "[Info] trivial connection found.\n";
     }
 
+    if (constrainedRoot) {
+        Eigen::MatrixXd representative;
+        directional::rotation_to_representative(V, F, EV, EF, rotationAngles, N, 0, representative);
+        FaceVector fv_c0 = hard_faces()[0];
+        int i = fv_c0.face_id;
+        double cx = fv_c0.frame[1].dot(B1.row(i));
+        double cy = fv_c0.frame[1].dot(B2.row(i));
+        double cangle = atan2(cy, cx);
+        double x = representative.row(i) * B1.row(i).transpose();
+        double y = representative.row(i) * B2.row(i).transpose();
+        double angle = atan2(y, x);
+        constrainedRootAngle = N * (cangle - angle);
+    }
+
     Eigen::MatrixXd representative;
     directional::rotation_to_representative(V, F, EV, EF, rotationAngles, N, constrainedRoot ? constrainedRootAngle : globalRotation, representative);
     directional::representative_to_raw(V, F, representative, N, rawField);
@@ -650,6 +661,7 @@ void RemeshingMenu::update_raw_field() {
     } else {
         direction_field[1] = representative;
     }
+    has_direction_field = true;
 }
 
 void RemeshingMenu::update_singularities() {
