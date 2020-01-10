@@ -65,6 +65,11 @@ namespace hlk {
 		viewer->data().show_faces = false;
 		viewer->data().show_texture = false;
 
+		traced_graph_index = viewer->append_mesh();
+		viewer->data().show_faces = false;
+		viewer->data().show_texture = false;
+
+
 		// Set the data index back to the underlying mesh
 		viewer->selected_data_index = base_index;
 
@@ -351,6 +356,10 @@ namespace hlk {
 			extract_fine_graph();
 		}
 
+		if (ImGui::Button("Trace Graph")) {
+			trace_graph();
+		}
+
 		if (ImGui::Checkbox("Show Mesh", &show_mesh)) {
 			set_layer(overlay_index, show_mesh);
 		}
@@ -361,6 +370,10 @@ namespace hlk {
 
 		if (ImGui::Checkbox("Show Knit Graph", &show_knit_graph)) {
 			set_layer(knit_graph_index, show_knit_graph);
+		}
+
+		if (ImGui::Checkbox("Show Traced Graph", &show_traced_graph)) {
+			set_layer(traced_graph_index, show_traced_graph);
 		}
 
 		if (ImGui::DragInt("Minimizer Timeout", &minimizer_timeout, 1.0, 1, 60)) {
@@ -427,13 +440,27 @@ namespace hlk {
 		viewer->data(knit_graph_index).line_width = 2.0f;
 	}
 
+	void LabelingUI::trace_graph()
+	{
+		auto CKG = M.get_dual();
+		auto KG = CKG.build_graph();
+		KG.contract();
+		KG.trace();
+		if (KG.traced) {
+			auto vis = KnitGraph::visualize_stitches(KG.stitches);
+			vis.display(viewer->data(traced_graph_index));
+			viewer->data(traced_graph_index).line_width = 2.5;
+			viewer->data(traced_graph_index).point_size = 10;
+		}
+	}
+
 	void LabelingUI::generate_instructions()
 	{
 		optimize_geometry();
 		auto CKG = M.get_dual();
 		auto KG = CKG.build_graph();
 		KG.contract();
-		KG.trace(igl::file_dialog_save());
+		KG.generate_instructions(igl::file_dialog_save());
 	}
 
 	void LabelingUI::save_coarse_knit_mesh(std::string filename)

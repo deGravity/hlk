@@ -6,6 +6,7 @@
 
 #include "autoknit.h"
 #include "vkmp/xferplan/Stitch.hpp"
+#include "graph_vis.h"
 
 namespace hlk {
 
@@ -30,6 +31,8 @@ namespace hlk {
 		std::shared_ptr<KnitGraphNode> dst;
 
 		bool is_loop = true;
+
+		int index = -1;
 
 		// These fields are only used by loop edges
 		LoopType type;
@@ -83,6 +86,7 @@ namespace hlk {
 		std::shared_ptr<KnitGraphEdge> left;
 		std::shared_ptr<KnitGraphEdge> right;
 		std::vector<int> loop_stacking;
+		bool internal_knit = true; // Internal purl if false
 
 		Eigen::RowVector3d pos;
 
@@ -92,6 +96,9 @@ namespace hlk {
 		bool contract();
 		bool contracted = false; // If true, this should be removed from node lists
 
+		bool pass_through = false;
+		int patch_id = -1;
+
 		vkmp::StData get_data(bool first_tracing);
 
 	};
@@ -99,6 +106,12 @@ namespace hlk {
 	struct KnitGraph {
 		std::vector<std::shared_ptr<KnitGraphNode>> nodes;
 		std::vector<std::shared_ptr<KnitGraphEdge>> edges;
+		std::vector<vkmp::Stitch> stitches;
+		bool traced = false; // Whether or not we've traced this knit graph, and stitches has
+							 // Useful data
+
+		static IGLVisualization visualize_stitches(const std::vector<vkmp::Stitch>& stitches);
+
 
 		bool doubled_wales = true; // Whether or not each node is this graph represents two stitches in the final objec
 		bool contracted = false; // Whether or not all contractible nodes have been removed
@@ -109,7 +122,9 @@ namespace hlk {
 		void split_doubled(); // Split all nodes into two loop-wise connected nodes - pre-req. for scheduling
 		void schedule(); // Order and assign yarns for each node. Fix yarn in/out and create shift-paths
 
-		void trace(std::string filename);
+		void generate_instructions(std::string filename);
+
+		void trace();
 		ak::RowColGraph make_row_col_graph();
 
 		void re_index(); // Assign each node a unique index number

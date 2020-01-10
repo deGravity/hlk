@@ -104,6 +104,11 @@ namespace hlk {
 		while (seams.size() < num_seams) {
 			seams.emplace_back(topology_optimizer.get_bool_prop(nth_label("seam", seams.size())));
 		}
+
+		for (auto& s : seams) {
+			s->load(f);
+		}
+
 		hlk::load(f, seam_edges);
 
 		hlk::load(f, vertex_in_seam);
@@ -889,7 +894,7 @@ namespace hlk {
 
 		for (int e = 0; e < edges.size(); ++e) {
 			int seam = edges[e].seam;
-			if (seam < 0) {
+			if (seam < 0 || !seams[seam]->val) {
 				Eigen::RowVector2i e_sides = edges_to_sides.row(e);
 				int src = e_sides[0];
 				int dst = e_sides[1];

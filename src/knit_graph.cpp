@@ -5,7 +5,77 @@
 #include "vkmp/scheduler.hpp"
 
 #include <iostream>
+#include <set>
+
+#include <igl/parula.h>
+
 //#include <igl/copyleft/cgal/wire_mesh.h>
+
+hlk::IGLVisualization hlk::KnitGraph::visualize_stitches(const std::vector<vkmp::Stitch>& stitches)
+{
+	hlk::GraphVisualization vis;
+
+	vis.V.resize(stitches.size(), 3);
+	// Vector pointing to some neighbor at each vertex to compute normals for displaying arrow heads
+	Eigen::MatrixXd neighbor_vec(stitches.size(), 3);
+	for (int i = 0; i < stitches.size(); ++i) {
+		vis.V(i,0) = (double) stitches[i].at.x;
+		vis.V(i, 1) = (double) stitches[i].at.y;
+		vis.V(i, 2) = (double) stitches[i].at.z;
+
+
+		for (uint32_t n : {stitches[i].in[0], stitches[i].in[1], stitches[i].out[0], stitches[i].out[1]}) {
+			neighbor_vec.row(i) = Eigen::RowVector3d(1, 0, 0);
+			if (n != -1U) {
+				Eigen::RowVector3d neighbor_pos(stitches[n].at.x, stitches[n].at.y, stitches[n].at.z);
+				neighbor_vec.row(i) = neighbor_pos - vis.V.row(i);
+				vis.add_line(i, n, Eigen::RowVector3d(1.0, 0.564, 0.0));
+			}
+		}
+	}
+
+	std::map<int, bool> yarn_seen;
+	std::map<int, int> last_per_yarn;
+
+	std::set<int> yarn_ids;
+
+	// Figure out how many yarns we have so we can make them all different colors
+	for (int i = 0; i < stitches.size(); ++i) {
+		yarn_ids.insert(stitches[i].yarn);
+	}
+	int num_yarns = yarn_ids.size();
+
+	Eigen::MatrixXd yarn_colors(num_yarns, 3);
+	if (num_yarns > 1) {
+		for (int i = 0; i < num_yarns; ++i) {
+			double c, r, g, b;
+			c = (double)i / (num_yarns - 1);
+			igl::parula(c, r, g, b);
+			yarn_colors(i, 0) = r;
+			yarn_colors(i, 1) = g;
+			yarn_colors(i, 2) = b;
+		}
+	}
+	else {
+		yarn_colors.row(0) = Eigen::RowVector3d(0.0, 1.0, 0.0);
+	}
+
+	for (int i = 0; i < stitches.size(); ++i) {
+		int yarn = stitches[i].yarn;
+		if (yarn_seen[yarn]) {
+			int prev = last_per_yarn[yarn];
+			vis.add_line(prev, i, yarn_colors.row(yarn));
+		}
+
+		yarn_seen[yarn] = true;
+		last_per_yarn[yarn] = i;
+		
+		vis.add_point(i, yarn_colors.row(yarn));
+		vis.add_label(i, std::to_string(i));
+	}
+
+	return vis.get_vis();
+}
 
 void hlk::KnitGraph::contract()
 {
@@ -32,7 +102,7 @@ void hlk::KnitGraph::contract()
 	re_index();
 }
 
-void hlk::KnitGraph::trace(std::string filename)
+void hlk::KnitGraph::generate_instructions(std::string filename)
 {
 	ak::RowColGraph RCG = make_row_col_graph();
 	std::vector<ak::TracedStitch> traced_stitches;
@@ -62,7 +132,95 @@ void hlk::KnitGraph::trace(std::string filename)
 			stitches.back().data = STITCH::PURL;
 		}
 		*/
-		
+
+		/*
+		if (stitches.back().in[0] == -1U && stitches.back().in[1] == -1U) {
+			stitches.back().data = STITCH::CASTON;
+		}
+		*/
+
+		/*
+		if (stitches.back().out[0] == -1U && stitches.back().out[1] == -1U) {
+			stitches.back().data = STITCH::BINDOFF;
+		}
+		*/
+		first_trace[ts.vertex] = false;
+
+	}
+
+	// Now go back and put in yarn-ends at the first and last instances of
+	// each yarn
+	typedef struct {
+		uint32_t first = -1U;
+		uint32_t last = -1U;
+	} yarn_endpoints;
+	std::map<int, yarn_endpoints> yarn_ends;
+	std::set<int> yarn_ids;
+
+	for (int i = 0; i < traced_stitches.size(); ++i) {
+		int yarn = traced_stitches[i].yarn;
+		if (yarn_ends[yarn].first == -1U) {
+			yarn_ends[yarn].first = i;
+		}
+		yarn_ends[yarn].last = i;
+		yarn_ids.insert(yarn);
+	}
+	for (int yarn : yarn_ids) {
+		stitches[yarn_ends[yarn].first].data = STITCH::YARNEND;
+		stitches[yarn_ends[yarn].last].data = STITCH::YARNEND;
+	}
+
+	//vkmp::load_stitches(filename, &s.stitches);
+
+	vkmp::save_stitches(filename + ".st", stitches);
+
+	std::map<int, std::pair<int, int>> yarn_mappings;
+	yarn_mappings[0] = std::make_pair(1, -1);
+	yarn_mappings[1] = std::make_pair(2, -1);
+	s.do_schedule(yarn_mappings, true, -1);
+	s.write_schedule(filename + ".js");
+	std::string scripts_dir = SCRIPTS_DIR;
+	std::string node_path = "NODE_PATH=" + scripts_dir + "\\";
+	putenv(node_path.c_str());
+	std::string command_1 = "node " + filename + ".js";
+	std::cout << "Trying to run:\n" << command_1 << std::endl;
+	system(command_1.c_str());
+	std::string command_2 = "node " + scripts_dir + "\\knitout-to-dat.js " + filename + ".k " + filename + ".dat";
+	std::cout << "Trying to run:\n" << command_2 << std::endl;
+	system(command_2.c_str());
+
+
+	//ak::save_traced(filename, traced_stitches);
+}
+
+void hlk::KnitGraph::trace()
+{
+	ak::RowColGraph RCG = make_row_col_graph();
+	std::vector<ak::TracedStitch> traced_stitches;
+	ak::trace_graph(RCG, &traced_stitches);
+
+	stitches.reserve(traced_stitches.size());
+	std::vector<bool> first_trace(nodes.size(), true);
+	for (auto const& ts : traced_stitches) {
+		stitches.emplace_back();
+		stitches.back().yarn = ts.yarn;
+		stitches.back().type = ts.type;
+		stitches.back().direction = ts.dir;
+		stitches.back().in[0] = ts.ins[0];
+		stitches.back().in[1] = ts.ins[1];
+		stitches.back().out[0] = ts.outs[0];
+		stitches.back().out[1] = ts.outs[1];
+		stitches.back().at = ts.at;
+
+		stitches.back().data = nodes[ts.vertex]->get_data(first_trace[ts.vertex]);
+
+		// Force ribbing-like pattern
+		/*
+		if (nodes[ts.vertex]->index % 4 < 2) {
+			stitches.back().data = STITCH::PURL;
+		}
+		*/
+
 		/*
 		if (stitches.back().in[0] == -1U && stitches.back().in[1] == -1U) {
 			stitches.back().data = STITCH::CASTON;
@@ -98,28 +256,8 @@ void hlk::KnitGraph::trace(std::string filename)
 		stitches[yarn_ends[yarn].first].data = STITCH::YARNEND;
 		stitches[yarn_ends[yarn].last].data = STITCH::YARNEND;
 	}
-	
-	//vkmp::load_stitches(filename, &s.stitches);
-	
-	vkmp::save_stitches(filename + ".st", stitches);
 
-	std::map<int, std::pair<int, int>> yarn_mappings;
-	yarn_mappings[0] = std::make_pair(1, -1);
-	yarn_mappings[1] = std::make_pair(2, -1);
-	s.do_schedule(yarn_mappings, true, - 1);
-	s.write_schedule(filename + ".js");
-	std::string scripts_dir = SCRIPTS_DIR;
-	std::string node_path = "NODE_PATH=" + scripts_dir + "\\";
-	putenv(node_path.c_str());
-	std::string command_1 = "node " + filename + ".js";
-	std::cout << "Trying to run:\n" << command_1 << std::endl;
-	system(command_1.c_str());
-	std::string command_2 = "node " + scripts_dir + "\\knitout-to-dat.js " + filename + ".k " + filename + ".dat";
-	std::cout << "Trying to run:\n" << command_2 << std::endl;
-	system(command_2.c_str());
-
-	
-	//ak::save_traced(filename, traced_stitches);
+	traced = true;
 }
 
 ak::RowColGraph hlk::KnitGraph::make_row_col_graph()
@@ -157,6 +295,9 @@ void hlk::KnitGraph::re_index()
 {
 	for (int i = 0; i < nodes.size(); ++i) {
 		nodes[i]->index = i;
+	}
+	for (int i = 0; i < edges.size(); ++i) {
+		edges[i]->index = i;
 	}
 }
 
@@ -230,6 +371,11 @@ void hlk::KnitGraph::build_mesh(double th, int poly_size, Eigen::MatrixXd & V, E
 
 bool hlk::KnitGraphNode::contractable()
 {
+	// No pass through for increases / decreases
+	if (pass_through && top.size() < 2 && bottom.size() < 2) {
+		return true;
+	}
+
 	// contractable if no interacting yarns
 	bool can_contract = (top.size() == 0 && bottom.size() == 0) || (!left && !right);
 	

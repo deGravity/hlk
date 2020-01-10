@@ -34,6 +34,8 @@ namespace hlk {
 
 		void extract_fine_graph();
 
+		void trace_graph();
+
 		void generate_instructions();
 
 		void save_coarse_knit_mesh(std::string filename);
@@ -51,12 +53,14 @@ namespace hlk {
 		int overlay_index = -1;
 		int graph_index = -1;
 		int knit_graph_index = -1;
+		int traced_graph_index = -1;
 
 		int minimizer_timeout = (int) M.minimizer_timeout;
 
 		bool show_mesh = true;
 		bool show_graph = true;
 		bool show_knit_graph = true;
+		bool show_traced_graph = true;
 		bool planarize = false;
 
 		enum Tool {

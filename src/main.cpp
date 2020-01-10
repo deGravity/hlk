@@ -46,11 +46,10 @@ int main(void) {
 	}
 	else if (mode == 3) { // test patch visualization
 		//std::string filename = igl::file_dialog_open();
-		std::vector<std::vector<int>> sides{ {3,2},{1},{5},{5} };
-		Eigen::MatrixXd corners(5, 3);
+		std::vector<std::vector<int>> sides{ {7},{14},{7},{9} };
+		Eigen::MatrixXd corners(4, 3);
 		corners <<
 			0, 0, 0,
-			.5, -.3, 0,
 			1, 0, 0,
 			1, 1, 0,
 			0, 1, 0;
@@ -211,7 +210,7 @@ int main(void) {
 			0, 1, 0;
 		Patch p(sides, corners);
 		p.graph.contract();
-		p.graph.trace("test_trace");
+		p.graph.generate_instructions("test_trace");
 
 		/*
 		vkmp::Scheduler s;

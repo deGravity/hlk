@@ -191,6 +191,193 @@ namespace hlk {
 			}
 		}
 
+		G.contract();
+		G.re_index();
+
+		
+		// Find Boundary loops and add cast-on / bind-off stitches
+
+		// First find all the dangling edges
+		std::vector<int> starts;
+		std::vector<int> ends;
+		std::vector<bool> is_start(G.nodes.size(), false);
+		std::vector<bool> is_end(G.nodes.size(), false);
+		for (auto& e : G.edges) {
+			if (e->is_loop) {
+				if (!e->dst && e->src) {
+					ends.push_back(e->src->index);
+					is_end[e->src->index] = true;
+				}
+				if (!e->src && e->dst) {
+					starts.push_back(e->dst->index);
+					is_start[e->dst->index] = true;
+				}
+			}
+		}
+		std::vector<bool> used(G.nodes.size(), false);
+
+		std::vector<std::vector<int>> start_loops;
+		std::vector<std::vector<int>> end_loops;
+		auto& nodes = G.nodes;
+
+
+		// Start Loops
+		for (int n : starts) {
+			if (!used[n]) {
+				std::vector<int> loop;
+				used[n] = true;				
+				loop.push_back(n);
+				int current = n;
+				while (true) {
+					int candidate = current;
+					do {
+						auto& cn = nodes[candidate];
+						/*if (current != n && cn->left && cn->left->src && !used[cn->left->src->index]) {
+							candidate = cn->left->src->index;
+						}
+						else*/ if (cn->bottom.size() > 0 && cn->bottom[0]->src && (!used[cn->bottom.front()->src->index] || cn->bottom.front()->src->index == n)) {
+							candidate = cn->bottom.front()->src->index;
+						}
+						else if (cn->right && cn->right->dst && (!used[cn->right->dst->index] || cn->right->dst->index == n)) {
+							candidate = cn->right->dst->index;
+						}
+						else if (cn->top.size() > 0 && cn->top.back()->dst && !used[cn->top.back()->dst->index]) {
+							candidate = cn->top.back()->dst->index;
+						}
+						else {
+							break; // Stop if we can't find a direction to go
+						}
+					} while (!is_start[candidate]);
+					if (candidate != n) {
+						current = candidate;
+						loop.push_back(current);
+						used[current] = true;
+					}
+					else {
+						break;
+					}
+				}
+				start_loops.push_back(loop);
+			}
+		}
+
+		// End Loops
+		for (int n : ends) {
+			if (!used[n]) {
+				std::vector<int> loop;
+				used[n] = true;
+				loop.push_back(n);
+				int current = n;
+				while (true) {
+					int candidate = current;
+					do {
+						auto& cn = nodes[candidate];
+						/*if (current != n && cn->left && cn->left->src && !used[cn->left->src->index]) {
+							candidate = cn->left->src->index;
+						}
+						else */if (cn->top.size() > 0 && cn->top.back()->dst && !used[cn->top.back()->dst->index]) {
+							candidate = cn->top.back()->dst->index;
+						}
+						else if (cn->right && cn->right->dst && (!used[cn->right->dst->index] || cn->right->dst->index == n)) {
+							candidate = cn->right->dst->index;
+						}
+						else if (cn->bottom.size() > 0 && cn->bottom.front()->src && (!used[cn->bottom.front()->src->index] || cn->bottom.front()->src->index == n)) {
+							candidate = cn->bottom.front()->src->index;
+						}
+						else {
+							break; // Stop if we can't find a direction to go
+						}
+					} while (!is_end[candidate]);
+					if (candidate != n) {
+						current = candidate;
+						loop.push_back(current);
+						used[current] = true;
+					}
+					else {
+						break;
+					}
+				}
+				end_loops.push_back(loop);
+			}
+		}
+
+		// Now Bind-Off / Cast-On on the boundary loops we found
+
+		
+		// First the cast-ons
+		for (auto& loop : start_loops) {
+			std::vector<std::shared_ptr<KnitGraphNode>> loop_nodes;
+			for (int k = 0; k < loop.size(); ++k) {
+				int i = loop[k];
+				G.nodes.push_back(std::make_shared<KnitGraphNode>());
+				auto& node = G.nodes.back();
+				loop_nodes.push_back(node);
+				Eigen::RowVector3d delta(0, 0, 0);
+				for (auto& neighbor : nodes[i]->top) {
+					delta = delta + (nodes[i]->pos - neighbor->dst->pos) / nodes[i]->top.size();
+				}
+				node->pos = nodes[i]->pos + delta;
+
+				if (!nodes[i]->bottom.size() > 0) {
+					nodes[i]->bottom.push_back(std::make_shared<KnitGraphEdge>());
+					G.edges.push_back(nodes[i]->bottom[0]);
+					nodes[i]->bottom[0]->dst = nodes[i];
+					nodes[i]->bottom[0]->is_loop = true;
+				}
+				nodes[i]->bottom[0]->src = node;
+				nodes[i]->bottom[0]->dst = nodes[i];
+				node->top.push_back(nodes[i]->bottom[0]);
+				node->patch_id = nodes[i]->patch_id;
+			}
+			for (int i = 0; i < loop.size(); ++i) {
+				int j = (i + 1) % loop_nodes.size();
+				G.edges.push_back(std::make_shared<KnitGraphEdge>());
+				loop_nodes[i]->right = G.edges.back();
+				loop_nodes[j]->left = G.edges.back();
+				G.edges.back()->src = loop_nodes[i];
+				G.edges.back()->dst = loop_nodes[j];
+				G.edges.back()->is_loop = false;
+			}
+		}
+
+		// Now the Bind-Offs
+		for (auto& loop : end_loops) {
+			std::vector<std::shared_ptr<KnitGraphNode>> loop_nodes;
+			for (int k = 0; k < loop.size(); ++k) {
+				int i = loop[k];
+				G.nodes.push_back(std::make_shared<KnitGraphNode>());
+				auto& node = G.nodes.back();
+				loop_nodes.push_back(node);
+				Eigen::RowVector3d delta(0, 0, 0);
+				for (auto& neighbor : nodes[i]->bottom) {
+					delta = delta + (nodes[i]->pos - neighbor->src->pos) / nodes[i]->bottom.size();
+				}
+				node->pos = nodes[i]->pos + delta;
+
+				if (!nodes[i]->top.size() > 0) {
+					nodes[i]->top.push_back(std::make_shared<KnitGraphEdge>());
+					G.edges.push_back(nodes[i]->top[0]);
+					nodes[i]->top[0]->src = nodes[i];
+					nodes[i]->top[0]->is_loop = true;
+				}
+				nodes[i]->top[0]->dst = node;
+				nodes[i]->top[0]->src = nodes[i];
+				node->bottom.push_back(nodes[i]->top[0]);
+				node->patch_id = nodes[i]->patch_id;
+			}
+			for (int i = 0; i < loop.size(); ++i) {
+				int j = (i + 1) % loop_nodes.size();
+				G.edges.push_back(std::make_shared<KnitGraphEdge>());
+				loop_nodes[i]->right = G.edges.back();
+				loop_nodes[j]->left = G.edges.back();
+				G.edges.back()->src = loop_nodes[i];
+				G.edges.back()->dst = loop_nodes[j];
+				G.edges.back()->is_loop = false;
+			}
+		}
+		
+		G.re_index();
+		
 		return G;
 	}
 };

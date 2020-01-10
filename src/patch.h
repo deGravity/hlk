@@ -16,6 +16,7 @@ namespace hlk {
 		std::vector<LoopSign> output_signs;
 		bool has_yarn_in;
 		bool has_yarn_out;
+		bool pass_through = false;
 	};
 
 
