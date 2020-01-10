@@ -617,13 +617,17 @@ namespace ak {
 		}
 
 		// TODO - Just copy over the Eigen position
-		/*
+		
 
 		//set stitch 'at' using model vertex positions:
-		if (DEBUG_model_) {
+		if (true) {
 			std::vector< glm::vec3 > at; at.reserve(vertices.size());
 			for (auto const &v : vertices) {
-				at.emplace_back(v.at.interpolate(DEBUG_model_->vertices));
+				glm::vec3 pos;
+				pos.x = (float) v.at.x();
+				pos.y = (float) v.at.y();
+				pos.z = (float)v.at.z();
+				at.emplace_back(pos);
 			}
 			assert(at.size() == vertices.size());
 			std::vector< glm::vec3 > up; up.reserve(vertices.size());
@@ -667,7 +671,7 @@ namespace ak {
 			}
 		}
 
-		*/
+		
 	}
 
 }
