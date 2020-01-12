@@ -126,54 +126,71 @@ namespace hlk {
 			return true;
 		}
 		else {
-
 			if (current_tool == SEAMER) {
+
+				// Make sure we aren't actually just moving the camera
+
+				auto dx = (viewer->down_mouse_x - viewer->current_mouse_x);
+				auto dy = (viewer->down_mouse_y - viewer->current_mouse_y);
+				auto dist2 = dx * dx + dy * dy;
+				if (dist2 > 5) return false;
+
 				int fid;
 				Eigen::Vector3f bc;
 				if (pick_face(fid, bc)) {
 					int side = fid;
 					int edge = M.sides_to_edges[side];
-					if (edge >= 0 && M.edges[edge].seam >= 0) {
-						M.toggle_seam(side);
-						if (auto_solve) {
-							solve_topology();
-						}
-						update_mesh();	
-					}
-					else {
+					int closest_vertex;
+					bc.maxCoeff(&closest_vertex);
+					int vtx = M.F_t(fid, closest_vertex);
 
-						int closest_vertex;
-						bc.maxCoeff(&closest_vertex);
-						// Find the outgoing side from the closest vertex,
-						// or -1 if non-quad vertex or boundary
-						int side = -1;
-						if (closest_vertex == 0) {
-							side = fid;
+					if (button == (int)igl::opengl::glfw::Viewer::MouseButton::Left) {
+						if (edge >= 0 && M.edges[edge].seam >= 0) {
+							M.toggle_seam(side);
+							if (auto_solve) {
+								solve_topology();
+							}
+							update_mesh();
 						}
-						if (closest_vertex == 1) {
-							side = M.flip_side(fid);
-						}
-						if (side >= 0) {
-							//if (M.vertex_in_seam[M.F_t(fid, closest_vertex)]) {
-								//side = M.flip_side(fid);
-							//}
+						else {
+
+							// Find the outgoing side from the closest vertex,
+							// or -1 if non-quad vertex or boundary
+							int side = -1;
+							if (closest_vertex == 0) {
+								side = fid;
+							}
+							if (closest_vertex == 1) {
+								side = M.flip_side(fid);
+							}
 							if (side >= 0) {
-								M.update_textures();
-								auto loop = M.side_loop(side);
-								int end = 0;
-								std::vector<int> new_seam_sides;
-								for (end = 0; end < loop.size(); ++end) {
-									new_seam_sides.push_back(end);
-									if (M.vertex_in_seam[M.side_v(loop[end])]) {
-										break;
+								//if (M.vertex_in_seam[M.F_t(fid, closest_vertex)]) {
+									//side = M.flip_side(fid);
+								//}
+								if (side >= 0) {
+									M.update_textures();
+									auto loop = M.side_loop(side);
+									int end = 0;
+									std::vector<int> new_seam_sides;
+									for (end = 0; end < loop.size(); ++end) {
+										new_seam_sides.push_back(end);
+										if (M.vertex_in_seam[M.side_v(loop[end])]) {
+											break;
+										}
 									}
+									new_seam_sides = loop;
+									M.add_seam(new_seam_sides);
+									update_mesh();
 								}
-								new_seam_sides = loop;
-								M.add_seam(new_seam_sides);
-								update_mesh();
 							}
 						}
+						return true;
 					}
+					else if (button == (int)igl::opengl::glfw::Viewer::MouseButton::Right) {
+						M.toggle_special_vertex(vtx);
+					}
+
+					
 				}
 			}
 
@@ -210,23 +227,27 @@ namespace hlk {
 		}
 
 		if (current_tool == SEAMER) {
+
 			int fid;
 			Eigen::Vector3f bc;
 			if (pick_face(fid, bc)) {
 
 				int edge = M.sides_to_edges[fid];
+				int closest_vertex;
+				bc.maxCoeff(&closest_vertex);
+				int vtx = M.F_t(fid, closest_vertex);
+
 				if (edge >= 0 && M.edges[edge].seam >= 0) {
 					M.update_textures();
 					int seam_id = M.edges[edge].seam;
 					for (int e : M.seam_edges[seam_id]) {
 						M.set_glyph(M.edge_slots[e], glyphs::SOLID_LINE, color::ORANGE);
 					}
+					M.set_glyph(M.vertex_slots[vtx], glyphs::CIRCLE, color::ORANGE);
 					update_mesh();
 				}
 				else {
 
-					int closest_vertex;
-					bc.maxCoeff(&closest_vertex);
 					// Find the outgoing side from the closest vertex,
 					// or -1 if non-quad vertex or boundary
 					int side = -1;
@@ -256,6 +277,7 @@ namespace hlk {
 									M.set_glyph(M.edge_slots[e], glyphs::SEAM, color::RED);
 								}
 							}
+							M.set_glyph(M.vertex_slots[vtx], glyphs::CIRCLE, color::ORANGE);
 							update_mesh();
 						}
 					}

@@ -116,6 +116,8 @@ namespace hlk {
 
 		std::vector<double> side_lengths;
 
+		std::vector<bool> vertex_is_special;
+
 		std::vector<CoarseKnitEdge> edges;
 		std::vector<CoarseKnitQuad> quads;
 		std::vector<CoarseKnitSide> sides;
@@ -142,6 +144,8 @@ namespace hlk {
 		void seam_on(int side);
 		void toggle_seam(int side);
 		//void join_seam(int side_a, int side_b);
+
+		void toggle_special_vertex(int vertex);
 
 		void add_seam(std::vector<int> sides);
 

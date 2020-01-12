@@ -55,6 +55,17 @@ namespace hlk {
 		for (auto& quad : quads) {
 			quad.update_texture();
 		}
+
+		for (auto sv : singular_vertices) {
+			set_glyph(vertex_slots[sv], glyphs::CROSS, color::RED);
+		}
+
+		for (int i = 0; i < vertex_is_special.size(); ++i) {
+			if (vertex_is_special[i]) {
+				set_glyph(vertex_slots[i], glyphs::CIRCLE, color::RED);
+			}
+		}
+
 	}
 
 	void CoarseKnitMesh::save(std::ofstream& f) {
@@ -134,11 +145,16 @@ namespace hlk {
 		f >> scale >> stitch_gauge >>  row_gauge >>
 			tollerance  >> min_time >> max_time >> 
 			minimizer_timeout >> topology_solved >> geometry_solved;
+
+		// Optional - older files won't have it
+		if (f && f.peek() != EOF) {
+			hlk::load(f, vertex_is_special);
+		}
 	}
 
 	void CoarseKnitMesh::init()
 	{
-		init(true);
+		init(false);
 	}
 
 	void CoarseKnitMesh::init(bool do_opt)
@@ -156,6 +172,7 @@ namespace hlk {
 		geometry_optimizer.clear();
 		topology_optimizer.clear();
 		side_lengths.clear();
+		vertex_is_special.clear();
 
 		// TODO - get side lengths from original mesh instead of coarse mesh
 		for (int q = 0; q < m; ++q) {
@@ -181,6 +198,7 @@ namespace hlk {
 		
 
 		vertex_in_seam.resize(n, false);
+		vertex_is_special.resize(n, false);
 
 		/*	
 		From Motorcycle Graphs Paper:
@@ -647,7 +665,10 @@ namespace hlk {
 		int valence = mesh->valence[u];
 		// For our purposes, valences of multiples of 4 (3 on borders)
 		// do not count as singularities, so calculate this explicitly
-		bool is_regular = (is_border && (valence % 3 == 0)) || (valence % 4 == 0);
+		bool is_regular = 
+			(is_border && (valence % 3 == 0)) || 
+			(valence % 4 == 0) || 
+			!mesh->vertex_is_special[index];
 		int prev_idx = mesh->prev_side(index);
 		auto& prev_is_loop = mesh->sides[prev_idx].is_loop;
 		auto& prev_is_out = mesh->sides[prev_idx].is_out;
@@ -760,7 +781,8 @@ namespace hlk {
 			std::string cost_name = "seam_cost_" + std::to_string(i);
 			z3::expr s_cost = topology_optimizer.context.int_const(cost_name.c_str());
 			seam_costs.push_back(s_cost);
-			topology_optimizer.add_constraint((seam->var && s_cost == 1) || (!seam->var && s_cost == 0));
+			int seam_length = seam_edges[i].size();
+			topology_optimizer.add_constraint((seam->var && s_cost == seam_length) || (!seam->var && s_cost == 0));
 			++i;
 		}
 
@@ -1026,6 +1048,15 @@ namespace hlk {
 
 		topology_solved = false;
 		geometry_solved = false;
+	}
+	void CoarseKnitMesh::toggle_special_vertex(int vertex)
+	{
+		// Don't allow toggling of singularities
+		std::cout << "Toggling Vertex " << vertex << std::endl;
+		if (!is_singularity[vertex]) {
+			vertex_is_special[vertex] = !vertex_is_special[vertex];
+			update_textures();
+		}
 	}
 	void CoarseKnitMesh::add_seam(std::vector<int> seam_sides)
 	{
