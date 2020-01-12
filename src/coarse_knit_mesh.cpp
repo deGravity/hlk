@@ -400,7 +400,7 @@ namespace hlk {
 	}
 	CoarseKnitQuad::CoarseKnitQuad(Optimizer & topo_opt, Optimizer & geo_opt, int i, CoarseKnitMesh * m)
 	{
-		shaping_distribution = DISTRIBUTED;
+		shaping_distribution = BOTH_SIDES;
 		short_row_distribution = NONE;
 		index = i;
 		mesh = m;
@@ -527,7 +527,6 @@ namespace hlk {
 				"no_inc_dec_" + std::to_string(index)
 			));
 		}
-		/*
 		else if (shaping_distribution == ShapingType::DISTRIBUTED) {
 			constraints.push_back(std::make_pair(
 				loop_min * z3::pw(2, rows - 1) >= loop_max,
@@ -546,7 +545,7 @@ namespace hlk {
 				"single_side_increase_" + std::to_string(index)
 			));
 		}
-		*/
+
 		if (short_row_distribution == ShapingType::NONE) {
 			constraints.push_back(std::make_pair(
 				yarn_in == yarn_out,
@@ -680,10 +679,10 @@ namespace hlk {
 			break;
 		case ShapingType::BOTH_SIDES:
 			if (side_locs[0] >= 0) {
-				mesh->set_glyph(mesh->quadrant_slot(index, side_locs[0]), glyphs::LEANING_INCREASE, color::GREY);
+				mesh->set_glyph(mesh->quadrant_slot(index, side_locs[1]), glyphs::LEANING_INCREASE, color::GREY);
 			}
 			if (side_locs[2] >= 0) {
-				mesh->set_glyph(mesh->quadrant_slot(index, side_locs[2]), glyphs::LEANING_INCREASE, color::GREY);
+				mesh->set_glyph(mesh->quadrant_slot(index, side_locs[3]), glyphs::LEANING_INCREASE, color::GREY);
 			}
 			break;
 		case ShapingType::DISTRIBUTED:
