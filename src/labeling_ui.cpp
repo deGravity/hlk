@@ -169,6 +169,20 @@ namespace hlk {
 
 			}
 
+			if (current_tool == TEXTURER) {
+				auto dx = (viewer->down_mouse_x - viewer->current_mouse_x);
+				auto dy = (viewer->down_mouse_y - viewer->current_mouse_y);
+				auto dist2 = dx * dx + dy * dy;
+				if (dist2 > 5) return false;
+				int fid;
+				Eigen::Vector3f bc;
+				if (pick_face(fid, bc)) {
+					M.set_texture(fid, current_texture);
+					update_mesh();
+				}
+
+			}
+
 			if (current_tool == SEAMER) {
 
 				// Make sure we aren't actually just moving the camera
@@ -254,6 +268,16 @@ namespace hlk {
 
 					if (M.flip_side(fid) == last_drag_side) {
 						M.paint_direction(last_drag_side, fid, orienter_mode);
+						update_mesh();
+					}
+					last_drag_side = fid;
+					return true;
+				}
+
+				if (current_tool == TEXTURER) {
+					if (M.flip_side(fid) == last_drag_side) {
+						M.set_texture(fid, current_texture);
+						M.set_texture(M.flip_side(fid), current_texture);
 						update_mesh();
 					}
 					last_drag_side = fid;

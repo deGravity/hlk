@@ -9,6 +9,8 @@
 #include "glyphs.h"
 #include "glyph.h"
 
+#include "texture.h"
+
 namespace hlk {
 
 	std::string nth_label(std::string label, int n) {
@@ -41,6 +43,7 @@ namespace hlk {
 		}
 
 		// Get a time scale
+		/*
 		int num_sources = 0;
 		int num_sinks = 0;
 		for (auto& quad : quads) {
@@ -51,6 +54,7 @@ namespace hlk {
 
 			}
 		}
+		*/
 
 		for (auto& quad : quads) {
 			quad.update_texture();
@@ -620,14 +624,9 @@ namespace hlk {
 	}
 	void CoarseKnitQuad::update_texture()
 	{
-		int min_t = mesh->min_time;
-		int max_t = mesh->max_time;
-		double color_v = (double)(time->val - min_t) / (max_t - min_t);
-		double r, g, b;
-		igl::parula(color_v, r, g, b);
-		Eigen::RowVector4d color(r, g, b, 1.0);
 		auto slot = mesh->quad_slots[index];
-		mesh->set_glyph(slot, glyphs::SOLID_LINE, color::WHITE);
+		auto tex = get_textures();
+		mesh->set_glyph(slot, glyphs::SOLID_LINE, tex[texture_id].color);
 		// TODO - Print Glyphs for inc/dec type
 
 		// First identify orientation
@@ -1090,6 +1089,7 @@ namespace hlk {
 	void CoarseKnitMesh::set_texture(int side, int texture)
 	{
 		quads[side / 4].texture_id = texture;
+		update_textures();
 	}
 	void CoarseKnitMesh::seam_off(int side)
 	{

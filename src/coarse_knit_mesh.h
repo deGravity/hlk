@@ -62,7 +62,7 @@ namespace hlk {
 		ShapingType shaping_distribution;
 		ShapingType short_row_distribution;
 
-		int texture_id = -1;
+		int texture_id = 0;
 
 		std::vector<std::pair<z3::expr, std::string>> get_topology_constraints();
 		std::vector<std::pair<z3::expr, std::string>> get_geometry_constraints();
