@@ -1076,6 +1076,16 @@ namespace hlk {
 		dest_quad.short_row_distribution = origin_quad.short_row_distribution;
 
 		geometry_solved = false;
+		update_textures();
+	}
+	void CoarseKnitMesh::set_shaping(int side, ShapingType shaping, ShapingType short_row)
+	{
+		auto& dest_quad = quads[side / 4];
+		dest_quad.shaping_distribution = shaping;
+		dest_quad.short_row_distribution = short_row;
+
+		geometry_solved = false;
+		update_textures();
 	}
 	void CoarseKnitMesh::set_texture(int side, int texture)
 	{

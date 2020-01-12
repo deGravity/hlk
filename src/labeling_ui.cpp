@@ -126,6 +126,21 @@ namespace hlk {
 			return true;
 		}
 		else {
+
+			if (current_tool == MEASURER) {
+				auto dx = (viewer->down_mouse_x - viewer->current_mouse_x);
+				auto dy = (viewer->down_mouse_y - viewer->current_mouse_y);
+				auto dist2 = dx * dx + dy * dy;
+				if (dist2 > 5) return false;
+				int fid;
+				Eigen::Vector3f bc;
+				if (pick_face(fid, bc)) {
+					M.set_shaping(fid, shaping_brush, short_row_brush);
+					update_mesh();
+				}
+
+			}
+
 			if (current_tool == SEAMER) {
 
 				// Make sure we aren't actually just moving the camera
@@ -222,6 +237,16 @@ namespace hlk {
 						M.erase_orientation(fid);
 						update_mesh();
 					}
+				}
+
+				if (current_tool == MEASURER) {
+					if(M.flip_side(fid) == last_drag_side) {
+						M.set_shaping(fid, shaping_brush, short_row_brush);
+						M.set_shaping(M.flip_side(fid), shaping_brush, short_row_brush);
+						update_mesh();
+					}
+					last_drag_side = fid;
+					return true;
 				}
 			}
 		}
@@ -375,7 +400,16 @@ namespace hlk {
 		}
 		mode_selector(MEASURER, measurer_pressed, measurer_tex, measurer_instructions, "Constraints Tool");
 		if (current_tool == MEASURER) {
-
+			ImGui::Text("Inc/Dec");
+			ImGui::RadioButton("None", (int*)& shaping_brush, NONE);
+			ImGui::RadioButton("Left (In)", (int*)& shaping_brush, IN_SIDE);
+			ImGui::RadioButton("Right (Out)", (int*)& shaping_brush, OUT_SIDE);
+			ImGui::RadioButton("Both Sides", (int*)& shaping_brush, BOTH_SIDES);
+			ImGui::RadioButton("Distributed", (int*)& shaping_brush, DISTRIBUTED);
+			ImGui::Text("Short Rows");
+			ImGui::RadioButton("None", (int*)& short_row_brush, NONE);
+			ImGui::RadioButton("Top (Out)", (int*)& short_row_brush, OUT_SIDE);
+			ImGui::RadioButton("Bottom (In)", (int*)& short_row_brush, IN_SIDE);
 		}
 		ImGui::Text(instructions.c_str());
 		

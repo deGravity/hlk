@@ -138,6 +138,7 @@ namespace hlk {
 
 		// Copy shaping between quads
 		void copy_shaping(int origin_side, int dest_side);
+		void set_shaping(int side, ShapingType shaping, ShapingType short_row);
 		void set_texture(int side, int texture);
 
 		void seam_off(int side);

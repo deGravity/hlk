@@ -86,6 +86,9 @@ namespace hlk {
 		EraserMode eraser_mode = ERASE_ORIENTATIONS;
 		KnitDirection orienter_mode = LOOP;
 
+		ShapingType shaping_brush = DISTRIBUTED;
+		ShapingType short_row_brush = NONE;
+
 		std::string eraser_instructions = "CTRL-Click and drag to erase.";
 		std::string texturer_instructions = "CTRL-Click and drag to add\ntexture.";
 		std::string seamer_instructions = "CTRL-Click and drag to join\nseams.";
