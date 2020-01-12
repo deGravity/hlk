@@ -627,7 +627,7 @@ namespace hlk {
 		igl::parula(color_v, r, g, b);
 		Eigen::RowVector4d color(r, g, b, 1.0);
 		auto slot = mesh->quad_slots[index];
-		mesh->set_glyph(slot, glyphs::SOLID_LINE, color);
+		mesh->set_glyph(slot, glyphs::SOLID_LINE, color::WHITE);
 		// TODO - Print Glyphs for inc/dec type
 
 		// First identify orientation
