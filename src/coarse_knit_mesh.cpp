@@ -102,6 +102,8 @@ namespace hlk {
 		f << scale << " " << stitch_gauge << " " << row_gauge << " " <<
 			tollerance << " " << min_time << " " << max_time << " " <<
 			minimizer_timeout << " " << topology_solved << " " << geometry_solved;
+
+		hlk::save(f, vertex_is_special);
 	}
 
 	void CoarseKnitMesh::load(std::ifstream& f) {
@@ -663,12 +665,23 @@ namespace hlk {
 		int u = mesh->side_u(index);
 		bool is_border = mesh->is_border_vertex[u];
 		int valence = mesh->valence[u];
+
+		if (u == 144 || u == 12) {
+			std::cout << "Looking at vtx " << u << std::endl;
+		}
+
+
+		if (mesh->vertex_is_special[u]) {
+			std::cout << "Found a special vertex: " << u << std::endl;
+		}
+
+	
 		// For our purposes, valences of multiples of 4 (3 on borders)
 		// do not count as singularities, so calculate this explicitly
 		bool is_regular = 
-			(is_border && (valence % 3 == 0)) || 
-			(valence % 4 == 0) || 
-			!mesh->vertex_is_special[index];
+			((is_border && (valence % 3 == 0)) || 
+			(valence % 4 == 0)) && 
+			!mesh->vertex_is_special[u];
 		int prev_idx = mesh->prev_side(index);
 		auto& prev_is_loop = mesh->sides[prev_idx].is_loop;
 		auto& prev_is_out = mesh->sides[prev_idx].is_out;
@@ -692,7 +705,9 @@ namespace hlk {
 			// Constrain that the order at a singular corner can't go "backwards"
 			// by 1. This looks like the the above constraint, except that loop/yarn are
 			// switched (going "backward") and the entire term is negated (prohibit that path)
-
+			if (mesh->vertex_is_special[u]) {
+				std::cout << "constraining a special vertex: " << u << std::endl;
+			}
 			auto no_double_yarn = (is_out == prev_is_out) == is_loop;
 			auto skip_yarn = (is_out != prev_is_out) && is_loop;
 

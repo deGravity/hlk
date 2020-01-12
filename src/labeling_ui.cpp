@@ -349,7 +349,24 @@ namespace hlk {
 		}
 		mode_selector(SEAMER, seamer_pressed, seamer_tex, seamer_instructions, "Seaming Tool");
 		if (current_tool == SEAMER) {
-
+			if (ImGui::Button("Fix All")) {
+				if (mesh_loaded) {
+					for (auto& seam : M.seams) {
+						seam->is_fixed = true;
+					}
+					M.update_textures();
+					update_mesh();
+				}
+			}
+			if (ImGui::Button("UnFix All")) {
+				if (mesh_loaded) {
+					for (auto& seam : M.seams) {
+						seam->is_fixed = false;
+					}
+					M.update_textures();
+					update_mesh();
+				}
+			}
 		}
 		mode_selector(ORIENTER, orienter_pressed, orienter_tex, orienter_instructions, "Orienting Tool");
 		if (current_tool == ORIENTER) {
