@@ -149,6 +149,8 @@ namespace hlk {
 		void toggle_special_vertex(int vertex);
 
 		void add_seam(std::vector<int> sides);
+		// Get the line that a seam would trace
+		std::vector<int> trace_seam(int side);
 
 		// Split any seams in the seam list that cross this vertex
 		void split_seams(int vertex_a, int vertex_b);

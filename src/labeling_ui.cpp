@@ -211,6 +211,28 @@ namespace hlk {
 						}
 						else {
 
+							int side = closest_vertex == 1 ? fid : M.flip_side(fid);
+							if (side >= 0) {
+								int u = M.side_u(side);
+								int v = M.side_v(side);
+
+								if (M.vertex_in_seam[u] && !M.vertex_in_seam[v]) {
+									side = M.flip_side(side);
+								}
+
+								auto edges = M.trace_seam(side);
+								M.update_textures();
+								std::vector<int> new_seam_sides;
+								for (auto e : edges) {
+									if (e >= 0) {
+										new_seam_sides.push_back(M.edges_to_sides(e, 0));
+									}
+								}
+								M.add_seam(new_seam_sides);
+								update_mesh();
+							}
+
+							/*
 							// Find the outgoing side from the closest vertex,
 							// or -1 if non-quad vertex or boundary
 							int side = -1;
@@ -240,6 +262,7 @@ namespace hlk {
 									update_mesh();
 								}
 							}
+							*/
 						}
 						return true;
 					}
@@ -327,6 +350,27 @@ namespace hlk {
 
 					// Find the outgoing side from the closest vertex,
 					// or -1 if non-quad vertex or boundary
+
+					M.update_textures();
+					int side = closest_vertex == 1 ? fid : M.flip_side(fid);
+					if (side >= 0) {
+						int u = M.side_u(side);
+						int v = M.side_v(side);
+
+						if (M.vertex_in_seam[u] && !M.vertex_in_seam[v]) {
+							side = M.flip_side(side);
+						}
+
+						auto edges = M.trace_seam(side);
+						for (auto e : edges) {
+							if (e >= 0) {
+								M.set_glyph(M.edge_slots[e], glyphs::SEAM, color::RED);
+							}
+						}
+					}
+					M.set_glyph(M.vertex_slots[vtx], glyphs::CIRCLE, color::ORANGE);
+					update_mesh();
+					/*
 					int side = -1;
 					if (closest_vertex == 0) {
 						side = fid;
@@ -358,6 +402,7 @@ namespace hlk {
 							update_mesh();
 						}
 					}
+					*/
 				}
 			}
 		}
@@ -382,6 +427,9 @@ namespace hlk {
 			if (ImGui::ImageButton((void*)(intptr_t)(current_tool == t ? pressed : unpressed), ImVec2(32, 32))) {
 				current_tool = t;
 				instructions = tool_instructions;
+				if (mesh_loaded) {
+					M.update_textures();
+				}
 			}
 			tooltip(name);
 		};

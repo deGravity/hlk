@@ -1151,6 +1151,8 @@ namespace hlk {
 		seams.emplace_back(topology_optimizer.get_bool_prop(nth_label("seam", seam_id)));
 		std::vector<int> new_seam;
 		for (auto side : seam_sides) {
+			vertex_in_seam[side_u(side)] = true;
+			vertex_in_seam[side_v(side)] = true;
 			int e = sides_to_edges[side];
 			edges[e].seam = seam_id;
 			new_seam.push_back(e);
@@ -1160,6 +1162,18 @@ namespace hlk {
 		topology_solved = false;
 		geometry_solved = false;
 	}
+
+	std::vector<int> CoarseKnitMesh::trace_seam(int side) {
+		auto loop_sides = side_loop(side);
+		int last = 0;
+		while (last < loop_sides.size() && !vertex_in_seam[side_v(loop_sides[last])]) ++last;
+		std::vector<int> seam_edges;
+		for (int i = 0; i < last; ++i) {
+			seam_edges.push_back(sides_to_edges[loop_sides[i]]);
+		}
+		return seam_edges;
+	}
+
 	void CoarseKnitMesh::split_seams(int vertex_a, int vertex_b)
 	{
 		// Since split_seams doesn't do anything if a seam doesn't
