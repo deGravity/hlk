@@ -108,8 +108,9 @@ namespace hlk {
 		bool auto_solve;
 
 		// Texture Names - TODO - We probably want a second data structure to hold a database of these
-		std::vector<char*> textures{ "stockinette", "ribbing" };
+		std::vector<std::string> texture_names{};
 		int current_texture = 0;
+		bool knitting_textures_loaded = false;
 
 		// Debug Tooltips On
 		bool show_debug_tooltip = false;
@@ -120,6 +121,7 @@ namespace hlk {
 		GLuint eraser_pressed, brush_pressed, seamer_pressed, orienter_pressed, measurer_pressed;
 
 		void load_textures();
+		void load_knitting_textures();
 
 		Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> R, G, B, A;
 

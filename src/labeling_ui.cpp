@@ -10,7 +10,35 @@
 #include "glyph.h"
 #include "glyphs.h"
 
+#include "texture.h"
+
 #include <fstream>
+
+namespace ImGui
+{
+	static auto vector_getter = [](void* vec, int idx, const char** out_text)
+	{
+		auto& vector = *static_cast<std::vector<std::string>*>(vec);
+		if (idx < 0 || idx >= static_cast<int>(vector.size())) { return false; }
+		*out_text = vector.at(idx).c_str();
+		return true;
+	};
+
+	bool Combo(const char* label, int* currIndex, std::vector<std::string>& values)
+	{
+		if (values.empty()) { return false; }
+		return Combo(label, currIndex, vector_getter,
+			static_cast<void*>(&values), values.size());
+	}
+
+	bool ListBox(const char* label, int* currIndex, std::vector<std::string>& values)
+	{
+		if (values.empty()) { return false; }
+		return ListBox(label, currIndex, vector_getter,
+			static_cast<void*>(&values), values.size());
+	}
+
+}
 
 namespace hlk {
 	bool LabelingUI::load_quad_mesh_file()
@@ -316,6 +344,7 @@ namespace hlk {
 
 	void LabelingUI::draw_viewer_menu() {
 		load_textures();
+		load_knitting_textures();
 		auto tooltip = [](std::string text) {
 			if (ImGui::IsItemHovered()) {
 				ImGui::BeginTooltip();
@@ -369,7 +398,17 @@ namespace hlk {
 		if (current_tool == TEXTURER) {
 			ImGui::SameLine();
 			ImGui::PushItemWidth(100);
-			ImGui::Combo("", &current_texture, textures.data(), textures.size());
+			
+			// Leaving this here because it's useful for figuring out ImGui Stuff...
+			//ImGui::ShowStyleEditor();
+
+			ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(
+				(float)textures[current_texture].color(0),
+				(float)textures[current_texture].color(1),
+				(float)textures[current_texture].color(2),
+				(float)textures[current_texture].color(3)));
+			ImGui::Combo("", &current_texture, texture_names);
+			ImGui::PopStyleColor();
 			ImGui::PopItemWidth();
 		}
 		mode_selector(SEAMER, seamer_pressed, seamer_tex, seamer_instructions, "Seaming Tool");
@@ -611,6 +650,17 @@ namespace hlk {
 			igl::png::texture_from_file("orienter_pressed.png", orienter_pressed);
 			igl::png::texture_from_file("measurer_pressed.png", measurer_pressed);
 			textures_loaded = true;
+		}
+	}
+	void LabelingUI::load_knitting_textures()
+	{
+		if (!knitting_textures_loaded) {
+			init_textures();
+			for (auto texture : textures) {
+				texture_names.push_back(texture.name);
+			}
+
+			knitting_textures_loaded = true;
 		}
 	}
 }
