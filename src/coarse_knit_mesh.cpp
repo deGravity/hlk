@@ -672,17 +672,12 @@ namespace hlk {
 			// by 1. This looks like the the above constraint, except that loop/yarn are
 			// switched (going "backward") and the entire term is negated (prohibit that path)
 
-			// TODO - Constrain further - only allow doubling of loops.
-
-			auto orientation_check = (prev_is_out == is_out) == prev_is_loop; // == -> !=
-			auto direction_check = prev_is_loop != is_loop; // Don't need to add ! to both sides since it would cancel
-
-			auto no_yarn_double = !(!prev_is_loop->var && !is_loop->var);
+			auto no_double_yarn = (is_out == prev_is_out) == is_loop;
+			auto skip_yarn = (is_out != prev_is_out) && is_loop;
 
 			constraints.push_back(
 				std::make_pair(
-					!(orientation_check && direction_check) && // Negate full expression
-					no_yarn_double,
+					no_double_yarn || skip_yarn,
 					"singular_corner_" + std::to_string(index)
 				)
 			);
