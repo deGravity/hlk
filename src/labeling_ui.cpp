@@ -120,12 +120,7 @@ namespace hlk {
 			drag_start_side = -1;
 
 			if (auto_solve) {
-				bool sat = M.optimize_topology();
-
-				if (!sat) {
-					std::cout << "UNSAT!" << std::endl;
-				}
-				// TODO - Handle invalid constraints
+				solve_topology();
 			}
 			update_mesh();
 			return true;
@@ -141,12 +136,7 @@ namespace hlk {
 					if (edge >= 0 && M.edges[edge].seam >= 0) {
 						M.toggle_seam(side);
 						if (auto_solve) {
-							bool sat = M.optimize_topology();
-							update_mesh();
-							if (!sat) {
-								std::cout << "UNSAT!" << std::endl;
-							}
-							// TODO - Handle invalid constraints
+							solve_topology();
 						}
 						update_mesh();	
 					}
@@ -312,6 +302,12 @@ namespace hlk {
 			auto filename = igl::file_dialog_save();
 			if (filename.size() > 0) {
 				save_coarse_knit_mesh(filename);
+			}
+		}
+
+		if (ImGui::Checkbox("Auto-Solve", &auto_solve)) {
+			if (auto_solve) {
+				solve_topology();
 			}
 		}
 
@@ -490,6 +486,18 @@ namespace hlk {
 		else {
 			viewer->data(layer).label_color(3) = 0.0; 
 		}
+	}
+
+	void LabelingUI::solve_topology()
+	{
+		bool sat = M.optimize_topology();
+
+		if (!sat) {
+			std::cout << "UNSAT!" << std::endl;
+		}
+
+		update_mesh();
+		// TODO - Handle invalid constraints
 	}
 
 	bool LabelingUI::pick_face(int& fid, Eigen::Vector3f& bc)

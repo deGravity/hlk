@@ -44,6 +44,8 @@ namespace hlk {
 		
 		void set_layer(int layer, bool on);
 
+		void solve_topology();
+
 
 	private:
 
