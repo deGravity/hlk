@@ -74,7 +74,14 @@ hlk::IGLVisualization hlk::KnitGraph::visualize_stitches(const std::vector<vkmp:
 		yarn_seen[yarn] = true;
 		last_per_yarn[yarn] = i;
 		
-		vis.add_point(i, yarn_colors.row(yarn));
+		Eigen::RowVector3d point_color = yarn_colors.row(yarn);
+		if (stitches[i].data.name == "knit") {
+			point_color = Eigen::RowVector3d(1.0, 1.0, 1.0);
+		}
+		else if (stitches[i].data.name == "purl") {
+			point_color = Eigen::RowVector3d(0.0, 0.0, 0.0);
+		}
+		vis.add_point(i, point_color);
 		vis.add_label(i, std::to_string(i));
 	}
 
@@ -108,73 +115,11 @@ void hlk::KnitGraph::contract()
 
 void hlk::KnitGraph::generate_instructions(std::string filename)
 {
-	ak::RowColGraph RCG = make_row_col_graph();
-	std::vector<ak::TracedStitch> traced_stitches;
-	ak::trace_graph(RCG, &traced_stitches);
+	trace();
 
 
 	vkmp::Scheduler s;
-	std::vector< vkmp::Stitch >& stitches = s.stitches;
-	stitches.reserve(traced_stitches.size());
-	std::vector<bool> first_trace(nodes.size(), true);
-	for (auto const& ts : traced_stitches) {
-		stitches.emplace_back();
-		stitches.back().yarn = ts.yarn;
-		stitches.back().type = ts.type;
-		stitches.back().direction = ts.dir;
-		stitches.back().in[0] = ts.ins[0];
-		stitches.back().in[1] = ts.ins[1];
-		stitches.back().out[0] = ts.outs[0];
-		stitches.back().out[1] = ts.outs[1];
-		stitches.back().at = ts.at;
-
-		stitches.back().data = nodes[ts.vertex]->get_data(first_trace[ts.vertex]);
-
-		// Force ribbing-like pattern
-		/*
-		if (nodes[ts.vertex]->index % 4 < 2) {
-			stitches.back().data = STITCH::PURL;
-		}
-		*/
-
-		/*
-		if (stitches.back().in[0] == -1U && stitches.back().in[1] == -1U) {
-			stitches.back().data = STITCH::CASTON;
-		}
-		*/
-
-		/*
-		if (stitches.back().out[0] == -1U && stitches.back().out[1] == -1U) {
-			stitches.back().data = STITCH::BINDOFF;
-		}
-		*/
-		first_trace[ts.vertex] = false;
-
-	}
-
-	// Now go back and put in yarn-ends at the first and last instances of
-	// each yarn
-	typedef struct {
-		uint32_t first = -1U;
-		uint32_t last = -1U;
-	} yarn_endpoints;
-	std::map<int, yarn_endpoints> yarn_ends;
-	std::set<int> yarn_ids;
-
-	for (int i = 0; i < traced_stitches.size(); ++i) {
-		int yarn = traced_stitches[i].yarn;
-		if (yarn_ends[yarn].first == -1U) {
-			yarn_ends[yarn].first = i;
-		}
-		yarn_ends[yarn].last = i;
-		yarn_ids.insert(yarn);
-	}
-	for (int yarn : yarn_ids) {
-		stitches[yarn_ends[yarn].first].data = STITCH::YARNEND;
-		stitches[yarn_ends[yarn].last].data = STITCH::YARNEND;
-	}
-
-	//vkmp::load_stitches(filename, &s.stitches);
+	s.stitches = stitches;
 
 	vkmp::save_stitches(filename + ".st", stitches);
 
@@ -193,8 +138,6 @@ void hlk::KnitGraph::generate_instructions(std::string filename)
 	std::cout << "Trying to run:\n" << command_2 << std::endl;
 	system(command_2.c_str());
 
-
-	//ak::save_traced(filename, traced_stitches);
 }
 
 void hlk::KnitGraph::propogate_textures()
@@ -209,13 +152,14 @@ void hlk::KnitGraph::propogate_textures()
 
 		texture_r[n] = 0;
 		texture_c[n] = 0;
+		explored[n] = true;
 
 		std::deque<int> to_explore;
 
 		to_explore.push_back(n);
 
 		auto explore_neighbor = [&](int curr, int neigh, int axis, int step) {
-			if (explored[n] && nodes[curr]->texture_id == nodes[neigh]->texture_id) {
+			if (!explored[neigh] && nodes[curr]->texture_id == nodes[neigh]->texture_id) {
 				if (axis == 0) {
 					texture_r[neigh] = texture_r[curr];
 					texture_c[neigh] = texture_c[curr] + step;
@@ -224,6 +168,7 @@ void hlk::KnitGraph::propogate_textures()
 					texture_r[neigh] = texture_r[curr] + step;
 					texture_c[neigh] = texture_c[curr];
 				}
+				explored[neigh] = true;
 				to_explore.push_back(neigh);
 			}
 		};
@@ -231,19 +176,19 @@ void hlk::KnitGraph::propogate_textures()
 		while (!to_explore.empty()) {
 			int current = to_explore.front();
 			to_explore.pop_front();
-			if (nodes[n]->right) {
-				int neighbor = nodes[n]->right->dst->index;
+			if (nodes[current]->right) {
+				int neighbor = nodes[current]->right->dst->index;
 				explore_neighbor(current, neighbor, 0, 1);
 			}
-			if (nodes[n]->left) {
-				int neighbor = nodes[n]->left->src->index;
+			if (nodes[current]->left) {
+				int neighbor = nodes[current]->left->src->index;
 				explore_neighbor(current, neighbor, 0, -1);
 			}
-			for (auto& child : nodes[n]->top) {
+			for (auto& child : nodes[current]->top) {
 				int neighbor = child->dst->index;
 				explore_neighbor(current, neighbor, 1, 2);
 			}
-			for (auto& parent : nodes[n]->bottom) {
+			for (auto& parent : nodes[current]->bottom) {
 				int neighbor = parent->src->index;
 				explore_neighbor(current, neighbor, 1, -2);
 			}
@@ -251,7 +196,6 @@ void hlk::KnitGraph::propogate_textures()
 
 	}
 
-	
 	auto texture_db = get_textures();
 
 	// Now Apply the Textures
@@ -261,7 +205,7 @@ void hlk::KnitGraph::propogate_textures()
 		int C = texture.pattern.cols();
 		int r_i = (R + (texture_r[n] % R)) % R;
 		int r_l = (R + (texture_r[n] + 1 % R)) % R;
-		int c = (C + (texture_c[n] % R)) % R;
+		int c = (C + (texture_c[n] % C)) % C;
 		nodes[n]->internal_knit = texture.pattern(r_i, c) == 0;
 		for (auto& top : nodes[n]->top) {
 			if (top->is_loop && top->type == LoopType::KNIT) {
@@ -292,24 +236,6 @@ void hlk::KnitGraph::trace()
 
 		stitches.back().data = nodes[ts.vertex]->get_data(first_trace[ts.vertex]);
 
-		// Force ribbing-like pattern
-		/*
-		if (nodes[ts.vertex]->index % 4 < 2) {
-			stitches.back().data = STITCH::PURL;
-		}
-		*/
-
-		/*
-		if (stitches.back().in[0] == -1U && stitches.back().in[1] == -1U) {
-			stitches.back().data = STITCH::CASTON;
-		}
-		*/
-
-		/*
-		if (stitches.back().out[0] == -1U && stitches.back().out[1] == -1U) {
-			stitches.back().data = STITCH::BINDOFF;
-		}
-		*/
 		first_trace[ts.vertex] = false;
 
 	}

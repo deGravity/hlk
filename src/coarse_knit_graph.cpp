@@ -134,6 +134,9 @@ namespace hlk {
 		for (int i = 0; i < patch_data.size(); ++i) {
 			auto& data = patch_data[i];
 			patches.emplace_back(data.side_lengths, data.corners, data.shaping, data.short_row_shaping);
+			for (auto& node : patches.back().graph.nodes) {
+				node->texture_id = data.texture_id;
+			}
 		}
 		patches_initialized = true;
 	}
