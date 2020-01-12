@@ -47,6 +47,7 @@ namespace hlk {
 		void solve_topology();
 
 
+
 	private:
 
 		CoarseKnitMesh M;

@@ -4,8 +4,12 @@
 #include "vkmp/xferplan/Stitch.hpp"
 #include "vkmp/scheduler.hpp"
 
+#include "texture.h"
+
 #include <iostream>
 #include <set>
+
+#include <deque>
 
 #include <igl/parula.h>
 
@@ -191,6 +195,80 @@ void hlk::KnitGraph::generate_instructions(std::string filename)
 
 
 	//ak::save_traced(filename, traced_stitches);
+}
+
+void hlk::KnitGraph::propogate_textures()
+{
+	std::vector<int> texture_r(nodes.size(), -1);
+	std::vector<int> texture_c(nodes.size(), -1);
+	std::vector<bool> explored(nodes.size(), false);
+
+	// BFS to Propogate Texture Coordinates
+	for (int n = 0; n < nodes.size(); ++n) {
+		if (explored[n]) continue; // Already Explored
+
+		texture_r[n] = 0;
+		texture_c[n] = 0;
+
+		std::deque<int> to_explore;
+
+		to_explore.push_back(n);
+
+		auto explore_neighbor = [&](int curr, int neigh, int axis, int step) {
+			if (explored[n] && nodes[curr]->texture_id == nodes[neigh]->texture_id) {
+				if (axis == 0) {
+					texture_r[neigh] = texture_r[curr];
+					texture_c[neigh] = texture_c[curr] + step;
+				}
+				else {
+					texture_r[neigh] = texture_r[curr] + step;
+					texture_c[neigh] = texture_c[curr];
+				}
+				to_explore.push_back(neigh);
+			}
+		};
+
+		while (!to_explore.empty()) {
+			int current = to_explore.front();
+			to_explore.pop_front();
+			if (nodes[n]->right) {
+				int neighbor = nodes[n]->right->dst->index;
+				explore_neighbor(current, neighbor, 0, 1);
+			}
+			if (nodes[n]->left) {
+				int neighbor = nodes[n]->left->src->index;
+				explore_neighbor(current, neighbor, 0, -1);
+			}
+			for (auto& child : nodes[n]->top) {
+				int neighbor = child->dst->index;
+				explore_neighbor(current, neighbor, 1, 2);
+			}
+			for (auto& parent : nodes[n]->bottom) {
+				int neighbor = parent->src->index;
+				explore_neighbor(current, neighbor, 1, -2);
+			}
+		}
+
+	}
+
+	
+	auto texture_db = get_textures();
+
+	// Now Apply the Textures
+	for (int n = 0; n < nodes.size(); ++n) {
+		auto& texture = texture_db[nodes[n]->texture_id];
+		int R = texture.pattern.rows();
+		int C = texture.pattern.cols();
+		int r_i = (R + (texture_r[n] % R)) % R;
+		int r_l = (R + (texture_r[n] + 1 % R)) % R;
+		int c = (C + (texture_c[n] % R)) % R;
+		nodes[n]->internal_knit = texture.pattern(r_i, c) == 0;
+		for (auto& top : nodes[n]->top) {
+			if (top->is_loop && top->type == LoopType::KNIT) {
+				top->type = (texture.pattern(r_l, c) == 0) ? LoopType::KNIT : LoopType::PURL;
+			}
+		}
+	}
 }
 
 void hlk::KnitGraph::trace()
@@ -447,24 +525,27 @@ vkmp::StData hlk::KnitGraphNode::get_data(bool first_tracing)
 {
 	vkmp::StData data;
 
-	data = STITCH::KNIT; // Default to a knit stitch
+	data = first_tracing ? (internal_knit ? STITCH::KNIT : STITCH::PURL) : STITCH::KNIT;
+
 	// Knit and Purl
 	if (top.size() == 1 && bottom.size() == 1 && left && right) {
-		auto type = top[0]->type;
-		switch (type) {
-		case LoopType::KNIT:
-			data = STITCH::KNIT;
-			break;
-		case LoopType::PURL:
-			data = STITCH::PURL;
-			break;
-		case LoopType::SLIP:
-			data = STITCH::MISS;
-			break;
-		case LoopType::YARNOVER:
-			// This would be a 2-pass: first drop, then tuck
-			// Doesn't make a lot of sense
-			break;
+		if (!first_tracing) {
+			auto type = top[0]->type;
+			switch (type) {
+			case LoopType::KNIT:
+				data = STITCH::KNIT;
+				break;
+			case LoopType::PURL:
+				data = STITCH::PURL;
+				break;
+			case LoopType::SLIP:
+				data = STITCH::MISS;
+				break;
+			case LoopType::YARNOVER:
+				// This would be a 2-pass: first drop, then tuck
+				// Doesn't make a lot of sense
+				break;
+			}
 		}
 	}
 	// Increases
@@ -481,9 +562,8 @@ vkmp::StData hlk::KnitGraphNode::get_data(bool first_tracing)
 			}
 		}
 		// Don't output the increase on the first tracing
-		// TODO - Should choose appropriately between knit and purl
 		if (first_tracing) {
-			data = STITCH::KNIT;
+			data = internal_knit ? STITCH::KNIT : STITCH::PURL;
 		}
 	}
 	// Decreases
@@ -503,9 +583,8 @@ vkmp::StData hlk::KnitGraphNode::get_data(bool first_tracing)
 			
 		}
 		// Don't output the increase on the second tracing
-		// TODO - Should choose appropriately between knit and purl
 		if (!first_tracing) {
-			data = STITCH::KNIT;
+			data = top[0]->type == LoopType::PURL ? STITCH::PURL : STITCH::KNIT;
 		}
 	}
 

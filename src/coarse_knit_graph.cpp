@@ -377,6 +377,8 @@ namespace hlk {
 		}
 		
 		G.re_index();
+
+		G.propogate_textures();
 		
 		return G;
 	}

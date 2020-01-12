@@ -98,6 +98,7 @@ namespace hlk {
 
 		bool pass_through = false;
 		int patch_id = -1;
+		int texture_id = 0;
 
 		vkmp::StData get_data(bool first_tracing);
 
@@ -123,6 +124,8 @@ namespace hlk {
 		void schedule(); // Order and assign yarns for each node. Fix yarn in/out and create shift-paths
 
 		void generate_instructions(std::string filename);
+
+		void propogate_textures();
 
 		void trace();
 		ak::RowColGraph make_row_col_graph();
