@@ -629,6 +629,74 @@ namespace hlk {
 		auto slot = mesh->quad_slots[index];
 		mesh->set_glyph(slot, glyphs::SOLID_LINE, color);
 		// TODO - Print Glyphs for inc/dec type
+
+		// First identify orientation
+		std::vector<int> gen_indices;
+		std::vector<int> side_locs(4, -1);
+		int top = -1, bottom = -1, left = -1, right = -1;
+		for (int i = 0; i < 4; ++i) {
+			gen_indices.push_back(mesh->sides[index * 4 + i].generalized_index());
+			side_locs[gen_indices.back()] = i;
+		}
+
+		switch (short_row_distribution) {
+		case ShapingType::NONE:
+			if (side_locs[0] >= 0) {
+				mesh->set_glyph(mesh->quadrant_slot(index, side_locs[0]), glyphs::NO_SHORT_ROW, color::GREY);
+			}
+			else if (side_locs[2] >= 0) {
+				mesh->set_glyph(mesh->quadrant_slot(index, side_locs[2]), glyphs::NO_SHORT_ROW, color::GREY);
+			}
+			break;
+		case ShapingType::IN_SIDE:
+			if (side_locs[0] >= 0) {
+				mesh->set_glyph(mesh->quadrant_slot(index, side_locs[0]), glyphs::SHORT_ROW, color::GREY);
+			}
+			break;
+		case ShapingType::OUT_SIDE:
+			if (side_locs[2] >= 0) {
+				mesh->set_glyph(mesh->quadrant_slot(index, side_locs[2]), glyphs::SHORT_ROW, color::GREY);
+			}
+			break;
+		}
+
+		switch (shaping_distribution) {
+		case ShapingType::NONE:
+			if (side_locs[1] >= 0) {
+				mesh->set_glyph(mesh->quadrant_slot(index, side_locs[1]), glyphs::NO_INCREASE, color::GREY);
+			}
+			else if (side_locs[3] >= 0) {
+				mesh->set_glyph(mesh->quadrant_slot(index, side_locs[3]), glyphs::NO_INCREASE, color::GREY);
+			}
+			break;
+		case ShapingType::IN_SIDE:
+			if (side_locs[3] >= 0) {
+				mesh->set_glyph(mesh->quadrant_slot(index, side_locs[3]), glyphs::LEANING_INCREASE, color::GREY);
+			}
+			break;
+		case ShapingType::OUT_SIDE:
+			if (side_locs[1] >= 0) {
+				mesh->set_glyph(mesh->quadrant_slot(index, side_locs[1]), glyphs::LEANING_INCREASE, color::GREY);
+			}
+			break;
+		case ShapingType::BOTH_SIDES:
+			if (side_locs[0] >= 0) {
+				mesh->set_glyph(mesh->quadrant_slot(index, side_locs[0]), glyphs::LEANING_INCREASE, color::GREY);
+			}
+			if (side_locs[2] >= 0) {
+				mesh->set_glyph(mesh->quadrant_slot(index, side_locs[2]), glyphs::LEANING_INCREASE, color::GREY);
+			}
+			break;
+		case ShapingType::DISTRIBUTED:
+			if (side_locs[1] >= 0) {
+				mesh->set_glyph(mesh->quadrant_slot(index, side_locs[1]), glyphs::INCREASE, color::GREY);
+			}
+			else if (side_locs[3] >= 0) {
+				mesh->set_glyph(mesh->quadrant_slot(index, side_locs[3]), glyphs::INCREASE, color::GREY);
+			}
+			break;
+		}
+
 	}
 	void CoarseKnitQuad::save(std::ofstream& f)
 	{
@@ -666,16 +734,6 @@ namespace hlk {
 		bool is_border = mesh->is_border_vertex[u];
 		int valence = mesh->valence[u];
 
-		if (u == 144 || u == 12) {
-			std::cout << "Looking at vtx " << u << std::endl;
-		}
-
-
-		if (mesh->vertex_is_special[u]) {
-			std::cout << "Found a special vertex: " << u << std::endl;
-		}
-
-	
 		// For our purposes, valences of multiples of 4 (3 on borders)
 		// do not count as singularities, so calculate this explicitly
 		bool is_regular = 
@@ -705,9 +763,7 @@ namespace hlk {
 			// Constrain that the order at a singular corner can't go "backwards"
 			// by 1. This looks like the the above constraint, except that loop/yarn are
 			// switched (going "backward") and the entire term is negated (prohibit that path)
-			if (mesh->vertex_is_special[u]) {
-				std::cout << "constraining a special vertex: " << u << std::endl;
-			}
+
 			auto no_double_yarn = (is_out == prev_is_out) == is_loop;
 			auto skip_yarn = (is_out != prev_is_out) && is_loop;
 
