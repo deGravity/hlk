@@ -38,7 +38,6 @@ public:
         should_setup_boundary = true;
         has_direction_field = false;
         has_integer_grid = false;
-        has_curl = false;
         is_quad_meshed = false;
         should_redraw = false;
 
@@ -46,13 +45,12 @@ public:
         existing_edge_label = false;
         multi_points_drawing = true;
         use_optim_loop = true;
-        do_matching = false;
+        do_matching = true;
         use_guiding_field = false;
 
         viewing_mode = ViewingMode::MESH_ONLY;
         drawing_mode = DrawingMode::WALE;
         seaming_mode = SeamingMode::SEAM;
-        miq_mode = MIQMode::CROSS;
         line_texture(texture_R, texture_G, texture_B);
         direction_field = { Eigen::MatrixXd(), Eigen::MatrixXd() };
 
@@ -149,14 +147,11 @@ public:
     bool save_raw_field();
     void reset_face_vectors();
     void reset_field();
-    void init_curvature_field();
     void setup_boundary();
     void interpolate_cross_field(Eigen::VectorXd& S, int direction = 1); // default wale interpolation
     void update_vectors_from_field(int direction = 1);
     void interpolate_field();
     void generate_integer_grid();
-    void init_curl();
-    void reduce_curl();
     void init_quad_mesh();
     void quad_helix_finding();
     std::vector<FaceVector> hard_faces();
@@ -178,7 +173,6 @@ public:
 
     // bools...
     bool has_direction_field;
-    bool has_curl;
     bool has_integer_grid;
     bool is_quad_meshed;
     bool should_redraw;
@@ -245,6 +239,8 @@ public:
     Eigen::MatrixXi F_uv;
     // Local basis
     Eigen::MatrixXd B1, B2, B3;
+    // Edge topology
+    Eigen::MatrixXi EV, EF, FE;
 
     // quad mesh data
     QuadMesh quad_mesh;
@@ -253,43 +249,23 @@ public:
     std::vector<Eigen::MatrixXd> direction_field; // size 2, using stl for serialization
     Eigen::VectorXd field_sings;
 
-    // polyvector field data
-    Eigen::MatrixXcd polyvector_field;
-    Eigen::VectorXi p_b;
-    Eigen::MatrixXd p_bc;
-    Eigen::MatrixXd VMeshCut;
-    Eigen::MatrixXi FMeshCut;
-    Eigen::MatrixXd cutUV;
-
-    // curl reduction data
-    Eigen::MatrixXi FField, FSings, FSeams;
-    Eigen::MatrixXi EV, EF, FE;
-    Eigen::MatrixXd VField, VSings, VSeams;
-    Eigen::MatrixXd CField, CSings, CSeams;
-    Eigen::MatrixXd curlRawField, combedField;
-    Eigen::VectorXi combedMatching;
-    Eigen::VectorXd combedEffort;
-    Eigen::VectorXd curl; // norm of curl per edge
-    Eigen::VectorXi curlSingVertices, curlSingIndices;
-    Eigen::SparseMatrix<double> AE2F; // averaging curl to faces for visualization
-    double curlMax, curlMaxOrig;
-    Eigen::VectorXi c_b, c_blevel;
-    Eigen::MatrixXd c_bc;
-
     // trivial connections data
     Eigen::VectorXi singVertices, singIndices;
     Eigen::VectorXi cycleIndices;
     Eigen::VectorXd cycleCurvature, targetCurvature;
     Eigen::SparseMatrix<double> basisCycles;
     Eigen::VectorXi vertex2cycle, innerEdges;
-    Eigen::MatrixXd CMesh, rawField;
+    Eigen::MatrixXd rawField, combedField;
+    Eigen::MatrixXi FField, FSings;
+    Eigen::MatrixXd VField, VSings;
+    Eigen::MatrixXd CMesh, CField, CSings;
     std::vector<std::vector<int>> cycleFaces;
     int eulerChar, numGenerators, numBoundaries, numDirectionConstraints;
     int currVertex, currCycle;
     int N; // degree of field
     Eigen::VectorXd linf;
-    float constrainedRootAngle = -1;
-    float globalRotation;
+    std::vector<int> misaligned_faces;
+    float globalRotation, constrainedRootAngle;
     bool singularitySelect, constrainedRoot;
 
     /////////////////// UI ///////////////////
@@ -297,7 +273,6 @@ public:
     ViewingMode viewing_mode;
     DrawingMode drawing_mode;
     SeamingMode seaming_mode;
-    MIQMode miq_mode;
 
     bool symmetry_mode_yz, symmetry_mode_xz, symmetry_mode_xy;
     bool symmetrize_nrosy, symmetrize_loops, should_setup_boundary;

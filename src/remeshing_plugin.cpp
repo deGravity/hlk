@@ -262,6 +262,7 @@ void RemeshingMenu::draw_viewer_menu() {
                 ImGui::Text("===Field Operations===");
                 if (ImGui::Button("Interpolate Field", ImVec2(w - p, 0))) {
                     interpolate_field();
+                    update_visualization();
                 }
                 if (ImGui::Button("Run MIQ parametrization", ImVec2(w - p, 0))) {
                     generate_integer_grid();
@@ -1566,6 +1567,7 @@ void RemeshingMenu::split_mesh(const float threshold) {
     setup_boundary();
     interpolate_field();
     setup_basis_cycles();
+    update_visualization();
 }
 
 void RemeshingMenu::geodesic_split_mesh() {
@@ -2009,17 +2011,19 @@ void RemeshingMenu::update_visualization(unsigned char key) {
 
         } else {
             // raw field mesh
+            Eigen::MatrixXd glyphColors = directional::default_glyph_color().replicate(F.rows(), N);
+            for (int f : misaligned_faces) {
+                glyphColors.row(f) = directional::selected_face_glyph_color().replicate(1, N);
+            }
             directional::glyph_lines_raw(
-                V, F, rawField, directional::default_glyph_color(),
-                VField, FField, CField, 1.5);
+                V, F, rawField, glyphColors, VField, FField, CField);
             viewer->data_list[1].clear();
             viewer->data_list[1].set_mesh(VField, FField);
             viewer->data_list[1].set_colors(CField);
             set_mesh_overlays(1, false);
             // singularity mesh
             directional::singularity_spheres(
-                V, F, N, singVertices, singIndices,
-                VSings, FSings, CSings, 1.5);
+                V, F, N, singVertices, singIndices, VSings, FSings, CSings);
             viewer->data_list[2].clear();
             viewer->data_list[2].set_mesh(VSings, FSings);
             viewer->data_list[2].set_colors(CSings);

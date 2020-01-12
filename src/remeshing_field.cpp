@@ -3,8 +3,6 @@
 #include <directional/read_raw_field.h>
 #include <directional/representative_to_raw.h>
 #include <directional/rotation_to_representative.h>
-#include <directional/polyvector_field.h>
-#include <directional/polyvector_to_raw.h>
 #include <directional/write_raw_field.h>
 #include <igl/AABB.h>
 #include <igl/barycenter.h>
@@ -27,15 +25,10 @@ bool RemeshingMenu::load_raw_field() {
     std::string fname = igl::file_dialog_open();
     if (fname.length() == 0) return false;
 
-    if (miq_mode == MIQMode::INDEX) {
-        directional::read_raw_field(fname, N, rawField);
-    } else {
-        directional::read_raw_field(fname, rosy, curlRawField);
-        direction_field[1] = curlRawField.block(0, 0, F.rows(), 3);
-    }
+    directional::read_raw_field(fname, rosy, rawField);
+    direction_field[1] = rawField.block(0, 0, F.rows(), 3);
 
     has_direction_field = true;
-    has_curl = false;
     return true;
 }
 
@@ -43,12 +36,8 @@ bool RemeshingMenu::save_raw_field() {
     std::string fname = igl::file_dialog_save();
     if (fname.length() == 0) return false;
 
-    if (miq_mode == MIQMode::INDEX) {
-        return directional::write_raw_field(fname, rawField);
-    } else if (miq_mode == MIQMode::CROSS) {
-        directional::representative_to_raw(V, F, direction_field[1], rosy, curlRawField);
-    }
-    return directional::write_raw_field(fname, curlRawField);
+    directional::representative_to_raw(V, F, direction_field[1], rosy, rawField);
+    return directional::write_raw_field(fname, rawField);
 }
 
 void RemeshingMenu::reset_face_vectors() {
@@ -72,30 +61,8 @@ void RemeshingMenu::reset_field() {
     seams.clear();
     setup_boundary();
     interpolate_field();
+    setup_basis_cycles();
     update_visualization();
-    save_ctrlz();
-}
-
-void RemeshingMenu::init_curvature_field() {
-    Eigen::MatrixXd PD1, PD2; // unit directions per vertex
-    Eigen::VectorXd PV1, PV2; // magnitude
-    igl::principal_curvature(V, F, PD1, PD2, PV1, PV2);
-
-    Eigen::MatrixXd FD1, FD2; // directions per face
-    FD1.resize(F.rows(), 3); FD1.setZero();
-    FD2.resize(F.rows(), 3); FD2.setZero();
-    for (int i = 0; i < F.rows(); ++i)
-        for (int j = 0; j < 3; ++j) {
-            FD1.row(i) += PV1(F(i, j)) * PD1.row(F(i, j));
-            FD2.row(i) += PV2(F(i, j)) * PD2.row(F(i, j));
-        }
-    FD1.array() /= 3;
-    FD2.array() /= 3;
-    direction_field[0] = FD1;
-    direction_field[1] = FD2;
-
-    update_vectors_from_field(0);
-    update_vectors_from_field(1);
 }
 
 void RemeshingMenu::setup_boundary() {
@@ -191,13 +158,9 @@ void RemeshingMenu::interpolate_cross_field(Eigen::VectorXd& S, int direction) {
     Eigen::VectorXi soft_constraint_indices(soft_constraint_count);
     Eigen::VectorXd soft_constraint_weights(soft_constraint_count);
     Eigen::MatrixXd soft_constraints(soft_constraint_count, 3);
-    c_b.resize(hard_constraint_count + soft_constraint_count); c_b.setZero();
-    c_bc.resize(hard_constraint_count + soft_constraint_count, 6); c_bc.setZero();
-    c_blevel.resize(hard_constraint_count + soft_constraint_count); c_blevel.setZero();
 
     int idx_hard = 0;
     int idx_soft = 0;
-    int idx = 0;
     for (auto& face_vector : face_vectors) {
         if (face_vector.assigned[direction]) {
             if (face_vector.is_hard) {
@@ -210,14 +173,6 @@ void RemeshingMenu::interpolate_cross_field(Eigen::VectorXd& S, int direction) {
                 soft_constraints.row(idx_soft) = face_vector.frame[direction].normalized();
                 ++idx_soft;
             }
-            c_b(idx) = face_vector.face_id;
-            c_bc.block<1, 3>(idx, 0) = face_vector.frame[direction];
-            c_blevel(idx) = 1;
-            if (face_vector.assigned[1-direction]) {
-                c_bc.block<1, 3>(idx, 3) = face_vector.frame[1-direction];
-                c_blevel(idx) = 2;
-            }
-            ++idx;
         }
     }
 
@@ -252,200 +207,76 @@ void RemeshingMenu::update_vectors_from_field(int direction) {
 }
 
 void RemeshingMenu::interpolate_field() {
-    if (miq_mode == MIQMode::POLYVECTOR) {
-        // Set up constraints.
-        std::vector<int> constrained_faces;
-        std::vector<int> wale_constrained_faces;
-        std::vector<std::vector<Eigen::Vector3d>> constraints;
-        std::vector<std::vector<Eigen::Vector3d>> wale_constraints;
-        for (FaceVector& fv : face_vectors) {
-            if (fv.assigned[0] || fv.assigned[1]) {
-                // for polyvector field interpolation
-                constrained_faces.push_back(fv.face_id);
-                std::vector<Eigen::Vector3d> face_constraints;
-                if (fv.assigned[0] && fv.assigned[1]) {
-                    face_constraints = { fv.frame[1], fv.frame[0], -fv.frame[1], -fv.frame[0] };
-                } else {
-                    if (fv.assigned[0]) {
-                        Eigen::Vector3d ortho_dir = fv.normal.cross(fv.frame[0]);
-                        face_constraints = { fv.frame[0], ortho_dir, -fv.frame[0], -ortho_dir };
-                    } else { // fv.assigned[1]
-                        Eigen::Vector3d ortho_dir = fv.normal.cross(fv.frame[1]);
-                        face_constraints = { ortho_dir, fv.frame[1], -ortho_dir, -fv.frame[1] };
-                    }
-                }
-                constraints.push_back(face_constraints);
-                // for curl reduction precomputation
-                if (fv.assigned[1]) {
-                    wale_constrained_faces.push_back(fv.face_id);
-                    std::vector<Eigen::Vector3d> wale_face_constraints;
-                    if (fv.assigned[0]) {
-                        wale_face_constraints = { fv.frame[1], fv.frame[0] };
-                    } else {
-                        wale_face_constraints = { fv.frame[1] };
-                    }
-                    wale_constraints.push_back(wale_face_constraints);
-                }
-            }
-        }
+    interpolate_cross_field(field_sings);
+    update_vectors_from_field();
+    directional::representative_to_raw(V, F, direction_field[1], rosy, rawField);
+    viewing_mode = ViewingMode::MESH_ONLY;
 
-        p_b.resize(constrained_faces.size()); p_b.setZero();
-        p_bc.resize(constrained_faces.size(), 3 * rosy); p_bc.setZero();
-        for (int i = 0; i < constrained_faces.size(); ++i) {
-            p_b(i) = constrained_faces[i];
-            for (int j = 0; j < rosy; ++j) {
-                p_bc.block<1, 3>(i, 3 * j) = constraints[i][j];
-            }
-        }
-
-        c_b.resize(wale_constrained_faces.size()); c_b.setZero();
-        c_bc.resize(wale_constrained_faces.size(), 6); c_bc.setZero();
-        c_blevel.resize(wale_constrained_faces.size()); c_blevel.setZero();
-        for (int i = 0; i < wale_constrained_faces.size(); ++i) {
-            c_b(i) = wale_constrained_faces[i];
-            c_blevel(i) = wale_constraints[i].size();
-            c_bc.block<1, 3>(i, 0) = wale_constraints[i][0];
-            if (c_blevel(i) == 2) {
-                c_bc.block<1, 3>(i, 3) = wale_constraints[i][1];
-            }
-        }
-
-        directional::polyvector_field(V, F, p_b, p_bc, rosy, polyvector_field);
-        directional::polyvector_to_raw(V, F, polyvector_field, rosy, curlRawField);
-        viewing_mode = ViewingMode::MESH_FIELD;
-
-    } else if (miq_mode == MIQMode::CROSS) {
-        interpolate_cross_field(field_sings);
-        update_vectors_from_field();
-        directional::representative_to_raw(V, F, direction_field[1], rosy, curlRawField);
-        viewing_mode = ViewingMode::MESH_ONLY;
-
-        int s_count = 0;
-        for (int i = 0; i < field_sings.rows(); ++i) {
-            s_count += abs(field_sings(i)) > 0.001 ? 1 : 0;
-        }
-        std::cout << "Singularity Count = " << s_count << "\n";
-        std::cout << "Total index: " << field_sings.sum() << "\n";
+    int s_count = 0;
+    for (int i = 0; i < field_sings.rows(); ++i) {
+        s_count += abs(field_sings(i)) > 0.001 ? 1 : 0;
     }
+    std::cout << "[interpolate] Singularity count = " << s_count << "\n";
+    std::cout << "[interpolate] Field total index = " << field_sings.sum() << "\n";
 
     has_direction_field = true;
     has_integer_grid = false;
-    has_curl = false;
-    update_visualization();
 }
 
 void RemeshingMenu::generate_integer_grid() {
 
-    if (miq_mode == MIQMode::INDEX) {
-        if (N != 4) {
-            std::cout << "[generate_integer_grid] overwriting prescribed rawField because N is not 4\n";
-            directional::representative_to_raw(V, F, direction_field[1], rosy, rawField);
-        }
-        Meshing::polyvector_parametrize(
-            V, F, rosy, EV, EF, FE,
-            rawField, combedField,
-            combedMatching, combedEffort,
-            singVertices, singIndices,
-            VMeshCut, FMeshCut, cutUV,
-            1. / gradient_size, true); // SUPPOSEDLY THIS STEP COMBS THE FIELD
-        direction_field[1] = combedField.block(0, 0, F.rows(), 3);
+    std::vector<std::vector<int>> hard_edges;
 
-    } else if (miq_mode == MIQMode::POLYVECTOR) {
-        Meshing::polyvector_parametrize(
-            V, F, rosy, EV, EF, FE,
-            curlRawField, combedField,
-            combedMatching, combedEffort,
-            curlSingVertices, curlSingIndices,
-            VMeshCut, FMeshCut, cutUV,
-            1. / gradient_size, true);
-        direction_field[1] = combedField.block(0, 0, F.rows(), 3);
-
-    } else { // miq_mode == MIQMode::CROSS
-        std::vector<std::vector<int>> hard_edges;
-
-        Eigen::MatrixXi edges;
-        Eigen::VectorXi face_inds, opp_verts;
-        igl::boundary_facets(F, edges, face_inds, opp_verts);
-        for (int i = 0; i < edges.rows(); ++i) {
-            int v0 = edges(i, 0);
-            int v1 = edges(i, 1);
-            int f = face_inds(i);
-            for (int j = 0; j < 3; ++j) {
-                if ((F(f, j) == v0 && F(f, (j + 1) % 3) == v1) ||
-                    (F(f, j) == v1 && F(f, (j + 1) % 3) == v0)) {
-                    hard_edges.push_back({ f, j });
-                    break;
-                }
+    Eigen::MatrixXi edges;
+    Eigen::VectorXi face_inds, opp_verts;
+    igl::boundary_facets(F, edges, face_inds, opp_verts);
+    for (int i = 0; i < edges.rows(); ++i) {
+        int v0 = edges(i, 0);
+        int v1 = edges(i, 1);
+        int f = face_inds(i);
+        for (int j = 0; j < 3; ++j) {
+            if ((F(f, j) == v0 && F(f, (j + 1) % 3) == v1) ||
+                (F(f, j) == v1 && F(f, (j + 1) % 3) == v0)) {
+                hard_edges.push_back({ f, j });
+                break;
             }
         }
+    }
 
-        if (!seams.empty()) {
-            std::vector<std::vector<int>> VF, VI;
-            igl::vertex_triangle_adjacency(V.rows(), F, VF, VI);
-            for (const std::vector<SplitEdge>& seam : seams) {
-                for (const SplitEdge& split_edge : seam) {
-                    auto v0 = split_edge.index_0;
-                    auto v1 = split_edge.index_1;
-                    for (int i = 0; i < VF[v0].size(); ++i) {
-                        int f = VF[v0][i];
-                        int idx = VI[v0][i];
-                        assert(F(f, idx) == v0);
-                        if (F(f, (idx + 1) % 3) == v1) {
-                            hard_edges.push_back({ f, idx });
-                            continue;
-                        }
+    if (!seams.empty()) {
+        std::vector<std::vector<int>> VF, VI;
+        igl::vertex_triangle_adjacency(V.rows(), F, VF, VI);
+        for (const std::vector<SplitEdge>& seam : seams) {
+            for (const SplitEdge& split_edge : seam) {
+                auto v0 = split_edge.index_0;
+                auto v1 = split_edge.index_1;
+                for (int i = 0; i < VF[v0].size(); ++i) {
+                    int f = VF[v0][i];
+                    int idx = VI[v0][i];
+                    assert(F(f, idx) == v0);
+                    if (F(f, (idx + 1) % 3) == v1) {
+                        hard_edges.push_back({ f, idx });
+                        continue;
                     }
                 }
             }
         }
-
-        Meshing::cross_field_miq(
-            direction_field[1],
-            V,
-            F,
-            hard_edges,
-            gradient_size,
-            stiffen_iter,
-            V_uv,
-            F_uv
-        );
     }
+
+    Meshing::cross_field_miq(
+        direction_field[1],
+        V,
+        F,
+        hard_edges,
+        gradient_size,
+        stiffen_iter,
+        V_uv,
+        F_uv
+    );
     
     has_integer_grid = true;
     viewing_mode = ViewingMode::MESH_ONLY;
     update_visualization();
-}
-
-void RemeshingMenu::init_curl() {
-    Meshing::init_curl(
-        V, F, rosy, EV, EF, FE,
-        c_b, c_bc, c_blevel,
-        curlRawField, combedField,
-        combedMatching, combedEffort,
-        curl, curlSingVertices, curlSingIndices,
-        AE2F, curlMax, curlMaxOrig);
-
-    direction_field[1] = combedField.block(0, 0, F.rows(), 3);
-    has_curl = true;
-    if (viewing_mode == ViewingMode::MESH_ONLY || viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD) {
-        update_visualization();
-    }
-}
-
-void RemeshingMenu::reduce_curl() {
-    if (!has_curl) { init_curl(); }
-
-    Meshing::reduce_curl(
-        V, F, rosy, EV, EF, FE,
-        curlRawField, combedField,
-        combedMatching, combedEffort,
-        curl, curlSingVertices, curlSingIndices,
-        curlMax);
-
-    direction_field[1] = combedField.block(0, 0, F.rows(), 3);
-    if (viewing_mode == ViewingMode::MESH_ONLY || viewing_mode == ViewingMode::MESH_CURL || viewing_mode == ViewingMode::MESH_FIELD) {
-        update_visualization();
-    }
 }
 
 void RemeshingMenu::init_quad_mesh() {
@@ -470,7 +301,7 @@ void RemeshingMenu::init_quad_mesh() {
     quad_mesh.is_seam_edge.clear();
     quad_mesh.is_seam_edge = std::vector<bool>(4 * quad_mesh.m, false);
 
-    if (seams.empty() || miq_mode != MIQMode::CROSS) return;
+    if (seams.empty()) return;
 
     igl::AABB<Eigen::MatrixXd, 3> aabb_tree;
     aabb_tree.init(quad_mesh.V, quad_mesh.F_t);
@@ -526,9 +357,15 @@ void RemeshingMenu::setup_basis_cycles() {
     std::vector<FaceVector> directional_constraints = hard_faces();
     numDirectionConstraints = directional_constraints.empty() ? 0 : directional_constraints.size() - 1;
 
+    basisCycles.setZero();
+    cycleCurvature.setZero();
+    vertex2cycle.setZero();
+    innerEdges.setZero();
+    cycleFaces.clear();
+
+    constrainedRoot = false;
     if (directional_constraints.empty()) {
         directional::dual_cycles(V, F, EV, EF, basisCycles, cycleCurvature, vertex2cycle, innerEdges);
-        constrainedRoot = false;
     } else {
         std::vector<int> face_inds;
         std::vector<double> constraint_angles;
@@ -542,6 +379,7 @@ void RemeshingMenu::setup_basis_cycles() {
         directional::dual_cycles(V, F, EV, EF, basisCycles, cycleCurvature, vertex2cycle, innerEdges, face_inds, constraint_angles, N);
         constrainedRoot = true;
     }
+
     cycleIndices = Eigen::VectorXi::Constant(basisCycles.rows(), 0);
 
     for (int i = 0; i < singVertices.size(); i++)
@@ -612,8 +450,8 @@ void RemeshingMenu::compute_target_curvature() {
 void RemeshingMenu::update_raw_field() {
     int sum = round(cycleIndices.head(cycleIndices.size() - numGenerators).sum());
     std::cout << "Total indices: " << sum << "/" << N << std::endl;
-    std::cout << "Expected: " << eulerChar * N << "/" << N << std::endl;
     if (eulerChar * N != sum) {
+        std::cout << "Expected: " << eulerChar * N << "/" << N << std::endl;
         std::cout << "Warning: All non-generator singularities should add up to N * the Euler characteristic." << std::endl;
     }
 
@@ -631,36 +469,62 @@ void RemeshingMenu::update_raw_field() {
             cycleCurvature, cycleIndices, N,
             rotationAngles, linf, linfError);
     }
-    std::cout << "Index prescription linfError: " << linfError << std::endl;
-    if (linfError > 1e-12) {
-        std::cout << "[Warn] trivial connection property may not be satisfied; choose whether to do matching carefully.\n";
-    } else {
-        std::cout << "[Info] trivial connection found.\n";
-    }
+    //std::cout << "Index prescription linfError: " << linfError << std::endl;
 
-    if (constrainedRoot) {
+    std::vector<FaceVector> cfaces = hard_faces();
+    misaligned_faces.clear();
+    if (!cfaces.empty()) {
         Eigen::MatrixXd representative;
         directional::rotation_to_representative(V, F, EV, EF, rotationAngles, N, 0, representative);
-        FaceVector fv_c0 = hard_faces()[0];
-        int i = fv_c0.face_id;
-        double cx = fv_c0.frame[1].dot(B1.row(i));
-        double cy = fv_c0.frame[1].dot(B2.row(i));
-        double cangle = atan2(cy, cx);
+        if (do_matching) {
+            directional::representative_to_raw(V, F, representative, N, rawField);
+            Meshing::comb_field_from_connection(V, F, EV, EF, FE, rawField, combedField, Eigen::VectorXi(), Eigen::VectorXd());
+            representative = combedField.block(0, 0, F.rows(), 3);
+        }
+        int i = cfaces[0].face_id;
+        double cx = cfaces[0].frame[1].dot(B1.row(i));
+        double cy = cfaces[0].frame[1].dot(B2.row(i));
         double x = representative.row(i) * B1.row(i).transpose();
         double y = representative.row(i) * B2.row(i).transpose();
-        double angle = atan2(y, x);
-        constrainedRootAngle = N * (cangle - angle);
+        constrainedRootAngle = N * (atan2(cy, cx) - atan2(y, x));
     }
 
     Eigen::MatrixXd representative;
     directional::rotation_to_representative(V, F, EV, EF, rotationAngles, N, constrainedRoot ? constrainedRootAngle : globalRotation, representative);
     directional::representative_to_raw(V, F, representative, N, rawField);
     if (do_matching) {
-        Meshing::comb_field_from_connection(V, F, EV, EF, FE, rawField, combedField, combedMatching, combedEffort);
+        Meshing::comb_field_from_connection(V, F, EV, EF, FE, rawField, combedField, Eigen::VectorXi(), Eigen::VectorXd());
         direction_field[1] = combedField.block(0, 0, F.rows(), 3);
     } else {
         direction_field[1] = representative;
     }
+
+    if (linfError > 1e-13) {
+        std::cout << "[Warn] cannot find a trivial connection.\n";
+    } else {
+        double angle_error = 0;
+        for (const FaceVector& fv : cfaces) {
+            int i = fv.face_id;
+            double cx = fv.frame[1].dot(B1.row(i));
+            double cy = fv.frame[1].dot(B2.row(i));
+            double x = direction_field[1].row(i) * B1.row(i).transpose();
+            double y = direction_field[1].row(i) * B2.row(i).transpose();
+            double angle_error_i = atan2(cy, cx) - atan2(y, x);
+            //std::cout << i << " " << angle_error_i << "->";
+            while (angle_error_i >= 0.001) angle_error_i -= M_PI / 4;
+            while (angle_error_i < -0.001) angle_error_i += M_PI / 4;
+            //std::cout << angle_error_i << std::endl;
+            if (fabs(angle_error_i) > 0.01) {
+                misaligned_faces.push_back(i);
+            }
+        }
+        if (misaligned_faces.empty()) {
+            std::cout << "[Info] found trivial connection.\n";
+        } else {
+            std::cout << "[Warn] trivial connection cannot satisfy all directional constraints. \n";
+        }
+    }
+
     has_direction_field = true;
 }
 
