@@ -27,6 +27,9 @@ namespace hlk {
 			Eigen::MatrixXd corners;
 			std::vector<std::vector<int>> side_lengths;
 			int time;
+			int texture_id;
+			int shaping;
+			int short_row_shaping;
 		};
 
 		void visualize(

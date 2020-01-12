@@ -976,6 +976,9 @@ namespace hlk {
 			quads[q].get_generalized_corners(corners);
 			quads[q].get_sides_stitches(stitch_counts);
 			graph.patch_data.emplace_back(stitch_counts, corners, quads[q].time->val);
+			graph.patch_data.back().texture_id = quads[q].texture_id;
+			graph.patch_data.back().shaping = (int)quads[q].shaping_distribution;
+			graph.patch_data.back().short_row_shaping = (int)quads[q].short_row_distribution;
 		}
 
 		for (int e = 0; e < edges.size(); ++e) {

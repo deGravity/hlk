@@ -53,7 +53,7 @@ int main(void) {
 			1, 0, 0,
 			1, 1, 0,
 			0, 1, 0;
-		Patch p(sides, corners);
+		Patch p(sides, corners, 1, 1);
 
 		Eigen::MatrixXd V;
 		Eigen::MatrixXi E;
@@ -154,9 +154,9 @@ int main(void) {
 		Eigen::MatrixXd corners_1 = corners.block(4, 0, 4, 3);
 		Eigen::MatrixXd corners_2 = corners.block(8, 0, 4, 3);
 		
-		G_c.patches.emplace_back(sides[0], corners_0);
-		G_c.patches.emplace_back(sides[1], corners_1);
-		G_c.patches.emplace_back(sides[2], corners_2);
+		G_c.patches.emplace_back(sides[0], corners_0, 1, 1);
+		G_c.patches.emplace_back(sides[1], corners_1, 1, 1);
+		G_c.patches.emplace_back(sides[2], corners_2, 1, 1);
 
 		G_c.edges.resize(3);
 		G_c.edges[0].src = 0;
@@ -208,7 +208,7 @@ int main(void) {
 			1, 0, 0,
 			1, 1, 0,
 			0, 1, 0;
-		Patch p(sides, corners);
+		Patch p(sides, corners, 1, 1);
 		p.graph.contract();
 		p.graph.generate_instructions("test_trace");
 

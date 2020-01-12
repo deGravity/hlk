@@ -133,7 +133,7 @@ namespace hlk {
 		patches.reserve(patch_data.size());
 		for (int i = 0; i < patch_data.size(); ++i) {
 			auto& data = patch_data[i];
-			patches.emplace_back(data.side_lengths, data.corners);
+			patches.emplace_back(data.side_lengths, data.corners, data.shaping, data.short_row_shaping);
 		}
 		patches_initialized = true;
 	}

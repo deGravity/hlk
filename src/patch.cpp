@@ -310,6 +310,11 @@ namespace hlk {
 			else { // evenly distributed
 				left_decreases = ceil((double)num_decreases / 2);
 				right_decreases = floor((double)num_decreases / 2);
+				if (i % 2 == 0) { // swap error per row so we don't purely lean one-way
+					int temp = left_decreases;
+					left_decreases = right_decreases;
+					right_decreases = temp;
+				}
 			}
 			int num_straight = row_widths[i] - num_decreases;
 			for (int j = 0; j < left_decreases; ++j) {
@@ -610,7 +615,7 @@ namespace hlk {
 		}
 	}
 
-	Patch::Patch(std::vector<std::vector<int>> sides, const Eigen::MatrixXd& corners)
+	Patch::Patch(std::vector<std::vector<int>> sides, const Eigen::MatrixXd& corners, int shaping, int sr_shaping)
 	{
 		this->corners = corners;
 		this->sides = sides;
@@ -633,7 +638,7 @@ namespace hlk {
 				std::vector<std::vector<int>> patch_sides{ {n},{n},{0},{n} };
 				Eigen::MatrixXd patch_corners(4, 3);
 				// TODO - Properly initialize use corners
-				patches.emplace_back(patch_sides, patch_corners);
+				patches.emplace_back(patch_sides, patch_corners, shaping, sr_shaping);
 			}
 
 			for (int i = 0; i < patches.size(); ++i) {
@@ -661,7 +666,7 @@ namespace hlk {
 				std::vector<std::vector<int>> patch_sides{ {0},{n},{n},{n} };
 				Eigen::MatrixXd patch_corners(4, 3);
 				// TODO - Properly initialize use corners
-				patches.emplace_back(patch_sides, patch_corners);
+				patches.emplace_back(patch_sides, patch_corners, shaping, sr_shaping);
 			}
 
 			for (int i = 0; i < patches.size(); ++i) {
@@ -686,14 +691,24 @@ namespace hlk {
 			assert(side_counts[0] == side_counts[2] || side_counts[1] == side_counts[3]); // only one shaping operation
 			Chart c;
 
+			int leaning_dir = 0;
+			if (shaping == 1) { leaning_dir = -1; }
+			if (shaping == 2) { leaning_dir = 1; }
+			if (shaping == 3) { leaning_dir = 0; }
+
+			int sr_dir = 0;
+			if (sr_shaping == 1) { sr_dir = -1; }
+			if (sr_shaping == 2) { sr_dir = 1; }
+
 			if (side_counts[0] > side_counts[2]) { // Decreases
-				c.decreases_leaning(side_counts[0], side_counts[2], side_counts[1], 0);
+				
+				c.decreases_leaning(side_counts[0], side_counts[2], side_counts[1], leaning_dir);
 			}
 			else if (side_counts[1] != side_counts[3]) { // Short Rows
-				c.short_rows(side_counts[3], side_counts[1], side_counts[0], -1);
+				c.short_rows(side_counts[3], side_counts[1], side_counts[0], sr_dir);
 			}
 			else { // Flat or increases
-				c.increases_leaning(side_counts[0], side_counts[2], side_counts[1], 0);
+				c.increases_leaning(side_counts[0], side_counts[2], side_counts[1], leaning_dir);
 			}
 
 			make_graph(c.rows);

@@ -53,6 +53,6 @@ namespace hlk {
 		void make_graph(std::vector<std::vector<ChartCell>> chart);
 		void interpolate_coordinates();
 
-		Patch(std::vector<std::vector<int>> sides, const Eigen::MatrixXd& corners);
+		Patch(std::vector<std::vector<int>> sides, const Eigen::MatrixXd& corners, int shaping, int sr_shaping);
 	};
 };
