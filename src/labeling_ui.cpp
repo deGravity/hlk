@@ -54,6 +54,9 @@ namespace hlk {
 	void LabelingUI::load_quad_mesh_file(std::string filename)
 	{
 		read_quad_mesh(filename, M, planarize);
+		if (auto_solve) {
+			M.optimize_topology();
+		}
 
 		init_quad_mesh_display();
 	}
