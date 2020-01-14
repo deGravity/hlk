@@ -1140,7 +1140,7 @@ namespace hlk {
 				length = length + sides[line[i]].stitches->var;
 			}
 
-			double gauge = sides[line[0]].is_loop ? row_gauge : stitch_gauge;
+			double gauge = sides[line[0]].is_loop->val ? stitch_gauge : row_gauge;
 
 			int target_stitches = round(target * gauge);
 			int toll = critical_tollerance > 0 ? critical_tollerance : round(tollerance * target_stitches);
