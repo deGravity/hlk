@@ -1,0 +1,307 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{560D6AD5-5218-329F-AFA9-8AB374D984CC}</ProjectGuid>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+    <Keyword>Win32Proj</Keyword>
+    <Platform>x64</Platform>
+    <ProjectName>igl_comiso</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+    <VcpkgEnabled>false</VcpkgEnabled>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="do_not_import_user.props" Condition="exists('do_not_import_user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\ym2552\Desktop\high-level-knitting\index-build\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">igl_comiso.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">igl_comiso</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\ym2552\Desktop\high-level-knitting\index-build\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">igl_comiso.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">igl_comiso</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\ym2552\Desktop\high-level-knitting\index-build\MinSizeRel\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">igl_comiso.dir\MinSizeRel\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">igl_comiso</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\ym2552\Desktop\high-level-knitting\index-build\RelWithDebInfo\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">igl_comiso.dir\RelWithDebInfo\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">igl_comiso</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.lib</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..\eigen;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\ext\gmm-4.2\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /w /bigobj</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_SCL_SECURE_NO_DEPRECATE;IGL_STATIC_LIBRARY;NOMINMAX;INCLUDE_TEMPLATES;CMAKE_INTDIR="Debug";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_SCL_SECURE_NO_DEPRECATE;IGL_STATIC_LIBRARY;NOMINMAX;INCLUDE_TEMPLATES;CMAKE_INTDIR=\"Debug\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..\eigen;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\ext\gmm-4.2\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..\eigen;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\ext\gmm-4.2\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..\eigen;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\ext\gmm-4.2\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /w /bigobj</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_SCL_SECURE_NO_DEPRECATE;IGL_STATIC_LIBRARY;NOMINMAX;INCLUDE_TEMPLATES;CMAKE_INTDIR="Release";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_SCL_SECURE_NO_DEPRECATE;IGL_STATIC_LIBRARY;NOMINMAX;INCLUDE_TEMPLATES;CMAKE_INTDIR=\"Release\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..\eigen;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\ext\gmm-4.2\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..\eigen;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\ext\gmm-4.2\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..\eigen;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\ext\gmm-4.2\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /w /bigobj</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MinSpace</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_SCL_SECURE_NO_DEPRECATE;IGL_STATIC_LIBRARY;NOMINMAX;INCLUDE_TEMPLATES;CMAKE_INTDIR="MinSizeRel";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_SCL_SECURE_NO_DEPRECATE;IGL_STATIC_LIBRARY;NOMINMAX;INCLUDE_TEMPLATES;CMAKE_INTDIR=\"MinSizeRel\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..\eigen;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\ext\gmm-4.2\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..\eigen;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\ext\gmm-4.2\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..\eigen;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\ext\gmm-4.2\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /w /bigobj</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_SCL_SECURE_NO_DEPRECATE;IGL_STATIC_LIBRARY;NOMINMAX;INCLUDE_TEMPLATES;CMAKE_INTDIR="RelWithDebInfo";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_SCL_SECURE_NO_DEPRECATE;IGL_STATIC_LIBRARY;NOMINMAX;INCLUDE_TEMPLATES;CMAKE_INTDIR=\"RelWithDebInfo\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..\eigen;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\ext\gmm-4.2\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\..\eigen;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\ext\gmm-4.2\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\ym2552\Desktop\high-level-knitting\CMakeLists.txt">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule C:/Users/ym2552/Desktop/high-level-knitting/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+C:\dev\cmake-3.15.3\bin\cmake.exe -SC:/Users/ym2552/Desktop/high-level-knitting -BC:/Users/ym2552/Desktop/high-level-knitting/index-build --check-stamp-file C:/Users/ym2552/Desktop/high-level-knitting/index-build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\ym2552\Desktop\high-level-knitting\cmake\FindLIBIGL.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\CXXFeatures.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\DownloadProject.CMakeLists.cmake.in;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\DownloadProject.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\LibiglDownloadExternal.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\LibiglWindows.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\libigl.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\CGALConfig.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_CreateSingleSourceCGALProgram.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_GeneratorSpecificSettings.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_Macros.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SCM.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupBoost.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupCGALDependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupCGAL_CoreDependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupGMP.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_TweakFindBoost.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_VersionUtils.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_add_test.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_enable_end_of_configuration_hook.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_parse_version_h.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_setup_target_dependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindGMP.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindGMPXX.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindMPFR.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\lib\cmake\CGAL\CGALConfig.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeCCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeCXXCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeRCCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeSystem.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCXXInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCommonLanguageInclude.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeGenericSystem.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeInitializeConfigs.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeLanguageInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeParseArguments.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeRCInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeSystemSpecificInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeSystemSpecificInitialize.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTest.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTestTargets.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTestUseLaunchers.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckCSourceCompiles.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckIncludeFile.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckLibraryExists.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\MSVC-C.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\MSVC-CXX.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\DartConfiguration.tcl.in;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindBoost.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindOpenGL.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindPackageHandleStandardArgs.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindPackageMessage.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindThreads.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC-C.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC-CXX.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\WindowsPaths.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3Config.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3ConfigVersion.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3Targets.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Config.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets-debug.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets-release.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets.cmake;C:\dev\vcpkg\scripts\buildsystems\vcpkg.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule C:/Users/ym2552/Desktop/high-level-knitting/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+C:\dev\cmake-3.15.3\bin\cmake.exe -SC:/Users/ym2552/Desktop/high-level-knitting -BC:/Users/ym2552/Desktop/high-level-knitting/index-build --check-stamp-file C:/Users/ym2552/Desktop/high-level-knitting/index-build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\ym2552\Desktop\high-level-knitting\cmake\FindLIBIGL.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\CXXFeatures.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\DownloadProject.CMakeLists.cmake.in;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\DownloadProject.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\LibiglDownloadExternal.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\LibiglWindows.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\libigl.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\CGALConfig.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_CreateSingleSourceCGALProgram.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_GeneratorSpecificSettings.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_Macros.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SCM.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupBoost.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupCGALDependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupCGAL_CoreDependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupGMP.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_TweakFindBoost.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_VersionUtils.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_add_test.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_enable_end_of_configuration_hook.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_parse_version_h.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_setup_target_dependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindGMP.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindGMPXX.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindMPFR.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\lib\cmake\CGAL\CGALConfig.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeCCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeCXXCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeRCCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeSystem.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCXXInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCommonLanguageInclude.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeGenericSystem.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeInitializeConfigs.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeLanguageInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeParseArguments.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeRCInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeSystemSpecificInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeSystemSpecificInitialize.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTest.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTestTargets.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTestUseLaunchers.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckCSourceCompiles.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckIncludeFile.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckLibraryExists.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\MSVC-C.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\MSVC-CXX.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\DartConfiguration.tcl.in;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindBoost.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindOpenGL.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindPackageHandleStandardArgs.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindPackageMessage.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindThreads.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC-C.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC-CXX.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\WindowsPaths.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3Config.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3ConfigVersion.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3Targets.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Config.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets-debug.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets-release.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets.cmake;C:\dev\vcpkg\scripts\buildsystems\vcpkg.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule C:/Users/ym2552/Desktop/high-level-knitting/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+C:\dev\cmake-3.15.3\bin\cmake.exe -SC:/Users/ym2552/Desktop/high-level-knitting -BC:/Users/ym2552/Desktop/high-level-knitting/index-build --check-stamp-file C:/Users/ym2552/Desktop/high-level-knitting/index-build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\ym2552\Desktop\high-level-knitting\cmake\FindLIBIGL.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\CXXFeatures.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\DownloadProject.CMakeLists.cmake.in;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\DownloadProject.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\LibiglDownloadExternal.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\LibiglWindows.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\libigl.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\CGALConfig.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_CreateSingleSourceCGALProgram.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_GeneratorSpecificSettings.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_Macros.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SCM.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupBoost.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupCGALDependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupCGAL_CoreDependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupGMP.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_TweakFindBoost.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_VersionUtils.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_add_test.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_enable_end_of_configuration_hook.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_parse_version_h.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_setup_target_dependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindGMP.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindGMPXX.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindMPFR.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\lib\cmake\CGAL\CGALConfig.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeCCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeCXXCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeRCCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeSystem.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCXXInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCommonLanguageInclude.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeGenericSystem.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeInitializeConfigs.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeLanguageInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeParseArguments.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeRCInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeSystemSpecificInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeSystemSpecificInitialize.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTest.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTestTargets.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTestUseLaunchers.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckCSourceCompiles.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckIncludeFile.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckLibraryExists.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\MSVC-C.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\MSVC-CXX.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\DartConfiguration.tcl.in;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindBoost.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindOpenGL.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindPackageHandleStandardArgs.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindPackageMessage.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindThreads.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC-C.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC-CXX.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\WindowsPaths.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3Config.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3ConfigVersion.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3Targets.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Config.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets-debug.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets-release.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets.cmake;C:\dev\vcpkg\scripts\buildsystems\vcpkg.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule C:/Users/ym2552/Desktop/high-level-knitting/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+C:\dev\cmake-3.15.3\bin\cmake.exe -SC:/Users/ym2552/Desktop/high-level-knitting -BC:/Users/ym2552/Desktop/high-level-knitting/index-build --check-stamp-file C:/Users/ym2552/Desktop/high-level-knitting/index-build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\ym2552\Desktop\high-level-knitting\cmake\FindLIBIGL.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\CXXFeatures.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\DownloadProject.CMakeLists.cmake.in;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\DownloadProject.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\LibiglDownloadExternal.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\LibiglWindows.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\libigl.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\CGALConfig.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_CreateSingleSourceCGALProgram.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_GeneratorSpecificSettings.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_Macros.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SCM.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupBoost.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupCGALDependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupCGAL_CoreDependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupGMP.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_TweakFindBoost.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_VersionUtils.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_add_test.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_enable_end_of_configuration_hook.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_parse_version_h.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_setup_target_dependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindGMP.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindGMPXX.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindMPFR.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\lib\cmake\CGAL\CGALConfig.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeCCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeCXXCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeRCCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeSystem.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCXXInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCommonLanguageInclude.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeGenericSystem.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeInitializeConfigs.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeLanguageInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeParseArguments.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeRCInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeSystemSpecificInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeSystemSpecificInitialize.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTest.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTestTargets.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTestUseLaunchers.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckCSourceCompiles.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckIncludeFile.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckLibraryExists.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\MSVC-C.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\MSVC-CXX.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\DartConfiguration.tcl.in;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindBoost.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindOpenGL.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindPackageHandleStandardArgs.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindPackageMessage.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindThreads.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC-C.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC-CXX.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\WindowsPaths.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3Config.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3ConfigVersion.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3Targets.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Config.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets-debug.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets-release.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets.cmake;C:\dev\vcpkg\scripts\buildsystems\vcpkg.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\comiso\frame_field.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\comiso\miq.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\comiso\nrosy.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="C:\Users\ym2552\Desktop\high-level-knitting\index-build\ZERO_CHECK.vcxproj">
+      <Project>{34AEB84B-7D45-3AEC-AEA0-68D7B9401357}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\ym2552\Desktop\high-level-knitting\index-build\CoMISo\CoMISo.vcxproj">
+      <Project>{DA04F455-748E-3A64-9F96-520EBC791E0C}</Project>
+      <Name>CoMISo</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\ym2552\Desktop\high-level-knitting\index-build\igl.vcxproj">
+      <Project>{1C9176C6-C34F-37AF-9BF8-84E2401614DD}</Project>
+      <Name>igl</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

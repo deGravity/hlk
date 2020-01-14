@@ -1,0 +1,141 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\src\cgal_wrapper.cpp">
+      <Filter>SourceFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\src\coarse_knit_mesh.cpp">
+      <Filter>SourceFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\src\extract_quad_mesh.cpp">
+      <Filter>SourceFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\src\glyph.cpp">
+      <Filter>SourceFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\src\knit_graph.cpp">
+      <Filter>SourceFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\src\labeled_quad_mesh.cpp">
+      <Filter>SourceFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\src\labeling_ui.cpp">
+      <Filter>SourceFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\src\main.cpp">
+      <Filter>SourceFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\src\meshing_algorithms.cpp">
+      <Filter>SourceFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\src\optimizer.cpp">
+      <Filter>SourceFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\src\patch.cpp">
+      <Filter>SourceFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\src\quad_mesh.cpp">
+      <Filter>SourceFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\src\read_quad_mesh.cpp">
+      <Filter>SourceFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\src\remeshing_field.cpp">
+      <Filter>SourceFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\src\remeshing_loops.cpp">
+      <Filter>SourceFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\src\remeshing_plugin.cpp">
+      <Filter>SourceFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\src\remeshing_utils.cpp">
+      <Filter>SourceFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\src\singularity_graph.cpp">
+      <Filter>SourceFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\src\stack_layers.cpp">
+      <Filter>SourceFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\src\symmetrizer.cpp">
+      <Filter>SourceFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\src\texture.cpp">
+      <Filter>SourceFiles</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\src\cgal_wrapper.h">
+      <Filter>HeaderFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\src\coarse_knit_mesh.h">
+      <Filter>HeaderFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\src\extract_quad_mesh.h">
+      <Filter>HeaderFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\src\glyph.h">
+      <Filter>HeaderFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\src\glyphs.h">
+      <Filter>HeaderFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\src\knit_graph.h">
+      <Filter>HeaderFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\src\labeled_quad_mesh.h">
+      <Filter>HeaderFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\src\labeling_ui.h">
+      <Filter>HeaderFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\src\meshing_algorithms.h">
+      <Filter>HeaderFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\src\optimizer.h">
+      <Filter>HeaderFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\src\patch.h">
+      <Filter>HeaderFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\src\quad_mesh.h">
+      <Filter>HeaderFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\src\read_quad_mesh.h">
+      <Filter>HeaderFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\src\remeshing_plugin.h">
+      <Filter>HeaderFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\src\remeshing_utils.h">
+      <Filter>HeaderFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\src\singularity_graph.h">
+      <Filter>HeaderFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\src\stack_layers.h">
+      <Filter>HeaderFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\src\symmetrizer.h">
+      <Filter>HeaderFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\src\texture.h">
+      <Filter>HeaderFiles</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\ym2552\Desktop\high-level-knitting\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="C:\Users\ym2552\Desktop\high-level-knitting\src\Eigen.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="HeaderFiles">
+      <UniqueIdentifier>{A33FC055-FF2A-3B33-AA96-F186DD5AC259}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceFiles">
+      <UniqueIdentifier>{2B248BD4-DA9E-3EB1-806E-91BD76FEAAE3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

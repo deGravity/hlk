@@ -1,0 +1,211 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\assign.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\assign_scalar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\barycenter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\cell_adjacency.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\closest_facet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\complex_to_mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\component_inside_component.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\convex_hull.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\delaunay_triangulation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\extract_cells.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\extract_feature.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\fast_winding_number.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\half_space_box.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\hausdorff.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\incircle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\insert_into_cdt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\insphere.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\intersect_other.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\intersect_with_half_space.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\lexicographic_triangulation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\list_to_matrix.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\mesh_boolean.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\mesh_boolean_type_to_funcs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\mesh_to_cgal_triangle_list.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\mesh_to_polyhedron.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\minkowski_sum.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\order_facets_around_edge.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\order_facets_around_edges.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\orient2D.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\orient3D.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\outer_element.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\outer_facet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\outer_hull.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\peel_outer_hull_layers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\peel_winding_number_layers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\piecewise_constant_winding_number.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\point_areas.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\point_mesh_squared_distance.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\point_segment_squared_distance.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\point_solid_signed_squared_distance.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\point_triangle_squared_distance.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\points_inside_component.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\polyhedron_to_mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\projected_cdt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\projected_delaunay.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\propagate_winding_numbers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\read_triangle_mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\relabel_small_immersed_cells.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\remesh_intersections.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\remesh_self_intersections.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\remove_unreferenced.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\resolve_intersections.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\row_to_point.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\segment_segment_squared_distance.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\signed_distance_isosurface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\slice.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\slice_mask.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\snap_rounding.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\string_to_mesh_boolean_type.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\subdivide_segments.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\submesh_aabb_tree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\triangle_triangle_squared_distance.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\trim_with_solid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\unique.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\unique_rows.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\cgal\wire_mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\ym2552\Desktop\high-level-knitting\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{D05B1D73-C920-31F9-A822-2E78B11D36F2}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

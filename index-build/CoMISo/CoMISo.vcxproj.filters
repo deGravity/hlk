@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\Solver\EigenLDLTSolver.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\Solver\MISolver.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\Solver\ConstrainedSolver.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\Solver\IterativeSolverT.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\Solver\GMM_Tools.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\Solver\EigenLDLTSolver.hh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\Solver\MISolver.hh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\Solver\ConstrainedSolver.hh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\Solver\IterativeSolverT.hh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\Solver\GMM_Tools.hh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\CoMISo\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{A2163A6A-2AF3-3C26-803B-388D779F380F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{D05B1D73-C920-31F9-A822-2E78B11D36F2}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

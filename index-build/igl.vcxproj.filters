@@ -1,0 +1,1150 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\AABB.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\AtA_cached.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\EPS.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\HalfEdgeIterator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\accumarray.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\active_set.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\adjacency_list.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\adjacency_matrix.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\all.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\all_edges.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\all_pairs_distances.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\ambient_occlusion.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\angular_distance.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\any.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\any_of.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\arap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\arap_dof.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\arap_linear_block.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\arap_rhs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\average_onto_faces.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\average_onto_vertices.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\avg_edge_length.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\axis_angle_to_quat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\barycenter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\barycentric_coordinates.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\barycentric_to_global.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\basename.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\bbw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\bfs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\bfs_orient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\biharmonic_coordinates.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\bijective_composite_harmonic_mapping.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\bone_parents.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\boundary_conditions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\boundary_facets.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\boundary_loop.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\bounding_box.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\bounding_box_diagonal.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\canonical_quaternions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\ceil.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\centroid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\circulation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\circumradius.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\collapse_edge.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\collapse_small_triangles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\colon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\colormap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\column_to_quats.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\columnize.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\comb_cross_field.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\comb_frame_field.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\comb_line_field.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\combine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\compute_frame_field_bisectors.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\connect_boundary_to_infinity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\marching_cubes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\offset_surface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\progressive_hulls.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\progressive_hulls_cost_and_placement.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\quadprog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\swept_volume.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cotmatrix.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cotmatrix_entries.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cotmatrix_intrinsic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\count.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\covariance_scatter_matrix.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cross.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cross_field_mismatch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\crouzeix_raviart_cotmatrix.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\crouzeix_raviart_massmatrix.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cumprod.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cumsum.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cut_mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cut_mesh_from_singularities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cut_to_disk.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cylinder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\dated_copy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\decimate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\deform_skeleton.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\delaunay_triangulation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\dfs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\diag.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\dihedral_angles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\dijkstra.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\directed_edge_orientations.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\directed_edge_parents.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\dirname.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\dot.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\dot_row.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\doublearea.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\dqs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\ears.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\edge_collapse_is_valid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\edge_exists_near.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\edge_flaps.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\edge_lengths.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\edge_topology.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\edges.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\edges_to_path.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\eigs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\euler_characteristic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\exact_geodesic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\example_fun.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\exterior_edges.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\extract_manifold_patches.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\extract_non_manifold_edge_curves.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\face_areas.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\face_occurrences.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\faces_first.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\facet_components.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\false_barycentric_subdivision.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\fast_winding_number.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\file_contents_as_string.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\file_dialog_open.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\file_dialog_save.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\file_exists.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\find.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\find_cross_field_singularities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\find_zero.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\fit_plane.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\fit_rotations.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\flip_avoiding_line_search.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\flip_edge.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\flipped_triangles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\flood_fill.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\floor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\forward_kinematics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\frame_field_deformer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\frame_to_cross_field.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\frustum.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\gaussian_curvature.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\get_seconds.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\get_seconds_hires.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\grad.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\grad_intrinsic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\grid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\grid_search.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\group_sum_matrix.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\guess_extension.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\harmonic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\harwell_boeing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\hausdorff.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\heat_geodesics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\hessian.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\hessian_energy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\histc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\hsv_to_rgb.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\in_element.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\infinite_cost_stopping_condition.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\inradius.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\internal_angles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\intersect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\intrinsic_delaunay_cotmatrix.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\intrinsic_delaunay_triangulation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\invert_diag.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_border_vertex.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_boundary_edge.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_delaunay.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_dir.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_edge_manifold.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_file.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_intrinsic_delaunay.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_irregular_vertex.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_planar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_readable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_sparse.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_stl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_symmetric.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_vertex_manifold.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_writable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\isdiag.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\ismember.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\isolines.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\jet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\knn.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\launch_medit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\lbs_matrix.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\lexicographic_triangulation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\limit_faces.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\line_field_mismatch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\line_search.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\line_segment_in_rectangle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\linprog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\list_to_matrix.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\local_basis.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\look_at.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\loop.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\lscm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\map_vertices_to_circle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\mapping_energy_with_jacobians.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\marching_tets.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\massmatrix.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\massmatrix_intrinsic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\mat_max.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\mat_min.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\mat_to_quat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\matlab_format.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\matrix_to_list.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\max.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\max_faces_stopping_condition.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\max_size.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\median.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\min.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\min_quad_dense.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\min_quad_with_fixed.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\min_size.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\mod.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\mode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\mvc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\nchoosek.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\next_filename.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\normal_derivative.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\normalize_quat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\normalize_row_lengths.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\normalize_row_sums.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\null.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\octree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\on_boundary.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\orient_outward.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\orientable_patches.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\oriented_facets.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\orth.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\ortho.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\outer_element.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\parallel_transport_angles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\partition.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\parula.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\path_to_executable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\pathinfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\per_corner_normals.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\per_edge_normals.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\per_face_normals.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\per_vertex_attribute_smoothing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\per_vertex_normals.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\per_vertex_point_to_plane_quadrics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\piecewise_constant_winding_number.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\pinv.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\planarize_quad_mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\point_in_circle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\point_in_poly.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\point_mesh_squared_distance.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\point_simplex_squared_distance.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\polar_dec.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\polar_svd.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\polar_svd3x3.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\polygon_mesh_to_triangle_mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\principal_curvature.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\print_ijv.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\print_vector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\procrustes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\project.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\project_isometrically_to_plane.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\project_to_line.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\project_to_line_segment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\pseudonormal_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\pso.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\qslim.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\qslim_optimal_collapse_edge_callbacks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\quad_planarity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\quadric_binary_plus_operator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\quat_conjugate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\quat_mult.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\quat_to_axis_angle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\quat_to_mat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\quats_to_column.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\ramer_douglas_peucker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\random_dir.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\random_points_on_mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\random_quaternion.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\random_search.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\randperm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\ray_box_intersect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\ray_mesh_intersect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\ray_sphere_intersect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readBF.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readCSV.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readDMAT.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readMESH.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readMSH.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readNODE.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readOBJ.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readOFF.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readPLY.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readSTL.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readTGF.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readWRL.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\read_triangle_mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\remesh_along_isoline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\remove_duplicate_vertices.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\remove_duplicates.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\remove_unreferenced.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\reorder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\repdiag.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\repmat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\resolve_duplicated_faces.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\rgb_to_hsv.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\rotate_by_quat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\rotate_vectors.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\rotation_matrix_from_directions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\round.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\rows_to_matrix.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\sample_edges.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\scaf.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\seam_edges.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\segment_segment_intersect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\setdiff.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\setunion.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\setxor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\shape_diameter_function.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\shapeup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\shortest_edge_and_midpoint.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\signed_angle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\signed_distance.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\simplify_polyhedron.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\slice.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\slice_cached.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\slice_into.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\slice_mask.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\slim.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\snap_points.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\snap_to_canonical_view_quat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\snap_to_fixed_up.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\solid_angle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\sort.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\sort_angles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\sort_triangles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\sort_vectors_ccw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\sortrows.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\sparse.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\sparse_cached.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\sparse_voxel_grid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\speye.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\squared_edge_lengths.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\stdin_to_temp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\straighten_seams.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\sum.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\svd3x3.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\svd3x3_avx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\svd3x3_sse.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\swept_volume_bounding_box.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\swept_volume_signed_distance.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\tan_half_angle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\tet_tet_adjacency.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\topological_hole_fill.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\trackball.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\transpose_blocks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\triangle_fan.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\triangle_triangle_adjacency.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\triangles_from_strip.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\triangulated_grid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\two_axis_valuator_fixed_up.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\uniformly_sample_two_manifold.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\unique.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\unique_edge_map.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\unique_rows.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\unique_simplices.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\unproject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\unproject_in_mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\unproject_onto_mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\unproject_ray.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\unzip_corners.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\upsample.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\vector_area_matrix.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\vertex_components.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\vertex_triangle_adjacency.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\volume.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\voxel_grid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\winding_number.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\writeBF.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\writeDMAT.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\writeMESH.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\writeOBJ.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\writeOFF.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\writePLY.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\writeSTL.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\writeTGF.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\writeWRL.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\write_triangle_mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\ym2552\Desktop\high-level-knitting\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{D05B1D73-C920-31F9-A822-2E78B11D36F2}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

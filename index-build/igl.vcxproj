@@ -1,0 +1,671 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{1C9176C6-C34F-37AF-9BF8-84E2401614DD}</ProjectGuid>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+    <Keyword>Win32Proj</Keyword>
+    <Platform>x64</Platform>
+    <ProjectName>igl</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+    <VcpkgEnabled>false</VcpkgEnabled>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="do_not_import_user.props" Condition="exists('do_not_import_user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\ym2552\Desktop\high-level-knitting\index-build\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">igl.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">igl</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\ym2552\Desktop\high-level-knitting\index-build\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">igl.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">igl</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\ym2552\Desktop\high-level-knitting\index-build\MinSizeRel\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">igl.dir\MinSizeRel\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">igl</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\ym2552\Desktop\high-level-knitting\index-build\RelWithDebInfo\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">igl.dir\RelWithDebInfo\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">igl</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.lib</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /w /bigobj</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;IGL_STATIC_LIBRARY;NOMINMAX;CMAKE_INTDIR="Debug";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;IGL_STATIC_LIBRARY;NOMINMAX;CMAKE_INTDIR=\"Debug\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /w /bigobj</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;IGL_STATIC_LIBRARY;NOMINMAX;CMAKE_INTDIR="Release";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;IGL_STATIC_LIBRARY;NOMINMAX;CMAKE_INTDIR=\"Release\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /w /bigobj</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MinSpace</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;IGL_STATIC_LIBRARY;NOMINMAX;CMAKE_INTDIR="MinSizeRel";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;IGL_STATIC_LIBRARY;NOMINMAX;CMAKE_INTDIR=\"MinSizeRel\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /w /bigobj</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;IGL_STATIC_LIBRARY;NOMINMAX;CMAKE_INTDIR="RelWithDebInfo";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;IGL_STATIC_LIBRARY;NOMINMAX;CMAKE_INTDIR=\"RelWithDebInfo\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\include;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\..\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\ym2552\Desktop\high-level-knitting\CMakeLists.txt">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule C:/Users/ym2552/Desktop/high-level-knitting/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+C:\dev\cmake-3.15.3\bin\cmake.exe -SC:/Users/ym2552/Desktop/high-level-knitting -BC:/Users/ym2552/Desktop/high-level-knitting/index-build --check-stamp-file C:/Users/ym2552/Desktop/high-level-knitting/index-build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\ym2552\Desktop\high-level-knitting\cmake\FindLIBIGL.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\CXXFeatures.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\DownloadProject.CMakeLists.cmake.in;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\DownloadProject.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\LibiglDownloadExternal.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\LibiglWindows.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\libigl.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\CGALConfig.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_CreateSingleSourceCGALProgram.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_GeneratorSpecificSettings.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_Macros.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SCM.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupBoost.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupCGALDependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupCGAL_CoreDependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupGMP.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_TweakFindBoost.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_VersionUtils.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_add_test.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_enable_end_of_configuration_hook.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_parse_version_h.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_setup_target_dependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindGMP.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindGMPXX.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindMPFR.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\lib\cmake\CGAL\CGALConfig.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeCCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeCXXCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeRCCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeSystem.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCXXInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCommonLanguageInclude.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeGenericSystem.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeInitializeConfigs.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeLanguageInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeParseArguments.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeRCInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeSystemSpecificInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeSystemSpecificInitialize.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTest.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTestTargets.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTestUseLaunchers.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckCSourceCompiles.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckIncludeFile.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckLibraryExists.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\MSVC-C.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\MSVC-CXX.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\DartConfiguration.tcl.in;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindBoost.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindOpenGL.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindPackageHandleStandardArgs.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindPackageMessage.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindThreads.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC-C.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC-CXX.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\WindowsPaths.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3Config.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3ConfigVersion.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3Targets.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Config.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets-debug.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets-release.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets.cmake;C:\dev\vcpkg\scripts\buildsystems\vcpkg.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule C:/Users/ym2552/Desktop/high-level-knitting/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+C:\dev\cmake-3.15.3\bin\cmake.exe -SC:/Users/ym2552/Desktop/high-level-knitting -BC:/Users/ym2552/Desktop/high-level-knitting/index-build --check-stamp-file C:/Users/ym2552/Desktop/high-level-knitting/index-build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\ym2552\Desktop\high-level-knitting\cmake\FindLIBIGL.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\CXXFeatures.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\DownloadProject.CMakeLists.cmake.in;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\DownloadProject.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\LibiglDownloadExternal.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\LibiglWindows.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\libigl.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\CGALConfig.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_CreateSingleSourceCGALProgram.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_GeneratorSpecificSettings.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_Macros.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SCM.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupBoost.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupCGALDependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupCGAL_CoreDependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupGMP.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_TweakFindBoost.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_VersionUtils.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_add_test.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_enable_end_of_configuration_hook.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_parse_version_h.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_setup_target_dependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindGMP.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindGMPXX.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindMPFR.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\lib\cmake\CGAL\CGALConfig.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeCCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeCXXCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeRCCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeSystem.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCXXInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCommonLanguageInclude.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeGenericSystem.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeInitializeConfigs.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeLanguageInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeParseArguments.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeRCInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeSystemSpecificInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeSystemSpecificInitialize.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTest.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTestTargets.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTestUseLaunchers.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckCSourceCompiles.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckIncludeFile.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckLibraryExists.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\MSVC-C.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\MSVC-CXX.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\DartConfiguration.tcl.in;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindBoost.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindOpenGL.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindPackageHandleStandardArgs.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindPackageMessage.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindThreads.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC-C.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC-CXX.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\WindowsPaths.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3Config.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3ConfigVersion.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3Targets.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Config.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets-debug.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets-release.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets.cmake;C:\dev\vcpkg\scripts\buildsystems\vcpkg.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule C:/Users/ym2552/Desktop/high-level-knitting/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+C:\dev\cmake-3.15.3\bin\cmake.exe -SC:/Users/ym2552/Desktop/high-level-knitting -BC:/Users/ym2552/Desktop/high-level-knitting/index-build --check-stamp-file C:/Users/ym2552/Desktop/high-level-knitting/index-build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\ym2552\Desktop\high-level-knitting\cmake\FindLIBIGL.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\CXXFeatures.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\DownloadProject.CMakeLists.cmake.in;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\DownloadProject.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\LibiglDownloadExternal.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\LibiglWindows.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\libigl.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\CGALConfig.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_CreateSingleSourceCGALProgram.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_GeneratorSpecificSettings.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_Macros.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SCM.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupBoost.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupCGALDependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupCGAL_CoreDependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupGMP.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_TweakFindBoost.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_VersionUtils.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_add_test.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_enable_end_of_configuration_hook.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_parse_version_h.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_setup_target_dependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindGMP.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindGMPXX.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindMPFR.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\lib\cmake\CGAL\CGALConfig.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeCCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeCXXCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeRCCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeSystem.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCXXInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCommonLanguageInclude.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeGenericSystem.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeInitializeConfigs.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeLanguageInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeParseArguments.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeRCInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeSystemSpecificInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeSystemSpecificInitialize.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTest.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTestTargets.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTestUseLaunchers.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckCSourceCompiles.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckIncludeFile.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckLibraryExists.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\MSVC-C.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\MSVC-CXX.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\DartConfiguration.tcl.in;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindBoost.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindOpenGL.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindPackageHandleStandardArgs.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindPackageMessage.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindThreads.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC-C.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC-CXX.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\WindowsPaths.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3Config.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3ConfigVersion.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3Targets.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Config.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets-debug.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets-release.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets.cmake;C:\dev\vcpkg\scripts\buildsystems\vcpkg.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule C:/Users/ym2552/Desktop/high-level-knitting/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+C:\dev\cmake-3.15.3\bin\cmake.exe -SC:/Users/ym2552/Desktop/high-level-knitting -BC:/Users/ym2552/Desktop/high-level-knitting/index-build --check-stamp-file C:/Users/ym2552/Desktop/high-level-knitting/index-build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\ym2552\Desktop\high-level-knitting\cmake\FindLIBIGL.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\CXXFeatures.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\DownloadProject.CMakeLists.cmake.in;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\DownloadProject.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\LibiglDownloadExternal.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\LibiglWindows.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\cmake\libigl.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\CGALConfig.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_CreateSingleSourceCGALProgram.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_GeneratorSpecificSettings.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_Macros.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SCM.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupBoost.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupCGALDependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupCGAL_CoreDependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_SetupGMP.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_TweakFindBoost.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_VersionUtils.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_add_test.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_enable_end_of_configuration_hook.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_parse_version_h.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\CGAL_setup_target_dependencies.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindGMP.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindGMPXX.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\cmake\modules\FindMPFR.cmake;C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\external\cgal\Installation\lib\cmake\CGAL\CGALConfig.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeCCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeCXXCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeRCCompiler.cmake;C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\3.15.3\CMakeSystem.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCXXInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeCommonLanguageInclude.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeGenericSystem.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeInitializeConfigs.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeLanguageInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeParseArguments.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeRCInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeSystemSpecificInformation.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CMakeSystemSpecificInitialize.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTest.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTestTargets.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CTestUseLaunchers.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckCSourceCompiles.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckIncludeFile.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\CheckLibraryExists.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\MSVC-C.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Compiler\MSVC-CXX.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\DartConfiguration.tcl.in;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindBoost.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindOpenGL.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindPackageHandleStandardArgs.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindPackageMessage.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\FindThreads.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC-C.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC-CXX.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows-MSVC.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\Windows.cmake;C:\dev\cmake-3.15.3\share\cmake-3.15\Modules\Platform\WindowsPaths.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3Config.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3ConfigVersion.cmake;C:\dev\vcpkg\installed\x64-windows\share\eigen3\Eigen3Targets.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Config.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets-debug.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets-release.cmake;C:\dev\vcpkg\installed\x64-windows\share\z3\Z3Targets.cmake;C:\dev\vcpkg\scripts\buildsystems\vcpkg.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\ym2552\Desktop\high-level-knitting\index-build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\AABB.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\AtA_cached.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\EPS.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\HalfEdgeIterator.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\accumarray.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\active_set.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\adjacency_list.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\adjacency_matrix.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\all.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\all_edges.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\all_pairs_distances.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\ambient_occlusion.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\angular_distance.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\any.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\any_of.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\arap.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\arap_dof.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\arap_linear_block.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\arap_rhs.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\average_onto_faces.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\average_onto_vertices.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\avg_edge_length.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\axis_angle_to_quat.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\barycenter.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\barycentric_coordinates.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\barycentric_to_global.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\basename.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\bbw.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\bfs.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\bfs_orient.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\biharmonic_coordinates.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\bijective_composite_harmonic_mapping.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\bone_parents.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\boundary_conditions.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\boundary_facets.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\boundary_loop.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\bounding_box.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\bounding_box_diagonal.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\canonical_quaternions.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cat.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\ceil.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\centroid.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\circulation.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\circumradius.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\collapse_edge.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\collapse_small_triangles.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\colon.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\colormap.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\column_to_quats.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\columnize.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\comb_cross_field.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\comb_frame_field.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\comb_line_field.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\combine.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\compute_frame_field_bisectors.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\connect_boundary_to_infinity.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\marching_cubes.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\offset_surface.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\progressive_hulls.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\progressive_hulls_cost_and_placement.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\quadprog.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\copyleft\swept_volume.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cotmatrix.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cotmatrix_entries.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cotmatrix_intrinsic.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\count.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\covariance_scatter_matrix.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cross.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cross_field_mismatch.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\crouzeix_raviart_cotmatrix.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\crouzeix_raviart_massmatrix.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cumprod.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cumsum.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cut_mesh.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cut_mesh_from_singularities.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cut_to_disk.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\cylinder.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\dated_copy.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\decimate.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\deform_skeleton.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\delaunay_triangulation.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\dfs.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\diag.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\dihedral_angles.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\dijkstra.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\directed_edge_orientations.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\directed_edge_parents.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\dirname.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\dot.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\dot_row.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\doublearea.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\dqs.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\ears.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\edge_collapse_is_valid.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\edge_exists_near.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\edge_flaps.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\edge_lengths.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\edge_topology.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\edges.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\edges_to_path.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\eigs.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\euler_characteristic.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\exact_geodesic.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\example_fun.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\exterior_edges.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\extract_manifold_patches.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\extract_non_manifold_edge_curves.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\face_areas.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\face_occurrences.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\faces_first.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\facet_components.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\false_barycentric_subdivision.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\fast_winding_number.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\file_contents_as_string.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\file_dialog_open.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\file_dialog_save.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\file_exists.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\find.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\find_cross_field_singularities.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\find_zero.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\fit_plane.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\fit_rotations.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\flip_avoiding_line_search.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\flip_edge.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\flipped_triangles.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\flood_fill.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\floor.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\forward_kinematics.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\frame_field_deformer.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\frame_to_cross_field.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\frustum.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\gaussian_curvature.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\get_seconds.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\get_seconds_hires.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\grad.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\grad_intrinsic.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\grid.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\grid_search.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\group_sum_matrix.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\guess_extension.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\harmonic.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\harwell_boeing.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\hausdorff.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\heat_geodesics.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\hessian.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\hessian_energy.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\histc.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\hsv_to_rgb.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\in_element.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\infinite_cost_stopping_condition.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\inradius.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\internal_angles.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\intersect.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\intrinsic_delaunay_cotmatrix.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\intrinsic_delaunay_triangulation.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\invert_diag.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_border_vertex.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_boundary_edge.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_delaunay.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_dir.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_edge_manifold.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_file.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_intrinsic_delaunay.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_irregular_vertex.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_planar.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_readable.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_sparse.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_stl.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_symmetric.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_vertex_manifold.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\is_writable.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\isdiag.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\ismember.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\isolines.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\jet.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\knn.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\launch_medit.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\lbs_matrix.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\lexicographic_triangulation.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\limit_faces.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\line_field_mismatch.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\line_search.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\line_segment_in_rectangle.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\linprog.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\list_to_matrix.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\local_basis.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\look_at.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\loop.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\lscm.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\map_vertices_to_circle.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\mapping_energy_with_jacobians.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\marching_tets.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\massmatrix.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\massmatrix_intrinsic.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\mat_max.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\mat_min.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\mat_to_quat.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\matlab_format.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\matrix_to_list.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\max.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\max_faces_stopping_condition.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\max_size.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\median.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\min.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\min_quad_dense.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\min_quad_with_fixed.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\min_size.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\mod.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\mode.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\mvc.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\nchoosek.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\next_filename.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\normal_derivative.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\normalize_quat.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\normalize_row_lengths.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\normalize_row_sums.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\null.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\octree.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\on_boundary.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\orient_outward.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\orientable_patches.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\oriented_facets.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\orth.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\ortho.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\outer_element.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\parallel_transport_angles.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\partition.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\parula.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\path_to_executable.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\pathinfo.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\per_corner_normals.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\per_edge_normals.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\per_face_normals.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\per_vertex_attribute_smoothing.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\per_vertex_normals.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\per_vertex_point_to_plane_quadrics.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\piecewise_constant_winding_number.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\pinv.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\planarize_quad_mesh.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\point_in_circle.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\point_in_poly.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\point_mesh_squared_distance.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\point_simplex_squared_distance.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\polar_dec.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\polar_svd.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\polar_svd3x3.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\polygon_mesh_to_triangle_mesh.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\principal_curvature.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\print_ijv.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\print_vector.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\procrustes.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\project.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\project_isometrically_to_plane.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\project_to_line.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\project_to_line_segment.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\pseudonormal_test.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\pso.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\qslim.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\qslim_optimal_collapse_edge_callbacks.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\quad_planarity.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\quadric_binary_plus_operator.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\quat_conjugate.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\quat_mult.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\quat_to_axis_angle.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\quat_to_mat.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\quats_to_column.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\ramer_douglas_peucker.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\random_dir.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\random_points_on_mesh.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\random_quaternion.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\random_search.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\randperm.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\ray_box_intersect.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\ray_mesh_intersect.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\ray_sphere_intersect.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readBF.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readCSV.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readDMAT.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readMESH.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readMSH.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readNODE.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readOBJ.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readOFF.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readPLY.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readSTL.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readTGF.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\readWRL.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\read_triangle_mesh.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\remesh_along_isoline.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\remove_duplicate_vertices.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\remove_duplicates.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\remove_unreferenced.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\reorder.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\repdiag.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\repmat.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\resolve_duplicated_faces.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\rgb_to_hsv.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\rotate_by_quat.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\rotate_vectors.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\rotation_matrix_from_directions.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\round.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\rows_to_matrix.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\sample_edges.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\scaf.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\seam_edges.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\segment_segment_intersect.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\setdiff.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\setunion.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\setxor.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\shape_diameter_function.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\shapeup.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\shortest_edge_and_midpoint.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\signed_angle.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\signed_distance.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\simplify_polyhedron.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\slice.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\slice_cached.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\slice_into.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\slice_mask.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\slim.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\snap_points.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\snap_to_canonical_view_quat.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\snap_to_fixed_up.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\solid_angle.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\sort.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\sort_angles.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\sort_triangles.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\sort_vectors_ccw.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\sortrows.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\sparse.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\sparse_cached.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\sparse_voxel_grid.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\speye.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\squared_edge_lengths.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\stdin_to_temp.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\straighten_seams.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\sum.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\svd3x3.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\svd3x3_avx.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\svd3x3_sse.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\swept_volume_bounding_box.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\swept_volume_signed_distance.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\tan_half_angle.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\tet_tet_adjacency.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\topological_hole_fill.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\trackball.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\transpose_blocks.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\triangle_fan.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\triangle_triangle_adjacency.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\triangles_from_strip.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\triangulated_grid.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\two_axis_valuator_fixed_up.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\uniformly_sample_two_manifold.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\unique.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\unique_edge_map.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\unique_rows.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\unique_simplices.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\unproject.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\unproject_in_mesh.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\unproject_onto_mesh.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\unproject_ray.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\unzip_corners.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\upsample.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\vector_area_matrix.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\vertex_components.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\vertex_triangle_adjacency.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\volume.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\voxel_grid.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\winding_number.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\writeBF.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\writeDMAT.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\writeMESH.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\writeOBJ.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\writeOFF.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\writePLY.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\writeSTL.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\writeTGF.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\writeWRL.cpp" />
+    <ClCompile Include="C:\Users\ym2552\Desktop\high-level-knitting\ext\libigl\include\igl\write_triangle_mesh.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="C:\Users\ym2552\Desktop\high-level-knitting\index-build\ZERO_CHECK.vcxproj">
+      <Project>{34AEB84B-7D45-3AEC-AEA0-68D7B9401357}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

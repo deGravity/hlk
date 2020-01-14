@@ -1,0 +1,9 @@
+# CMake generation dependency list for this directory.
+C:/Users/ym2552/Desktop/high-level-knitting/ext/libigl/external/stb/CMakeLists.txt
+C:/dev/cmake-3.15.3/share/cmake-3.15/Modules/CMakeCheckCompilerFlagCommonPatterns.cmake
+C:/dev/cmake-3.15.3/share/cmake-3.15/Modules/CheckCCompilerFlag.cmake
+C:/dev/cmake-3.15.3/share/cmake-3.15/Modules/CheckCSourceCompiles.cmake
+C:/dev/cmake-3.15.3/share/cmake-3.15/Modules/CheckCXXCompilerFlag.cmake
+C:/dev/cmake-3.15.3/share/cmake-3.15/Modules/CheckCXXSourceCompiles.cmake
+C:/dev/cmake-3.15.3/share/cmake-3.15/Modules/GenerateExportHeader.cmake
+C:/dev/cmake-3.15.3/share/cmake-3.15/Modules/exportheader.cmake.in
