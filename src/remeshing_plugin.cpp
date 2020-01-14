@@ -119,12 +119,16 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
         if (czsl.ctrl && czsl.s) viewer.open_dialog_save_mesh();
         if (czsl.ctrl && czsl.l) viewer.open_dialog_load_mesh();
         if (czsl.ctrl && czsl.z) {
-            if (temps.size() > 1) {
-                load(temps[temps.size()-2].mesh);
-                remove(temps.back().edge.c_str());
-                remove(temps.back().face.c_str());
-                remove(temps.back().mesh.c_str());
-                temps.erase(temps.begin()+temps.size()-1);
+            if (in_composition_mode) {
+                std::cout << "[Info] in composition mode; ignoring ctrl+z...\n";
+            } else {
+                if (temps.size() > 1) {
+                    load(temps[temps.size() - 2].mesh);
+                    remove(temps.back().edge.c_str());
+                    remove(temps.back().face.c_str());
+                    remove(temps.back().mesh.c_str());
+                    temps.erase(temps.begin() + temps.size() - 1);
+                }
             }
         }
 
@@ -140,8 +144,15 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
         return false;
     };
 
+    auto post_resize = [&](igl::opengl::glfw::Viewer& viewer, int w, int h) {
+        window_width = w;
+        window_height = h;
+        return false;
+    };
+
     _viewer->callback_key_down = key_down;
     _viewer->callback_key_up = key_up;
+    _viewer->callback_post_resize = post_resize;
 
     if (!input_model.empty()) {
         load(input_model);
@@ -153,6 +164,7 @@ void RemeshingMenu::draw_viewer_menu() {
 
     float w = ImGui::GetContentRegionAvailWidth();
     float p = ImGui::GetStyle().FramePadding.x;
+
     if (ImGui::CollapsingHeader("Workspace", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (ImGui::Button("Load##Workspace", ImVec2((w - p) / 2.f, 0))) {
             load_workspace();
@@ -171,25 +183,19 @@ void RemeshingMenu::draw_viewer_menu() {
             viewer->open_dialog_save_mesh();
         }
         if (model_loaded()) {
-            if (ImGui::Button("Clear Loops##Mesh", ImVec2((w - p) / 3.f, 0))) {
+            if (ImGui::Button("Clear Loops##Mesh", ImVec2((w - p) / 2.5f, 0))) {
                 clear_loops();
                 update_visualization();
             }
             ImGui::SameLine(0, p);
-            if (ImGui::Button("Reset Field##Mesh", ImVec2((w - p) / 3.f, 0))) {
+            if (ImGui::Button("Reset Field##Mesh", ImVec2((w - p) / 2.7f, 0))) {
                 reset_field();
             }
             ImGui::SameLine(0, p);
-            if (ImGui::Button("Refine##Mesh", ImVec2((w - p) / 3.f, 0))) {
+            if (ImGui::Button("Refine##Mesh", ImVec2((w - p) / 4.6f, 0))) {
                 apply_subdivision();
             }
-        }
-    }
-
-    if (model_loaded()) {
-        if (ImGui::CollapsingHeader("Remeshing", ImGuiTreeNodeFlags_DefaultOpen)) {
             // Expose symmetry variables.
-            ImGui::PushItemWidth(80 * menu_scaling());
             if (symmetrizer.has_vertex_symmetry(2)) {
                 ImGui::Checkbox("XY Symmetry", &symmetry_mode_xy);
             } else {
@@ -205,154 +211,6 @@ void RemeshingMenu::draw_viewer_menu() {
             } else {
                 symmetry_mode_yz = false;
             }
-            ImGui::Checkbox("Symmetrize N-RoSy", &symmetrize_nrosy);
-            ImGui::Checkbox("Use Optimized Loops", &use_optim_loop);
-            /*ImGui::Checkbox("Show Axis", &show_axis);
-            ImGui::Checkbox("Multi Points", &multi_points_drawing);
-            ImGui::Checkbox("Use Guiding Field", &use_guiding_field);
-            */
-            ImGui::Checkbox("Do matching", &do_matching);
-            // Add threshold values.
-            ImGui::DragFloat("Click Threshold", &click_threshold, 0.05f, 0.0f, 0.5f);
-            ImGui::DragFloat("Soft Weight", &soft_constraint_strength, 0.01f, 0.0f, 1.0f);
-            if (use_guiding_field) {
-                ImGui::DragFloat("Field Weight", &field_guidance_weight, 0.01f, 0.0f, 100.0f);
-            }
-            ImGui::DragFloat("Gradient Size", &gradient_size, 1.0f, 0.0f, 150.0f);
-            ImGui::DragInt("# Stiffening", &stiffen_iter, 1, 0, 10);
-            /*if (constrainedRoot) {
-                std::string text = "Constrained Global Rotation: \n" + std::to_string(constrainedRootAngle);
-                ImGui::Text(text.c_str());
-            }*/
-            if (ImGui::DragFloat("Global Rotation", &globalRotation, 0.005f, (float)(-M_PI), (float)(M_PI))) {
-                update_raw_field();
-                if (viewing_mode == ViewingMode::MESH_TCON) {
-                    update_visualization();
-                }
-            }
-            ImGui::PopItemWidth();
-
-            ImGui::Text("===Seaming Operations===");
-            ImGui::DragFloat("Loops Threshold", &loops_threshold, 0.05f, 0.0f, 0.5f);
-            ImGui::Checkbox("Symmetrize Seaming Loops", &symmetrize_loops);
-            // seaming mode options.
-            ImGui::Text("Click to select the seaming mode.");
-            if (ImGui::RadioButton("Cut", seaming_mode == SeamingMode::CUT)) {
-                seaming_mode = SeamingMode::CUT;
-            }
-            ImGui::SameLine(0, p);
-            if (ImGui::RadioButton("Seam", seaming_mode == SeamingMode::SEAM)) {
-                seaming_mode = SeamingMode::SEAM;
-            }
-            ImGui::SameLine(0, p);
-            if (ImGui::RadioButton("Split", seaming_mode == SeamingMode::SPLIT)) {
-                seaming_mode = SeamingMode::SPLIT;
-            }
-            if (!seams.empty()) {
-                if (ImGui::Button("Cut the current seams", ImVec2(w - p, 0))) {
-                    cut_along_seams();
-                    interpolate_field();
-                    viewing_mode = ViewingMode::MESH_ONLY;
-                    update_visualization();
-                    save_ctrlz();
-                }
-            }
-
-            ImGui::Text("===Composition Guidelines===");
-            auto mode_selector = [&](Composition c, GLuint texture) {
-                if (ImGui::ImageButton((void*)(intptr_t)(texture), ImVec2(32, 32))) {
-                    composition = c;
-                }
-            };
-            mode_selector(Composition::Y_ONE, Y_one);
-            ImGui::SameLine(0, p);
-            mode_selector(Composition::T_HALF, T_half);
-            ImGui::SameLine(0, p);
-            mode_selector(Composition::HOLE_HALF, hole_half);
-            mode_selector(Composition::Y_HALF, Y_half);
-            ImGui::SameLine(0, p);
-            mode_selector(Composition::T_QUARTER, T_quarter);
-            ImGui::SameLine(0, p);
-            mode_selector(Composition::HOLE_QUARTER, hole_quarter);
-            mode_selector(Composition::PATCH_HALF, patch_half);
-            ImGui::SameLine(0, p);
-            mode_selector(Composition::PATCH_QUARTER_IN, patch_quarter_in);
-            ImGui::SameLine(0, p);
-            mode_selector(Composition::PATCH_QUARTER_OUT, patch_quarter_out);
-            ImGui::Text(composition_instructions[composition].c_str());
-
-            ImGui::Text("===Field Operations===");
-            if (ImGui::Button("Interpolate Field", ImVec2(w - p, 0))) {
-                interpolate_field();
-                update_visualization();
-            }
-
-            if (has_direction_field) {
-                if (ImGui::Button("Run MIQ parametrization", ImVec2(w - p, 0))) {
-                    generate_integer_grid();
-                }
-            }
-            // Quad controls
-            ImGui::Text("===Quad Operations===");
-            if (has_integer_grid) {
-                if (ImGui::Button("Extract Quad Mesh", ImVec2(w - p, 0))) {
-                    std::vector<std::vector<double>> Vs, TCs;
-                    std::vector<std::vector<int>> Fs;
-                    extract_quad_mesh(V, F, V_uv, F_uv, quad_mesh);
-                    is_quad_meshed = true;
-                    init_quad_mesh();
-                    viewing_mode = ViewingMode::QUAD_ONLY;
-                    update_visualization();
-                }
-            }
-            if (is_quad_meshed) {
-                if (ImGui::Button("Save Quads", ImVec2((w - p) / 2.f, 0))) {
-                    if (is_quad_meshed) {
-                        std::string fname = igl::file_dialog_save();
-                        if (fname.length() > 0) {
-                            Eigen::MatrixXd V_q = quad_mesh.V.block(0, 0, quad_mesh.n, 3);
-                            igl::writeOBJ(fname, V_q, quad_mesh.F_q);
-                        }
-                    }
-                }
-                ImGui::SameLine(0, p);
-                if (ImGui::Button("Check Helix", ImVec2((w - p) / 2.f, 0))) {
-                    quad_helix_finding();
-                }
-            }
-        }
-    }
-
-    // Visualization Options
-    if (ImGui::CollapsingHeader("Visualization Options", ImGuiTreeNodeFlags_DefaultOpen)) {
-        // drawing mode options.
-        ImGui::Text("Click to select the drawing mode.");
-        if (ImGui::RadioButton("Course", drawing_mode == DrawingMode::COURSE)) {
-            drawing_mode = DrawingMode::COURSE;
-        }
-        ImGui::SameLine(0, p);
-        if (ImGui::RadioButton("Wale", drawing_mode == DrawingMode::WALE)) {
-            drawing_mode = DrawingMode::WALE;
-        }
-        // viewing mode options.
-        if (model_loaded()) {
-            ImGui::Text("Click to select the viewing mode.");
-            if (ImGui::RadioButton("Mesh Only", viewing_mode == ViewingMode::MESH_ONLY)) {
-                viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
-            }
-            ImGui::SameLine(0, p);
-            if (ImGui::RadioButton("Mesh+TCon", viewing_mode == ViewingMode::MESH_TCON)) {
-                viewing_mode = ViewingMode::MESH_TCON; update_raw_field(); update_visualization();
-            }
-            if (is_quad_meshed) {
-                if (ImGui::RadioButton("Mesh+Quad", viewing_mode == ViewingMode::MESH_QUAD)) {
-                    viewing_mode = ViewingMode::MESH_QUAD; update_visualization();
-                }
-                ImGui::SameLine(0, p);
-                if (ImGui::RadioButton("Quad Only", viewing_mode == ViewingMode::QUAD_ONLY)) {
-                    viewing_mode = ViewingMode::QUAD_ONLY; update_visualization();
-                }
-            }
         }
     }
 
@@ -366,9 +224,8 @@ void RemeshingMenu::draw_viewer_menu() {
             viewer->snap_to_canonical_quaternion();
         }
         // Zoom
-        ImGui::PushItemWidth(80 * menu_scaling());
         ImGui::DragFloat("Zoom", &(viewer->core().camera_zoom), 0.05f, 0.1f, 20.0f);
-        /*// Select rotation type
+        // Select rotation type
         int rotation_type = static_cast<int>(viewer->core().rotation_type);
         static Eigen::Quaternionf trackball_angle = Eigen::Quaternionf::Identity();
         static bool orthographic = true;
@@ -389,21 +246,8 @@ void RemeshingMenu::draw_viewer_menu() {
             }
         }
         // Orthographic view
-        ImGui::Checkbox("Orthographic view", &(viewer->core().orthographic));*/
-        ImGui::PopItemWidth();
+        ImGui::Checkbox("Orthographic view", &(viewer->core().orthographic));
     }
-
-}
-
-// Draw additional windows
-void RemeshingMenu::draw_custom_window() {
-    // Define next window position + size
-    ImGui::SetNextWindowPos(ImVec2(180.f * menu_scaling(), 10), ImGuiSetCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(200, 160), ImGuiSetCond_FirstUseEver);
-    ImGui::Begin(
-        "New Window", nullptr,
-        ImGuiWindowFlags_NoSavedSettings
-    );
 
     // Helper for setting viewport specific mesh options
     auto make_checkbox = [&](const char* label, unsigned int& option) {
@@ -412,7 +256,7 @@ void RemeshingMenu::draw_custom_window() {
             [&](bool value) { return viewer->core().set(option, value); });
     };
     // Draw options
-    if (ImGui::CollapsingHeader("Draw Options", ImGuiTreeNodeFlags_OpenOnArrow)) {
+    if (ImGui::CollapsingHeader("Draw Options", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (ImGui::Checkbox("Face-based", &(viewer->data().face_based))) {
             viewer->data().dirty = igl::opengl::MeshGL::DIRTY_ALL;
         }
@@ -425,12 +269,10 @@ void RemeshingMenu::draw_custom_window() {
             ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_PickerHueWheel);
         ImGui::ColorEdit4("Line color", viewer->data().line_color.data(),
             ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_PickerHueWheel);
-        ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.3f);
         ImGui::DragFloat("Shininess", &(viewer->data().shininess), 0.05f, 0.0f, 100.0f);
-        ImGui::PopItemWidth();
     }
     // Overlays
-    if (ImGui::CollapsingHeader("Overlays", ImGuiTreeNodeFlags_OpenOnArrow)) {
+    if (ImGui::CollapsingHeader("Overlays", ImGuiTreeNodeFlags_DefaultOpen)) {
         make_checkbox("Wireframe", viewer->data().show_lines);
         make_checkbox("Fill", viewer->data().show_faces);
         make_checkbox("Show overlay", viewer->data().show_overlay);
@@ -438,8 +280,195 @@ void RemeshingMenu::draw_custom_window() {
         ImGui::Checkbox("Show vertex labels", &(viewer->data().show_vertid));
         ImGui::Checkbox("Show faces labels", &(viewer->data().show_faceid));
     }
+}
+
+// Draw additional windows
+void RemeshingMenu::draw_custom_window() {
+    if (!model_loaded()) return;
+
+    // Define next window position + size
+    ImGui::SetNextWindowPos(ImVec2(window_width - 300, 0), ImGuiSetCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(300, max(300, window_height - 100)), ImGuiSetCond_FirstUseEver);
+    ImGui::Begin(
+        "Remeshing", nullptr,
+        ImGuiWindowFlags_NoSavedSettings
+    );
+
+    float w = ImGui::GetContentRegionAvailWidth();
+    float p = ImGui::GetStyle().FramePadding.x;
+
+    if (ImGui::CollapsingHeader("Seaming/Feature Lines", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::DragFloat("Loops Drawing Threshold", &loops_threshold, 0.05f, 0.0f, 0.5f);
+        ImGui::Checkbox("Use Optimized Loops", &use_optim_loop);
+        ImGui::SameLine(0, p);
+        ImGui::Checkbox("Symmetrize Seaming Loops", &symmetrize_loops);
+        // seaming mode options.
+        ImGui::Text("Click to select the seaming mode.");
+        if (ImGui::RadioButton("Cut", seaming_mode == SeamingMode::CUT)) {
+            seaming_mode = SeamingMode::CUT;
+        }
+        ImGui::SameLine(0, p);
+        if (ImGui::RadioButton("Seam", seaming_mode == SeamingMode::SEAM)) {
+            seaming_mode = SeamingMode::SEAM;
+        }
+        ImGui::SameLine(0, p);
+        if (ImGui::RadioButton("Split", seaming_mode == SeamingMode::SPLIT)) {
+            seaming_mode = SeamingMode::SPLIT;
+        }
+        if (!seams.empty()) {
+            if (ImGui::Button("Cut the current seams", ImVec2(w - p, 0))) {
+                cut_along_seams();
+                interpolate_field();
+                viewing_mode = ViewingMode::MESH_ONLY;
+                update_visualization();
+                save_ctrlz();
+            }
+        }
+    }
+
+    if (ImGui::CollapsingHeader("Composition Guidelines", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Checkbox("In Composition Mode", &in_composition_mode);
+        auto tooltip = [](std::string text) {
+            if (ImGui::IsItemHovered()) {
+                ImGui::BeginTooltip();
+                ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+                ImGui::TextUnformatted(text.c_str());
+                ImGui::PopTextWrapPos();
+                ImGui::EndTooltip();
+            }
+        };
+        auto mode_selector = [&](Composition c, GLuint texture, std::string name) {
+            if (ImGui::ImageButton((void*)(intptr_t)(texture), ImVec2(80, 80))) {
+                if (composition != c) {
+                    if (!singGroups.empty() && singGroups[singGroups.size() - 1].size() != composition_sing_nums[c]) {
+                        std::cout << "[Warn] you are switching to a new composition rule while the current composition is incomplete; \tthe current changes will be discarded...\n";
+                        for (int v : singGroups[singGroups.size() - 1]) {
+                            cycleIndices(vertex2cycle(v)) = 0;
+                            vertex2singGroup.erase(v);
+                        }
+                        singGroups.pop_back();
+                        update_singularities();
+                        update_visualization();
+                    }
+                    composition = c;
+                    singGroups.push_back(std::vector<int>());
+                }
+            }
+            tooltip(name);
+        };
+
+        mode_selector(Composition::Y_ONE, Y_one, "Y split/merge 1 x -1");
+        ImGui::SameLine(0, p);
+        mode_selector(Composition::T_HALF, T_half, "T split/merge 2 x -1/2");
+        ImGui::SameLine(0, p);
+        mode_selector(Composition::HOLE_HALF, hole_half, "Small slit 2 x -1/2");
+        mode_selector(Composition::Y_HALF, Y_half, "Y split/merge 2 x -1/2");
+        ImGui::SameLine(0, p);
+        mode_selector(Composition::T_QUARTER, T_quarter, "T split/merge 4 x -1/4");
+        ImGui::SameLine(0, p);
+        mode_selector(Composition::HOLE_QUARTER, hole_quarter, "Cut-out hole 4 x -1/4");
+        mode_selector(Composition::PATCH_HALF, patch_half, "Line-seam patch 2 x +1/2");
+        ImGui::SameLine(0, p);
+        mode_selector(Composition::PATCH_QUARTER_IN, patch_quarter_in, "Flat patch 4 x +1/4");
+        ImGui::SameLine(0, p);
+        mode_selector(Composition::PATCH_QUARTER_OUT, patch_quarter_out, "Small flap 4 x +1/4");
+        if (in_composition_mode) ImGui::Text(composition_instructions[composition].c_str());
+        if (constrainedRoot) {
+            std::string text = "Constrained Global Rotation: \n" + std::to_string(constrainedRootAngle);
+            ImGui::Text(text.c_str());
+        } else {
+            if (ImGui::DragFloat("Global Rotation", &globalRotation, 0.005f, (float)(-M_PI), (float)(M_PI))) {
+                update_raw_field(); viewing_mode == ViewingMode::MESH_TCON; update_visualization();
+            }
+        }
+        ImGui::Checkbox("Should Comb Field", &do_matching);
+        if (ImGui::Button("Find Trivial Connection", ImVec2(w - p, 0))) {
+            update_raw_field(); viewing_mode == ViewingMode::MESH_TCON; update_visualization();
+        }
+    }
+
+    if (ImGui::CollapsingHeader("Knitting Direction Guidelines", ImGuiTreeNodeFlags_DefaultOpen)) {
+        // drawing mode options.
+        ImGui::Text("Click to select the drawing mode.");
+        if (ImGui::RadioButton("Course", drawing_mode == DrawingMode::COURSE)) {
+            drawing_mode = DrawingMode::COURSE;
+        }
+        ImGui::SameLine(0, p);
+        if (ImGui::RadioButton("Wale", drawing_mode == DrawingMode::WALE)) {
+            drawing_mode = DrawingMode::WALE;
+        }
+        ImGui::DragFloat("Drawing Threshold", &click_threshold, 0.05f, 0.0f, 0.5f);
+        ImGui::Checkbox("Symmetrize N-RoSy", &symmetrize_nrosy);
+        ImGui::DragFloat("Soft Constraint Weight", &soft_constraint_strength, 0.01f, 0.0f, 1.0f);
+        if (ImGui::Button("N-RoSy Interpolation", ImVec2(w - p, 0))) {
+            interpolate_field();
+            update_visualization();
+        }
+    }
+
+    if (ImGui::CollapsingHeader("Quad Mesh Generation", ImGuiTreeNodeFlags_DefaultOpen)) {
+        if (has_direction_field) {
+            if (use_guiding_field) {
+                ImGui::DragFloat("Field Weight", &field_guidance_weight, 0.01f, 0.0f, 100.0f);
+            }
+            ImGui::DragFloat("Gradient Size", &gradient_size, 1.0f, 0.0f, 150.0f);
+            ImGui::DragInt("# Stiffening Iters", &stiffen_iter, 1, 0, 10);
+            if (ImGui::Button("Run MIQ parametrization", ImVec2(w - p, 0))) {
+                generate_integer_grid();
+            }
+        }
+        // Quad controls
+        if (has_integer_grid) {
+            if (ImGui::Button("Extract Quad Mesh", ImVec2(w - p, 0))) {
+                std::vector<std::vector<double>> Vs, TCs;
+                std::vector<std::vector<int>> Fs;
+                extract_quad_mesh(V, F, V_uv, F_uv, quad_mesh);
+                is_quad_meshed = true;
+                init_quad_mesh();
+                viewing_mode = ViewingMode::QUAD_ONLY;
+                update_visualization();
+            }
+        }
+        if (is_quad_meshed) {
+            if (ImGui::Button("Save Quads", ImVec2((w - p) / 2.f, 0))) {
+                std::string fname = igl::file_dialog_save();
+                if (fname.length() > 0) {
+                    Eigen::MatrixXd V_q = quad_mesh.V.block(0, 0, quad_mesh.n, 3);
+                    igl::writeOBJ(fname, V_q, quad_mesh.F_q);
+                }
+            }
+            ImGui::SameLine(0, p);
+            if (ImGui::Button("Check Helix", ImVec2((w - p) / 2.f, 0))) {
+                quad_helix_finding();
+            }
+        }
+    }
+
+    // Visualization Options
+    if (ImGui::CollapsingHeader("Visualization Options", ImGuiTreeNodeFlags_DefaultOpen)) {
+        if (model_loaded()) {
+            if (ImGui::RadioButton("Mesh Only", viewing_mode == ViewingMode::MESH_ONLY)) {
+                viewing_mode = ViewingMode::MESH_ONLY; update_visualization();
+            }
+            ImGui::SameLine(0, p);
+            if (ImGui::RadioButton("Mesh+TCon", viewing_mode == ViewingMode::MESH_TCON)) {
+                viewing_mode = ViewingMode::MESH_TCON; update_visualization();
+            }
+            if (is_quad_meshed) {
+                ImGui::SameLine(0, p);
+                if (ImGui::RadioButton("Mesh+Quad", viewing_mode == ViewingMode::MESH_QUAD)) {
+                    viewing_mode = ViewingMode::MESH_QUAD; update_visualization();
+                }
+                ImGui::SameLine(0, p);
+                if (ImGui::RadioButton("Quad Only", viewing_mode == ViewingMode::QUAD_ONLY)) {
+                    viewing_mode = ViewingMode::QUAD_ONLY; update_visualization();
+                }
+            }
+        }
+    }
+
     ImGui::End();
-};
+}
 
 void RemeshingMenu::setup_mesh() {
     // Compute face barycenters
@@ -456,6 +485,9 @@ void RemeshingMenu::setup_mesh() {
 
     // Pass through the symmetrizer to find symmetries.
     symmetrizer = Symmetrizer(V, F);
+
+    singGroups.clear();
+    vertex2singGroup.clear();
 
     viewer->data().clear();
     viewer->data().set_mesh(V, F);
@@ -620,6 +652,8 @@ void RemeshingMenu::clear() {
     std::vector<std::unordered_set<int>>().swap(igl_v_faces);
     std::vector<std::vector<double>>().swap(graph_adj);
     cycleFaces.clear();
+    singGroups.clear();
+    vertex2singGroup.clear();
     clear_loops();
     // reset values
     has_direction_field = false;
@@ -852,7 +886,7 @@ bool RemeshingMenu::mouse_move(int mouse_x, int mouse_y) {
                         Eigen::Vector3d src = feature_points[0] + normal * mesh_size * 0.001;
                         Eigen::Vector3d dst = feature_points[feature_points.size() - 1] + normal * mesh_size * 0.001;
                         std::vector<Eigen::Vector3d> vecs = { src, dst };
-                        
+
                         if (ctrl_on && alt_on) {
                             draw_points(vecs, 4);
                         } else if (ctrl_on) {
@@ -953,16 +987,61 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
     bool intersects = igl::unproject_onto_mesh(Eigen::Vector2f(x, y), viewer->core().view,
         viewer->core().proj, viewer->core().viewport, V, F, fid, bc);
 
-    if (button == 0 && singularitySelect) { // trivial connections: select singularity
+    if ((button == 0 || button == 2) && (in_composition_mode || singularitySelect)) {
+        // trivial connections: 0, select singularity; 2, remove singularity (groups)
         if (intersects) {
             Eigen::Vector3d::Index maxCol;
             bc.maxCoeff(&maxCol);
             currVertex = F(fid, maxCol);
             currCycle = vertex2cycle(currVertex);
             viewing_mode = ViewingMode::MESH_TCON;
-            should_redraw = true;
-        }
 
+            std::vector<int> symmetric_verts = symmetrizer.symmetric_vertices(currVertex, v_symmetry_axes());
+            if (button == 0) {
+                if (singGroups.empty()) singGroups.push_back(std::vector<int>());
+                if (singGroups[singGroups.size() - 1].size() < composition_sing_nums[composition]) {
+                    // keep adding to the group
+                    for (int v : symmetric_verts) {
+                        cycleIndices(vertex2cycle(v)) = composition_indices[composition];
+                        vertex2singGroup[v] = singGroups.size() - 1;
+                        singGroups[vertex2singGroup[v]].push_back(v);
+                    }
+                    should_redraw = true;
+                    // until we complete adding the required num of singularities
+                }
+                if (singGroups[singGroups.size() - 1].size() == composition_sing_nums[composition]) {
+                    std::cout << "[Info] the current composition is complete.\n";
+                }
+            } else if (!singGroups.empty()) {
+                if (singGroups[singGroups.size() - 1].size() < composition_sing_nums[composition]) {
+                    for (int v : symmetric_verts) {
+                        cycleIndices(vertex2cycle(v)) = 0;
+                        std::vector<int>& currGroup = singGroups[vertex2singGroup[v]];
+                        if (currGroup.empty()) continue;
+                        currGroup.erase(find(currGroup.begin(), currGroup.end(), v));
+                        vertex2singGroup.erase(v);
+                    }
+                } else {
+                    std::vector<bool> singGroupsToKeep(singGroups.size(), true);
+                    for (int v : symmetric_verts) {
+                        singGroupsToKeep[vertex2singGroup[v]] = false;
+                    }
+                    std::vector<std::vector<int>> newSingGroups;
+                    for (int i = 0; i < singGroups.size(); ++i) {
+                        if (singGroupsToKeep[i]) {
+                            newSingGroups.push_back(singGroups[i]);
+                        } else {
+                            for (int v : singGroups[i]) {
+                                cycleIndices(vertex2cycle(v)) = 0;
+                                vertex2singGroup.erase(v);
+                            }
+                        }
+                    }
+                    newSingGroups.swap(singGroups);
+                }
+                should_redraw = true;
+            }
+        }
     } else if ((button == 2 || button == 1) && alt_on && !shift_on && !ctrl_on) { // loop
         if (feature_points.size() > 2) {
             auto n = face_vectors[loop_feature_face_ids[0]].normal;
@@ -1123,7 +1202,11 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
         if (seaming_mode == SeamingMode::CUT) {
             cut_along_seams();
         }
-        interpolate_field();
+        if (viewing_mode == ViewingMode::MESH_ONLY) {
+            interpolate_field();
+        } else {
+            update_singularities();
+        }
         update_visualization();
         save_ctrlz();
         should_redraw = false;

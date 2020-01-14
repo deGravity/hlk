@@ -69,7 +69,31 @@ enum Composition {
     HOLE_QUARTER
 };
 
-static std::vector<std::string> composition_instructions = {
+static const std::vector<int> composition_indices = {
+    +1,
+    +2,
+    +1,
+    -4,
+    -2,
+    -2,
+    -1,
+    -2,
+    -1
+};
+
+static const std::vector<int> composition_sing_nums = {
+    4,
+    2,
+    4,
+    1,
+    2,
+    2,
+    4,
+    2,
+    4
+};
+
+static const std::vector<std::string> composition_instructions = {
     "Create a flat patch (four +1/4 singularities)",
     "Create a line seam (two +1/2 singularities)",
     "Create a small flap (four +1/4 singularities)",
@@ -78,7 +102,7 @@ static std::vector<std::string> composition_instructions = {
     "Define a T-joint of tubes (two -1/2 singularities)",
     "Define a T-joint of tubes (four -1/4 singularities",
     "Create a small slit (two -1/2 singularities)",
-    "Create a hole cut-out (four -1/4 singularities"
+    "Create a hole cut-out (four -1/4 singularities)"
 };
 
 enum DrawingMode {

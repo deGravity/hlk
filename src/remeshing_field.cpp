@@ -210,7 +210,6 @@ void RemeshingMenu::interpolate_field() {
     interpolate_cross_field(field_sings);
     update_vectors_from_field();
     directional::representative_to_raw(V, F, direction_field[1], rosy, rawField);
-    viewing_mode = ViewingMode::MESH_ONLY;
 
     int s_count = 0;
     for (int i = 0; i < field_sings.rows(); ++i) {

@@ -41,6 +41,7 @@ public:
         has_integer_grid = false;
         is_quad_meshed = false;
         should_redraw = false;
+        in_composition_mode = false;
 
         geodesic_label = false;
         existing_edge_label = false;
@@ -62,6 +63,9 @@ public:
         globalRotation = 0.;
         singularitySelect = false;
         constrainedRoot = false;
+
+        window_width = 1280;
+        window_height = 800;
     }
     ~RemeshingMenu() {
         clear();
@@ -181,6 +185,7 @@ public:
     bool has_integer_grid;
     bool is_quad_meshed;
     bool should_redraw;
+    bool in_composition_mode;
 
     // numbers...
     float soft_constraint_strength;
@@ -272,6 +277,8 @@ public:
     std::vector<int> misaligned_faces;
     float globalRotation, constrainedRootAngle;
     bool singularitySelect, constrainedRoot;
+    std::vector<std::vector<int>> singGroups;
+    std::map<int, int> vertex2singGroup;
 
     /////////////////// UI ///////////////////
     std::string in_path, out_path, input_model;
@@ -293,7 +300,7 @@ public:
 
     bool existing_edge_label;
 
-    int mouse_key;
+    int mouse_key, window_width, window_height;
     double mouse_x, mouse_y;
     bool ctrl_on, alt_on, shift_on, mouse_down_on;
 
