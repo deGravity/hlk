@@ -1,6 +1,7 @@
 #include "disjointset.h"
 
 #include <map>
+#include <assert.h>
 
 namespace hlk {
 	IntUnionFind::IntUnionFind(int size)
@@ -9,6 +10,7 @@ namespace hlk {
 	}
 	int IntUnionFind::find(int a)
 	{
+		assert(a >= 0);
 		while (parent[a] >= 0) {
 			if (parent[parent[a]] >= 0) parent[a] = parent[parent[a]];
 			a = parent[a];
@@ -20,7 +22,8 @@ namespace hlk {
 	{
 		a = find(a);
 		b = find(b);
-		if (a < b) {
+		if (a == b) return;
+		if (parent[a] < parent[b]) {
 			parent[a] += parent[b];
 			parent[b] = a;
 		}
