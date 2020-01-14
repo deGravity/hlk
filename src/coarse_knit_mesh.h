@@ -41,16 +41,10 @@ namespace hlk {
 		CoarseKnitEdge(Optimizer& topo_opt, Optimizer& geo_opt, int i, CoarseKnitMesh* m);
 		int seam;
 		int index;
-		std::shared_ptr<IntProp> stitches;
-		std::shared_ptr<IntProp> stitches_backup; // Used for caching for symmetry optimization
-		void cache_stitches();
-		void uncache_stitches();
-		bool is_representative = true; // If this is a representative of a symmetry
 		CoarseKnitMesh* mesh;
 
 		std::vector<std::pair<z3::expr, std::string>> get_topology_constraints();
 		std::vector<std::pair<z3::expr, std::string>> get_geometry_constraints();
-		z3::expr get_geometry_cost();
 
 		int target_stitch_count();
 		

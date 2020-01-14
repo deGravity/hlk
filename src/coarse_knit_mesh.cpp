@@ -197,7 +197,6 @@ namespace hlk {
 			}
 		}
 
-		// Put Edges First so Sides can reference their stitch-counts
 		for (int i = 0; i < e; ++i) {
 			edges.emplace_back(topology_optimizer, geometry_optimizer, i, this);
 		}
@@ -265,9 +264,6 @@ namespace hlk {
 		}
 
 		
-
-		// TODO - Bug with the solver! It's probably due to not using shared pointers
-		// try changing this next.
 		update_textures();
 
 		// Solve the SMT problem and update the textures
@@ -286,18 +282,8 @@ namespace hlk {
 		seam = -1;
 		index = i;
 		mesh = m;
-		stitches = geo_opt.get_int_prop(nth_label("edge_stitches", i));
 	}
-	void CoarseKnitEdge::cache_stitches()
-	{
-		stitches_backup = stitches;
-	}
-	void CoarseKnitEdge::uncache_stitches()
-	{
-		stitches_backup->val = stitches->val;
-		is_representative = true;
-		stitches = stitches_backup;
-	}
+
 	std::vector<std::pair<z3::expr, std::string>> CoarseKnitEdge::get_topology_constraints()
 	{
 		std::vector<std::pair<z3::expr, std::string>> constraints;
@@ -337,52 +323,9 @@ namespace hlk {
 	{
 		std::vector<std::pair<z3::expr, std::string>> constraints;
 
-		// TODO - Intelligently separate seams
-
-		if (is_representative) {
-
-			int target_stitches = target_stitch_count();
-			int tollerance = mesh->edge_tollerance > 0 ? mesh->edge_tollerance : ceil(mesh->tollerance * target_stitches);
-			int min_sts = target_stitches - tollerance;
-			int max_sts = target_stitches + tollerance;
-			min_sts = min_sts > 0 ? min_sts : 1;
-
-
-			constraints.push_back(std::make_pair(
-				min_sts <= stitches->var,
-				"min_sts_edge_" + std::to_string(index)
-			));
-
-
-			constraints.push_back(std::make_pair(
-				max_sts >= stitches->var,
-				"max_sts_edge_" + std::to_string(index)
-			));
-
-		}
-
-		// TODO - consider doing something regarding direction matching here instead
-		// These are currently reduced since there is a shared variable. If we wish
-		// to relax this we will need to either temporarily add new variables, or
-		// have some other trick
-		/*
-		if (seam < 0 || !mesh->seams[seam]->val) {
-			auto& a = mesh->sides[mesh->edges_to_sides(index, 0)];
-			auto& b = mesh->sides[mesh->edges_to_sides(index, 1)];
-			constraints.push_back(std::make_pair(
-				a.stitches == b.stitches,
-				"consistent_sizing_" + std::to_string(index)
-			));
-		}
-		*/
-
 		return constraints;
 	}
-	z3::expr CoarseKnitEdge::get_geometry_cost()
-	{
-		int target_stitches = target_stitch_count();
-		return (stitches->var - target_stitches) * (stitches->var - target_stitches);
-	}
+
 	int CoarseKnitEdge::target_stitch_count()
 	{
 		auto& side = mesh->sides[mesh->edges_to_sides(index, 0)];
@@ -806,13 +749,8 @@ namespace hlk {
 		is_out = topo_opt.get_bool_prop(nth_label("is_out", i));
 		index = i;
 		mesh = m;
-		// Check if there is an associated edge - if so just copy a reference to its stitch count
-		if (mesh->sides_to_edges[index] < 0) {
-			stitches = geo_opt.get_int_prop(nth_label("side_stitches", i));
-		}
-		else {
-			stitches = mesh->edges[mesh->sides_to_edges[index]].stitches;
-		}
+		
+		stitches = geo_opt.get_int_prop(nth_label("side_stitches", i));
 	}
 
 	void CoarseKnitSide::cache_stitches()
@@ -891,7 +829,7 @@ namespace hlk {
 		std::vector<std::pair<z3::expr, std::string>> constraints;
 
 		// Only add for boundary edges
-		if (mesh->sides_to_edges[index] < 0 && is_representative) {
+		if (is_representative) {
 			int target_stitches = target_stitch_count();
 			int tollerance = mesh->edge_tollerance > 0 ? mesh->edge_tollerance : ceil(mesh->tollerance * target_stitches);
 			int min_sts = target_stitches - tollerance;
@@ -1015,9 +953,6 @@ namespace hlk {
 		for (auto& side : sides) {
 			side.cache_stitches();
 		}
-		for (auto& edge : edges) {
-			edge.cache_stitches();
-		}
 
 		std::vector<std::vector<int>> side_symmetries;
 
@@ -1031,6 +966,12 @@ namespace hlk {
 			}
 		}
 
+		for (auto& edge : edges) {
+			if (edge.seam < 0 || !seams[edge.seam]->val) {
+				side_symmetries.push_back({ edges_to_sides(edge.index, 0), edges_to_sides(edge.index, 1) });
+			}
+		}
+
 		// Now minimize the symmetries by merging
 
 		IntUnionFind djs(sides.size());
@@ -1039,18 +980,13 @@ namespace hlk {
 				djs.join(sym[0], sym[i]);
 			}
 		}
+		std::vector<std::vector<int>> components = djs.components();
 
-		for (auto& symmetry : djs.components()) {
-			auto representative = (sides_to_edges[symmetry[0]] >= 0) ? 
-				edges[sides_to_edges[symmetry[0]]].stitches : 
-				sides[symmetry[0]].stitches;
+		for (auto& symmetry : components) {
+			auto representative = sides[symmetry[0]].stitches;
 			for (int i = 1; i < symmetry.size(); ++i) {
 				sides[symmetry[i]].stitches = representative;
 				sides[symmetry[i]].is_representative = false;
-				if (sides_to_edges[symmetry[i]] >= 0) {
-					edges[sides_to_edges[symmetry[i]]].stitches = representative;
-					edges[sides_to_edges[symmetry[i]]].is_representative = false;
-				}
 			}
 		}
 
@@ -1062,18 +998,11 @@ namespace hlk {
 
 			geometry_optimizer.push();
 
-			int first_side = 0;
-			for (first_side = 0; first_side < sides.size(); ++first_side) {
-				if (sides_to_edges[first_side] < 0) break;
-			}
-
-			z3::expr cost = edges.size() > 0 ? edges[0].get_geometry_cost() : sides[first_side].get_geometry_cost();
-			if (edges.size() == 0) ++first_side;
-			for (int i = 1; i < edges.size(); ++i) {
-				cost = cost + edges[i].get_geometry_cost();
-			}
-			for (int i = first_side; i < sides.size(); ++i) {
-				if (sides_to_edges[i] < 0) {
+			z3::expr cost = sides[0].get_geometry_cost();
+			
+			for (int i = 1; i < sides.size(); ++i) {
+				int opp = flip_side(i);
+				if (i < opp || opp < 0) {
 					cost = cost + sides[i].get_geometry_cost();
 				}
 			}
@@ -1130,10 +1059,7 @@ namespace hlk {
 
 		// Return variables to normal
 		for (auto& side : sides) {
-			side.cache_stitches();
-		}
-		for (auto& edge : edges) {
-			edge.cache_stitches();
+			side.uncache_stitches();
 		}
 
 		return geometry_solved;
