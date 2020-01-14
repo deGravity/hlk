@@ -149,6 +149,8 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
 }
 
 void RemeshingMenu::draw_viewer_menu() {
+    load_textures();
+
     float w = ImGui::GetContentRegionAvailWidth();
     float p = ImGui::GetStyle().FramePadding.x;
     if (ImGui::CollapsingHeader("Workspace", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -218,10 +220,10 @@ void RemeshingMenu::draw_viewer_menu() {
             }
             ImGui::DragFloat("Gradient Size", &gradient_size, 1.0f, 0.0f, 150.0f);
             ImGui::DragInt("# Stiffening", &stiffen_iter, 1, 0, 10);
-            if (constrainedRoot) {
+            /*if (constrainedRoot) {
                 std::string text = "Constrained Global Rotation: \n" + std::to_string(constrainedRootAngle);
                 ImGui::Text(text.c_str());
-            }
+            }*/
             if (ImGui::DragFloat("Global Rotation", &globalRotation, 0.005f, (float)(-M_PI), (float)(M_PI))) {
                 update_raw_field();
                 if (viewing_mode == ViewingMode::MESH_TCON) {
@@ -256,14 +258,36 @@ void RemeshingMenu::draw_viewer_menu() {
                 }
             }
 
-            // Direction field controls
-            if (has_direction_field) {
-                // field interpolation mode options.
-                ImGui::Text("===Field Operations===");
-                if (ImGui::Button("Interpolate Field", ImVec2(w - p, 0))) {
-                    interpolate_field();
-                    update_visualization();
+            ImGui::Text("===Composition Guidelines===");
+            auto mode_selector = [&](Composition c, GLuint texture) {
+                if (ImGui::ImageButton((void*)(intptr_t)(texture), ImVec2(32, 32))) {
+                    composition = c;
                 }
+            };
+            mode_selector(Composition::Y_ONE, Y_one);
+            ImGui::SameLine(0, p);
+            mode_selector(Composition::T_HALF, T_half);
+            ImGui::SameLine(0, p);
+            mode_selector(Composition::HOLE_HALF, hole_half);
+            mode_selector(Composition::Y_HALF, Y_half);
+            ImGui::SameLine(0, p);
+            mode_selector(Composition::T_QUARTER, T_quarter);
+            ImGui::SameLine(0, p);
+            mode_selector(Composition::HOLE_QUARTER, hole_quarter);
+            mode_selector(Composition::PATCH_HALF, patch_half);
+            ImGui::SameLine(0, p);
+            mode_selector(Composition::PATCH_QUARTER_IN, patch_quarter_in);
+            ImGui::SameLine(0, p);
+            mode_selector(Composition::PATCH_QUARTER_OUT, patch_quarter_out);
+            ImGui::Text(composition_instructions[composition].c_str());
+
+            ImGui::Text("===Field Operations===");
+            if (ImGui::Button("Interpolate Field", ImVec2(w - p, 0))) {
+                interpolate_field();
+                update_visualization();
+            }
+
+            if (has_direction_field) {
                 if (ImGui::Button("Run MIQ parametrization", ImVec2(w - p, 0))) {
                     generate_integer_grid();
                 }
@@ -344,7 +368,7 @@ void RemeshingMenu::draw_viewer_menu() {
         // Zoom
         ImGui::PushItemWidth(80 * menu_scaling());
         ImGui::DragFloat("Zoom", &(viewer->core().camera_zoom), 0.05f, 0.1f, 20.0f);
-        // Select rotation type
+        /*// Select rotation type
         int rotation_type = static_cast<int>(viewer->core().rotation_type);
         static Eigen::Quaternionf trackball_angle = Eigen::Quaternionf::Identity();
         static bool orthographic = true;
@@ -365,9 +389,21 @@ void RemeshingMenu::draw_viewer_menu() {
             }
         }
         // Orthographic view
-        ImGui::Checkbox("Orthographic view", &(viewer->core().orthographic));
+        ImGui::Checkbox("Orthographic view", &(viewer->core().orthographic));*/
         ImGui::PopItemWidth();
     }
+
+}
+
+// Draw additional windows
+void RemeshingMenu::draw_custom_window() {
+    // Define next window position + size
+    ImGui::SetNextWindowPos(ImVec2(180.f * menu_scaling(), 10), ImGuiSetCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(200, 160), ImGuiSetCond_FirstUseEver);
+    ImGui::Begin(
+        "New Window", nullptr,
+        ImGuiWindowFlags_NoSavedSettings
+    );
 
     // Helper for setting viewport specific mesh options
     auto make_checkbox = [&](const char* label, unsigned int& option) {
@@ -402,7 +438,8 @@ void RemeshingMenu::draw_viewer_menu() {
         ImGui::Checkbox("Show vertex labels", &(viewer->data().show_vertid));
         ImGui::Checkbox("Show faces labels", &(viewer->data().show_faceid));
     }
-}
+    ImGui::End();
+};
 
 void RemeshingMenu::setup_mesh() {
     // Compute face barycenters
@@ -508,6 +545,21 @@ void RemeshingMenu::load_temp_data(std::string filename) {
     ifs.close();
 
     directional::read_singularities(sing_path_temp, N, singVertices, singIndices);
+}
+
+void RemeshingMenu::load_textures() {
+    if (!textures_loaded) {
+        igl::png::texture_from_file("circular_patch_half_icon.png", patch_half);
+        igl::png::texture_from_file("circular_patch_quarter_in_icon.png", patch_quarter_in);
+        igl::png::texture_from_file("circular_patch_quarter_out_icon.png", patch_quarter_out);
+        igl::png::texture_from_file("Y_joint_one_icon.png", Y_one);
+        igl::png::texture_from_file("Y_joint_half_icon.png", Y_half);
+        igl::png::texture_from_file("T_joint_half_icon.png", T_half);
+        igl::png::texture_from_file("T_joint_quarter_icon.png", T_quarter);
+        igl::png::texture_from_file("hole_half_icon.png", hole_half);
+        igl::png::texture_from_file("hole_quarter_icon.png", hole_quarter);
+        textures_loaded = true;
+    }
 }
 
 bool RemeshingMenu::save(std::string filename) {

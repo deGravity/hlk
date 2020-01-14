@@ -6,6 +6,7 @@
 
 #include <Eigen/Core>
 #include <igl/opengl/glfw/imgui/ImGuiMenu.h>
+#include <igl/png/texture_from_file.h>
 
 #include "cgal_wrapper.h"
 #include "quad_mesh.h"
@@ -51,6 +52,7 @@ public:
         viewing_mode = ViewingMode::MESH_ONLY;
         drawing_mode = DrawingMode::WALE;
         seaming_mode = SeamingMode::SEAM;
+        composition = Composition::PATCH_QUARTER_OUT;
         line_texture(texture_R, texture_G, texture_B);
         direction_field = { Eigen::MatrixXd(), Eigen::MatrixXd() };
 
@@ -76,9 +78,12 @@ public:
 
     void init(igl::opengl::glfw::Viewer* _viewer);
     void draw_viewer_menu();
+    void draw_custom_window();
     bool load(std::string filename);
     bool save(std::string filename);
     void load_temp_data(std::string filename);
+
+    void load_textures();
 
     bool load_workspace();
     bool save_workspace();
@@ -273,6 +278,11 @@ public:
     ViewingMode viewing_mode;
     DrawingMode drawing_mode;
     SeamingMode seaming_mode;
+    Composition composition;
+
+    // Texture Handles for UI
+    bool textures_loaded = false;
+    GLuint patch_half, patch_quarter_in, patch_quarter_out, Y_one, Y_half, T_half, T_quarter, hole_half, hole_quarter;
 
     bool symmetry_mode_yz, symmetry_mode_xz, symmetry_mode_xy;
     bool symmetrize_nrosy, symmetrize_loops, should_setup_boundary;

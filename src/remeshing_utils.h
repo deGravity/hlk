@@ -57,6 +57,30 @@ enum ViewingMode {
     QUAD_ONLY
 };
 
+enum Composition {
+    PATCH_QUARTER_OUT,
+    PATCH_HALF,
+    PATCH_QUARTER_IN,
+    Y_ONE,
+    Y_HALF,
+    T_HALF,
+    T_QUARTER,
+    HOLE_HALF,
+    HOLE_QUARTER
+};
+
+static std::vector<std::string> composition_instructions = {
+    "Create a flat patch (four +1/4 singularities)",
+    "Create a line seam (two +1/2 singularities)",
+    "Create a small flap (four +1/4 singularities)",
+    "Define a split/merge at a point (one -1 singularity)",
+    "Define a split/merge at a line (two -1/2 singularities)",
+    "Define a T-joint of tubes (two -1/2 singularities)",
+    "Define a T-joint of tubes (four -1/4 singularities",
+    "Create a small slit (two -1/2 singularities)",
+    "Create a hole cut-out (four -1/4 singularities"
+};
+
 enum DrawingMode {
     COURSE,
     WALE
