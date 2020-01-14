@@ -132,6 +132,8 @@ namespace hlk {
 		// Get Constraints for seams
 		std::vector<std::pair<z3::expr, std::string>> get_seam_costs();
 
+		void add_size_line(std::vector<int> line_sides);
+
 		// Get Constraints for line sizes
 		std::vector<std::pair<z3::expr, std::string>> size_line_constraints();
 
@@ -194,11 +196,14 @@ namespace hlk {
 		virtual void init();
 		virtual void init(bool do_opt = true);
 
-		double scale = 4; // Units:Inches
+		double scale = 1; // In Units / Inches
 		double stitch_gauge = 6.0; // In stitches / inch 
 		double row_gauge = 10.0; // In rows / inch
 
 		double tollerance = 0.01;
+
+		int edge_tollerance = 0;
+		int critical_tollerance = 0;
 
 
 		// TODO - be better than this

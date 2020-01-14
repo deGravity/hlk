@@ -83,6 +83,11 @@ namespace hlk {
 			ERASE_CONSTRAINTS
 		};
 
+		enum ConstraintsMode {
+			SHAPE_MODE,
+			SIZE_MODE
+		};
+
 		// Modes and settings
 
 		Tool current_tool = ORIENTER;
@@ -91,6 +96,8 @@ namespace hlk {
 
 		ShapingType shaping_brush = DISTRIBUTED;
 		ShapingType short_row_brush = NONE;
+
+		ConstraintsMode measurer_mode = SHAPE_MODE;
 
 		std::string eraser_instructions = "CTRL-Click and drag to erase.";
 		std::string texturer_instructions = "CTRL-Click and drag to add\ntexture.";

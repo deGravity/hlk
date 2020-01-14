@@ -112,6 +112,15 @@ namespace hlk {
 		if (modifier & IGL_MOD_CONTROL) {
 			// Get the starting side
 			
+			if (current_tool == ORIENTER) {
+				if (button == (int)igl::opengl::glfw::Viewer::MouseButton::Left) {
+					orienter_mode = LOOP;
+				}
+				else {
+					orienter_mode = YARN;
+				}
+			}
+
 			int fid;
 			Eigen::Vector3f bc;
 			if (pick_face(fid, bc)) {
@@ -122,16 +131,16 @@ namespace hlk {
 				is_dragging = true;
 				dragging_button = button;
 
-				if (current_tool == ORIENTER) {
-					std::cout << "mouse button = " << button << std::endl;
-					if (button == (int)igl::opengl::glfw::Viewer::MouseButton::Left) {
-						orienter_mode = LOOP;
-					}
-					else {
-						orienter_mode = YARN;
-					}
-				}
+				
 
+				return true;
+			}
+			else {
+				drag_start_side = -1;
+				last_drag_side = -1;
+
+				is_dragging = true;
+				dragging_button = button;
 				return true;
 			}
 
@@ -157,15 +166,28 @@ namespace hlk {
 		else {
 
 			if (current_tool == MEASURER) {
-				auto dx = (viewer->down_mouse_x - viewer->current_mouse_x);
-				auto dy = (viewer->down_mouse_y - viewer->current_mouse_y);
-				auto dist2 = dx * dx + dy * dy;
-				if (dist2 > 5) return false;
-				int fid;
-				Eigen::Vector3f bc;
-				if (pick_face(fid, bc)) {
-					M.set_shaping(fid, shaping_brush, short_row_brush);
-					update_mesh();
+				if (measurer_mode == SHAPE_MODE) {
+					auto dx = (viewer->down_mouse_x - viewer->current_mouse_x);
+					auto dy = (viewer->down_mouse_y - viewer->current_mouse_y);
+					auto dist2 = dx * dx + dy * dy;
+					if (dist2 > 5) return false;
+					int fid;
+					Eigen::Vector3f bc;
+					if (pick_face(fid, bc)) {
+						M.set_shaping(fid, shaping_brush, short_row_brush);
+						update_mesh();
+					}
+				}
+				else {
+					int fid;
+					Eigen::Vector3f bc;
+					if (pick_face(fid, bc)) {
+						int side = outgoing_side(fid, bc);
+						if (side >= 0) {
+							auto loop = M.side_loop(side);
+							M.add_size_line(loop);
+						}
+					}
 				}
 
 			}
@@ -277,7 +299,7 @@ namespace hlk {
 					}
 				}
 
-				if (current_tool == MEASURER) {
+				if (current_tool == MEASURER && measurer_mode == SHAPE_MODE) {
 					if(M.flip_side(fid) == last_drag_side) {
 						M.set_shaping(fid, shaping_brush, short_row_brush);
 						M.set_shaping(M.flip_side(fid), shaping_brush, short_row_brush);
@@ -285,6 +307,16 @@ namespace hlk {
 					}
 					last_drag_side = fid;
 					return true;
+				}
+			}
+			else {
+				if (current_tool == ORIENTER) {
+					if (last_drag_side >= 0) {
+						M.paint_direction(last_drag_side, -1, orienter_mode);
+						update_mesh();
+						last_drag_side = -1;
+						return true;
+					}
 				}
 			}
 		}
@@ -321,6 +353,22 @@ namespace hlk {
 				}
 				// Highlight any potential special vertices
 				M.set_glyph(M.vertex_slots[vtx], glyphs::CIRCLE, color::ORANGE);
+			}
+			update_mesh();
+		}
+
+		if (current_tool == MEASURER && measurer_mode == SIZE_MODE) {
+			int fid;
+			Eigen::Vector3f bc;
+			M.update_textures();
+			if (pick_face(fid, bc)) {
+				int side = outgoing_side(fid, bc);
+				if (side >= 0) {
+					auto loop = M.side_loop(side);
+					for (int i : loop) {
+						M.set_glyph(M.half_edge_slots[i], glyphs::SOLID_LINE, color::RED);
+					}
+				}
 			}
 			update_mesh();
 		}
@@ -429,16 +477,25 @@ namespace hlk {
 		}
 		mode_selector(MEASURER, measurer_pressed, measurer_tex, measurer_instructions, "Constraints Tool");
 		if (current_tool == MEASURER) {
-			ImGui::Text("Inc/Dec");
-			ImGui::RadioButton("None", (int*)& shaping_brush, NONE);
-			ImGui::RadioButton("Left (In)", (int*)& shaping_brush, IN_SIDE);
-			ImGui::RadioButton("Right (Out)", (int*)& shaping_brush, OUT_SIDE);
-			ImGui::RadioButton("Both Sides", (int*)& shaping_brush, BOTH_SIDES);
-			ImGui::RadioButton("Distributed", (int*)& shaping_brush, DISTRIBUTED);
-			ImGui::Text("Short Rows");
-			ImGui::RadioButton("None", (int*)& short_row_brush, NONE);
-			ImGui::RadioButton("Top (Out)", (int*)& short_row_brush, OUT_SIDE);
-			ImGui::RadioButton("Bottom (In)", (int*)& short_row_brush, IN_SIDE);
+
+			ImGui::RadioButton("Shaping", (int*)& measurer_mode, SHAPE_MODE);
+			ImGui::RadioButton("Sizing", (int*)& measurer_mode, SIZE_MODE);
+
+			if (measurer_mode == SHAPE_MODE) {
+				ImGui::Text("Inc/Dec");
+				ImGui::RadioButton("None", (int*)& shaping_brush, NONE);
+				ImGui::RadioButton("Left (In)", (int*)& shaping_brush, IN_SIDE);
+				ImGui::RadioButton("Right (Out)", (int*)& shaping_brush, OUT_SIDE);
+				ImGui::RadioButton("Both Sides", (int*)& shaping_brush, BOTH_SIDES);
+				ImGui::RadioButton("Distributed", (int*)& shaping_brush, DISTRIBUTED);
+				ImGui::Text("Short Rows");
+				ImGui::RadioButton("None", (int*)& short_row_brush, NONE);
+				ImGui::RadioButton("Top (Out)", (int*)& short_row_brush, OUT_SIDE);
+				ImGui::RadioButton("Bottom (In)", (int*)& short_row_brush, IN_SIDE);
+			}
+			else {
+				ImGui::Text("Click a line to make it a critical line.");
+			}
 		}
 		ImGui::Text(instructions.c_str());
 		
@@ -482,11 +539,27 @@ namespace hlk {
 			M.minimizer_timeout = (unsigned int)minimizer_timeout;
 		}
 
+		if (ImGui::DragInt("Side Tollerance", &M.edge_tollerance, 1.0, 0, 10)) {
+			M.geometry_solved = false;
+		}
+
+		if (ImGui::DragInt("Critical Tollerance", &M.critical_tollerance, 1.0, 0, 10)) {
+			M.geometry_solved = false;
+		}
+
 		if (ImGui::InputDouble("Tolerance", &M.tollerance)) {
 			M.geometry_solved = false;
 		}
 
 		if (ImGui::InputDouble("Scale", &M.scale)) {
+			M.geometry_solved = false;
+		}
+
+		if (ImGui::InputDouble("Stitch Gauge", &M.stitch_gauge)) {
+			M.geometry_solved = false;
+		}
+
+		if (ImGui::InputDouble("Row Gauge", &M.row_gauge)) {
 			M.geometry_solved = false;
 		}
 	

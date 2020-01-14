@@ -71,6 +71,12 @@ namespace hlk {
 			}
 		}
 
+		for (auto& line : size_lines) {
+			for (int s : line.first) {
+				set_glyph(half_edge_slots[s], glyphs::SOLID_LINE, color::GREEN);
+			}
+		}
+
 	}
 
 	void CoarseKnitMesh::save(std::ofstream& f) {
@@ -324,10 +330,10 @@ namespace hlk {
 		auto& side = mesh->sides[mesh->edges_to_sides(index, 0)];
 
 		double target_length = mesh->side_lengths[side.index];
-		double gauge = side.is_loop->val ? mesh->stitch_gauge : mesh->row_gauge;
+		double gauge = side.is_loop->val ? mesh->row_gauge : mesh->stitch_gauge;
 		int target_stitches = round(target_length * gauge / mesh->scale);
 		target_stitches = target_stitches > 0 ? target_stitches : 1; // At least 1 stitch per side
-		int tollerance = ceil(mesh->tollerance * target_stitches);
+		int tollerance = mesh->edge_tollerance > 0 ? mesh->edge_tollerance : ceil(mesh->tollerance * target_stitches);
 		int min_sts = target_stitches - tollerance;
 		int max_sts = target_stitches + tollerance;
 		min_sts = min_sts > 0 ? min_sts : 1;
@@ -338,11 +344,12 @@ namespace hlk {
 			"min_sts_edge_" + std::to_string(index)
 		));
 
+		
 		constraints.push_back(std::make_pair(
 			max_sts >= stitches->var,
 			"max_sts_edge_" + std::to_string(index)
 		));
-
+		
 		// TODO - consider doing something regarding direction matching here instead
 		// These are currently reduced since there is a shared variable. If we wish
 		// to relax this we will need to either temporarily add new variables, or
@@ -505,56 +512,68 @@ namespace hlk {
 		auto& yarn_in = side_stitches[3];
 
 		auto one_shaping_type = loop_in == loop_out || yarn_in == yarn_out;
-		auto rows = z3::ite(loop_in > loop_out, loop_in, loop_out);
-		auto cols = z3::ite(yarn_in > yarn_out, yarn_in, yarn_out);
+		auto cols = z3::ite(loop_in > loop_out, loop_in, loop_out);
+		auto rows = z3::ite(yarn_in > yarn_out, yarn_in, yarn_out);
 		auto loop_min = z3::ite(loop_in > loop_out, loop_out, loop_in);
 		auto loop_max = z3::ite(loop_in > loop_out, loop_in, loop_out);
 		auto yarn_min = z3::ite(yarn_in > yarn_out, yarn_out, yarn_in);
 		auto yarn_max = z3::ite(yarn_in > yarn_out, yarn_in, yarn_out);
 		
-		
-		constraints.push_back(std::make_pair(
-			one_shaping_type,
-			"one_shaping_type_" + std::to_string(index)
-		));
-		
-		//shaping_distribution = ShapingType::NONE;
-		//short_row_distribution = ShapingType::NONE;
 
+		// Only put constraints on if we definitely need them
 		
-		if (shaping_distribution == ShapingType::NONE) {
-			constraints.push_back(std::make_pair(
-				loop_in == loop_out,
-				"no_inc_dec_" + std::to_string(index)
-			));
-		}
-		else if (shaping_distribution == ShapingType::DISTRIBUTED) {
-			constraints.push_back(std::make_pair(
-				loop_min * z3::pw(2, rows - 1) >= loop_max,
-				"distributed_doubling_" + std::to_string(index)
-			));
-		}
-		else if (shaping_distribution == ShapingType::BOTH_SIDES) {
-			constraints.push_back(std::make_pair(
-				loop_min + (rows - 1) * 2 >= loop_max,
-				"double_side_increase_" + std::to_string(index)
-			));
-		}
-		else {
-			constraints.push_back(std::make_pair(
-				loop_min + (rows - 1) >=loop_max,
-				"single_side_increase_" + std::to_string(index)
-			));
+		bool inc_dec_allowed = shaping_distribution != NONE;
+		bool sr_allowed = short_row_distribution != NONE;
+
+		if (side_exprs[0].size() == 0 || side_exprs[2].size() == 0) {
+			sr_allowed = false;
 		}
 
-		if (short_row_distribution == ShapingType::NONE) {
+		if (side_exprs[1].size() == 0 || side_exprs[3].size() == 0) {
+			inc_dec_allowed = false;
+		}
+
+		if (!sr_allowed) {
 			constraints.push_back(std::make_pair(
 				yarn_in == yarn_out,
 				"no_short_row_" + std::to_string(index)
 			));
 		}
-		
+		if (!inc_dec_allowed) {
+			constraints.push_back(std::make_pair(
+				loop_in == loop_out,
+				"no_inc_dec_" + std::to_string(index)
+			));
+		}
+		if (inc_dec_allowed && sr_allowed) {
+			constraints.push_back(std::make_pair(
+				one_shaping_type,
+				"one_shaping_type_" + std::to_string(index)
+			));
 
+		}
+		
+		if (inc_dec_allowed) {
+			if (shaping_distribution == ShapingType::DISTRIBUTED) {
+				constraints.push_back(std::make_pair(
+					loop_min * z3::pw(2, rows - 1) >= loop_max,
+					"distributed_doubling_" + std::to_string(index)
+				));
+			}
+			else if (shaping_distribution == ShapingType::BOTH_SIDES) {
+				constraints.push_back(std::make_pair(
+					loop_min + (rows - 1) * 2 >= loop_max,
+					"double_side_increase_" + std::to_string(index)
+				));
+			}
+			else {
+				constraints.push_back(std::make_pair(
+					loop_min + (rows - 1) >= loop_max,
+					"single_side_increase_" + std::to_string(index)
+				));
+			}
+		}
+		
 		return constraints;
 	}
 	void CoarseKnitQuad::get_corners(Eigen::MatrixXd& C) const
@@ -679,10 +698,10 @@ namespace hlk {
 			}
 			break;
 		case ShapingType::BOTH_SIDES:
-			if (side_locs[0] >= 0) {
+			if (side_locs[1] >= 0) {
 				mesh->set_glyph(mesh->quadrant_slot(index, side_locs[1]), glyphs::LEANING_INCREASE, color::GREY);
 			}
-			if (side_locs[2] >= 0) {
+			if (side_locs[3] >= 0) {
 				mesh->set_glyph(mesh->quadrant_slot(index, side_locs[3]), glyphs::LEANING_INCREASE, color::GREY);
 			}
 			break;
@@ -786,7 +805,7 @@ namespace hlk {
 			double gauge = is_loop->val ? mesh->stitch_gauge : mesh->row_gauge;
 			int target_stitches = round(target_length * gauge / mesh->scale);
 			target_stitches = target_stitches > 0 ? target_stitches : 1; // At least 1 stitch per side
-			int tollerance = ceil(mesh->tollerance * target_stitches);
+			int tollerance = mesh->edge_tollerance > 0 ? mesh->edge_tollerance : ceil(mesh->tollerance * target_stitches);
 			int min_sts = target_stitches - tollerance;
 			int max_sts = target_stitches + tollerance;
 			min_sts = min_sts > 0 ? min_sts : 1;
@@ -801,6 +820,7 @@ namespace hlk {
 				max_sts >= stitches->var,
 				"max_sts_side_" + std::to_string(index)
 			));
+			
 		}
 
 		return constraints;
@@ -808,7 +828,7 @@ namespace hlk {
 	z3::expr CoarseKnitSide::get_geometry_cost()
 	{
 		double target_length = mesh->side_lengths[index];
-		double gauge = is_loop->val ? mesh->stitch_gauge : mesh->row_gauge;
+		double gauge = is_loop->val ? mesh->row_gauge : mesh->stitch_gauge;
 		int target_stitches = round(target_length * gauge / mesh->scale);
 		target_stitches = target_stitches > 0 ? target_stitches : 1; // At least 1 stitch per side
 		return (stitches->var - target_stitches) * (stitches->var - target_stitches);
@@ -903,68 +923,87 @@ namespace hlk {
 
 	bool CoarseKnitMesh::optimize_geometry()
 	{
-		if (geometry_solved) return true;
+		//if (geometry_solved) return true;
 		if (!topology_solved) return false;
 		
-		geometry_optimizer.push();
+		bool done = false;
 
-		z3::expr cost = edges[0].get_geometry_cost();
-		for (int i = 1; i < edges.size(); ++i) {
-			cost = cost + edges[i].get_geometry_cost();
-		}
-		for (int i = 0; i < sides.size(); ++i) {
-			if (sides_to_edges[i] < 0) {
-				cost = cost + sides[i].get_geometry_cost();
+		int starting_tollerance = edge_tollerance;
+		while (!done) {
+
+			geometry_optimizer.push();
+
+			int first_side = 0;
+			for (first_side = 0; first_side < sides.size(); ++first_side) {
+				if (sides_to_edges[first_side] < 0) break;
 			}
-		}
-		std::cout << "Cost Function = " << std::endl << cost.to_string() << std::endl;
 
-		for (auto& side : sides) {
-			for (auto constraint : side.get_geometry_constraints()) {
+			z3::expr cost = edges.size() > 0 ? edges[0].get_geometry_cost() : sides[first_side].get_geometry_cost();
+			if (edges.size() == 0) ++first_side;
+			for (int i = 1; i < edges.size(); ++i) {
+				cost = cost + edges[i].get_geometry_cost();
+			}
+			for (int i = first_side; i < sides.size(); ++i) {
+				if (sides_to_edges[i] < 0) {
+					cost = cost + sides[i].get_geometry_cost();
+				}
+			}
+			std::cout << "Cost Function = " << std::endl << cost.to_string() << std::endl;
+
+			for (auto& side : sides) {
+				for (auto constraint : side.get_geometry_constraints()) {
+					geometry_optimizer.add_constraint(constraint.first, constraint.second);
+					std::cout << "Added Constraint: " << constraint.second << std::endl << constraint.first.to_string() << std::endl;
+				}
+			}
+
+			for (auto& quad : quads) {
+				for (auto constraint : quad.get_geometry_constraints()) {
+					geometry_optimizer.add_constraint(constraint.first, constraint.second);
+					std::cout << "Added Constraint: " << constraint.second << std::endl << constraint.first.to_string() << std::endl;
+				}
+			}
+
+			for (auto& edge : edges) {
+				for (auto constraint : edge.get_geometry_constraints()) {
+					geometry_optimizer.add_constraint(constraint.first, constraint.second);
+					std::cout << "Added Constraint: " << constraint.second << std::endl << constraint.first.to_string() << std::endl;
+				}
+			}
+
+			for (auto constraint : size_line_constraints()) {
 				geometry_optimizer.add_constraint(constraint.first, constraint.second);
 				std::cout << "Added Constraint: " << constraint.second << std::endl << constraint.first.to_string() << std::endl;
 			}
-		}
 
-		for (auto& quad : quads) {
-			for (auto constraint : quad.get_geometry_constraints()) {
+			for (auto constraint : get_symmetry_constraints()) {
 				geometry_optimizer.add_constraint(constraint.first, constraint.second);
 				std::cout << "Added Constraint: " << constraint.second << std::endl << constraint.first.to_string() << std::endl;
 			}
-		}
 
-		for (auto& edge : edges) {
-			for (auto constraint : edge.get_geometry_constraints()) {
-				geometry_optimizer.add_constraint(constraint.first, constraint.second);
-				std::cout << "Added Constraint: " << constraint.second << std::endl << constraint.first.to_string() << std::endl;
+			auto result = geometry_optimizer.minimize(cost, minimizer_timeout);
+
+			if (result.has_result) {
+				geometry_optimizer.update_all_props(*result.result_model);
+				update_textures();
+				geometry_solved = true;
+				done = true;
 			}
-		}
+			else {
+				// TODO - Get Information from the UNSAT core
+				std::cout << result.unsat_core << std::endl;
+				geometry_solved = false;
+				std::cout << "Increasing Tollerance to " << edge_tollerance + 1 << std::endl;
+				++edge_tollerance;
+				if (edge_tollerance > starting_tollerance + 1) {
+					done = true;
+					std::cout << "Stopping increasing tollerance." << std::endl;
+				}
+			}
 
-		for (auto constraint : size_line_constraints()) {
-			geometry_optimizer.add_constraint(constraint.first, constraint.second);
-			std::cout << "Added Constraint: " << constraint.second << std::endl << constraint.first.to_string() << std::endl;
+			geometry_optimizer.pop();
 		}
-
-		for (auto constraint : get_symmetry_constraints()) {
-			geometry_optimizer.add_constraint(constraint.first, constraint.second);
-			std::cout << "Added Constraint: " << constraint.second << std::endl << constraint.first.to_string() << std::endl;
-		}
-
-		auto result = geometry_optimizer.minimize(cost, minimizer_timeout);
-
-		if (result.has_result) {
-			geometry_optimizer.update_all_props(*result.result_model);
-			update_textures();
-			geometry_solved = true;
-		}
-		else {
-			// TODO - Get Information from the UNSAT core
-			std::cout << result.unsat_core << std::endl;
-			geometry_solved = false;
-		}
-
-		geometry_optimizer.pop();
-		return result.has_result;
+		return geometry_solved;
 	}
 	CoarseKnitGraph CoarseKnitMesh::get_dual()
 	{
@@ -1015,6 +1054,18 @@ namespace hlk {
 	{
 		return std::vector<std::pair<z3::expr, std::string>>();
 	}
+	void CoarseKnitMesh::add_size_line(std::vector<int> line_sides)
+	{
+		double size = 0;
+		for (int i = 0; i < line_sides.size(); ++i) {
+			size += side_lengths[line_sides[i]];
+		}
+		auto size_line = std::make_pair(line_sides, size);
+		size_lines.push_back(size_line);
+		std::cout << "Added a size line with target size of " << size << std::endl;
+		update_textures();
+	}
+
 	std::vector<std::pair<z3::expr, std::string>> CoarseKnitMesh::size_line_constraints()
 	{
 		std::vector<std::pair<z3::expr, std::string>> constraints;
@@ -1022,7 +1073,7 @@ namespace hlk {
 		for (int l = 0; l < size_lines.size(); ++l) {
 			auto& size_line = size_lines[l];
 			auto& line = size_line.first;
-			auto target = size_line.second;
+			auto target = size_line.second / scale;
 
 			auto length = sides[line[0]].stitches->var;
 			
@@ -1030,11 +1081,12 @@ namespace hlk {
 				length = length + sides[line[i]].stitches->var;
 			}
 
-			double gauge = sides[line[0]].is_loop ? stitch_gauge : row_gauge;
+			double gauge = sides[line[0]].is_loop ? row_gauge : stitch_gauge;
 
-			int target_stitches = round(target / gauge);
-			int min_stitches = round(target_stitches - tollerance * target_stitches);
-			int max_stitches = round(target_stitches + tollerance * target_stitches);
+			int target_stitches = round(target * gauge);
+			int toll = critical_tollerance > 0 ? critical_tollerance : round(tollerance * target_stitches);
+			int min_stitches = target_stitches - toll;
+			int max_stitches = target_stitches + toll;
 			min_stitches = min_stitches > 0 ? min_stitches : 1;
 			max_stitches = max_stitches > 0 ? max_stitches : 1;
 
@@ -1340,13 +1392,18 @@ namespace hlk {
 	}
 	void CoarseKnitMesh::paint_direction(int side_out, int side_in, KnitDirection dir)
 	{
-		sides[side_out].is_out->set(true);
-		sides[side_in].is_out->set(false);
 		bool is_loop = dir == LOOP;
-		sides[side_out].is_loop->set(is_loop);
-		sides[side_in].is_loop->set(is_loop);
-		sides[side_in].update_texture();
-		sides[side_out].update_texture();
+		if (side_out >= 0) {
+			sides[side_out].is_out->set(true);
+			sides[side_out].is_loop->set(is_loop);
+			sides[side_out].update_texture();
+		}
+
+		if (side_in >= 0) {
+			sides[side_in].is_out->set(false);
+			sides[side_in].is_loop->set(is_loop);
+			sides[side_in].update_texture();
+		}
 
 		topology_solved = false;
 		geometry_solved = false;
