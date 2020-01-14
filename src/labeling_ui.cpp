@@ -565,6 +565,9 @@ namespace hlk {
 		if (ImGui::InputDouble("Row Gauge", &M.row_gauge)) {
 			M.geometry_solved = false;
 		}
+		if (ImGui::Checkbox("Symmetrize", &M.symmetrize)) {
+			M.geometry_solved = false;
+		}
 	
 	}
 

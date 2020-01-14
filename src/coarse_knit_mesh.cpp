@@ -14,6 +14,8 @@
 
 #include "disjointset.h"
 
+#include "symmetrizer.h"
+
 namespace hlk {
 
 	std::string nth_label(std::string label, int n) {
@@ -971,6 +973,31 @@ namespace hlk {
 				side_symmetries.push_back({ edges_to_sides(edge.index, 0), edges_to_sides(edge.index, 1) });
 			}
 		}
+
+		if (symmetrize) {
+			Symmetrizer symmetrizer(V, F_t);
+			for (int axis = 0; axis < 3; ++axis) {
+				if (symmetrizer.has_vertex_symmetry(axis)) {
+					for (int i = 0; i < sides.size(); ++i) {
+						int u = side_u(i);
+						int v = side_v(i);
+						int u_sym = symmetrizer.symmetric_vertex(u, axis);
+						int v_sym = symmetrizer.symmetric_vertex(v, axis);
+						for (int s : out_sides(u_sym)) {
+							if (side_v(s) == v_sym) {
+								side_symmetries.push_back({ i, s });
+							}
+						}
+						for (int s : in_sides(u_sym)) {
+							if (side_u(s) == v_sym) {
+								side_symmetries.push_back({ i,s });
+							}
+						}
+					}
+				}
+			}
+		}
+		
 
 		// Now minimize the symmetries by merging
 

@@ -222,5 +222,7 @@ namespace hlk {
 
 		bool topology_solved = false;
 		bool geometry_solved = false;
+
+		bool symmetrize = true;
 	};
 }
