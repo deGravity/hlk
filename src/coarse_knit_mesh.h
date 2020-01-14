@@ -4,6 +4,8 @@
 #include "optimizer.h"
 #include "coarse_knit_graph.h"
 
+#include <igl/opengl/ViewerData.h>
+
 #include <memory>
 #include <vector>
 #include <fstream>
@@ -151,6 +153,13 @@ namespace hlk {
 		void add_seam(std::vector<int> sides);
 		// Get the line that a seam would trace
 		std::vector<int> trace_seam(int side);
+
+		void debug_label_vertices(igl::opengl::ViewerData* debug);
+		void debug_label_vertex(igl::opengl::ViewerData* debug, int v);
+		void debug_label_edges(igl::opengl::ViewerData* debug);
+		void debug_label_edge(igl::opengl::ViewerData* debug, int e);
+		void debug_label_sides(igl::opengl::ViewerData* debug);
+		void debug_label_side(igl::opengl::ViewerData* debug, int s);
 
 		// Split any seams in the seam list that cross this vertex
 		void split_seams(int vertex_a, int vertex_b);

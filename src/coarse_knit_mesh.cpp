@@ -5,6 +5,7 @@
 
 #include <igl/parula.h>
 #include <igl/jet.h>
+#include <igl/barycenter.h>
 
 #include "glyphs.h"
 #include "glyph.h"
@@ -1164,14 +1165,50 @@ namespace hlk {
 	}
 
 	std::vector<int> CoarseKnitMesh::trace_seam(int side) {
+
 		auto loop_sides = side_loop(side);
 		int last = 0;
 		while (last < loop_sides.size() && !vertex_in_seam[side_v(loop_sides[last])]) ++last;
 		std::vector<int> seam_edges;
-		for (int i = 0; i < last; ++i) {
+		for (int i = 0; i <= last && i < loop_sides.size(); ++i) {
 			seam_edges.push_back(sides_to_edges[loop_sides[i]]);
 		}
 		return seam_edges;
+	}
+
+	void CoarseKnitMesh::debug_label_vertices(igl::opengl::ViewerData* debug)
+	{
+		for (int i = 0; i < n; ++i) {
+			debug->add_label(V.row(i), std::to_string(i));
+		}
+	}
+
+	void CoarseKnitMesh::debug_label_edges(igl::opengl::ViewerData* debug)
+	{
+		for (int i = 0; i < e; ++i) {
+			debug_label_edge(debug, i);
+		}
+	}
+
+	void CoarseKnitMesh::debug_label_edge(igl::opengl::ViewerData* debug, int edge)
+	{
+		if (edge < 0 || edge >= e) {
+			std::cout << "Trying to label " << e << " which is not an edge." << std::endl;
+		}
+		else {
+			int s = edges_to_sides(edge, 0);
+			Eigen::Vector3d pos = (V.row(side_u(s)) + V.row(side_v(s))) / 2;
+			debug->add_label(pos, std::to_string(e));
+		}
+	}
+
+	void CoarseKnitMesh::debug_label_sides(igl::opengl::ViewerData* debug)
+	{
+		Eigen::MatrixXd BC;
+		igl::barycenter(V, F_t, BC);
+		for (int i = 0; i < BC.rows(); ++i) {
+			debug->add_label(BC.row(i), std::to_string(i));
+		}
 	}
 
 	void CoarseKnitMesh::split_seams(int vertex_a, int vertex_b)

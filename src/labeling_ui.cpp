@@ -97,6 +97,7 @@ namespace hlk {
 		viewer->data().show_faces = false;
 		viewer->data().show_texture = false;
 
+		debug_index = viewer->append_mesh();
 
 		// Set the data index back to the underlying mesh
 		viewer->selected_data_index = base_index;
@@ -202,6 +203,8 @@ namespace hlk {
 					int vtx = M.F_t(fid, closest_vertex);
 
 					if (button == (int)igl::opengl::glfw::Viewer::MouseButton::Left) {
+
+						// If we have selected an existing seam option toggle it
 						if (edge >= 0 && M.edges[edge].seam >= 0) {
 							M.toggle_seam(side);
 							if (auto_solve) {
@@ -209,17 +212,9 @@ namespace hlk {
 							}
 							update_mesh();
 						}
-						else {
-
-							int side = closest_vertex == 1 ? fid : M.flip_side(fid);
+						else { // Otherwise extend a seam from the closest vertex
+							int side = outgoing_side(fid, bc);
 							if (side >= 0) {
-								int u = M.side_u(side);
-								int v = M.side_v(side);
-
-								if (M.vertex_in_seam[u] && !M.vertex_in_seam[v]) {
-									side = M.flip_side(side);
-								}
-
 								auto edges = M.trace_seam(side);
 								M.update_textures();
 								std::vector<int> new_seam_sides;
@@ -231,38 +226,6 @@ namespace hlk {
 								M.add_seam(new_seam_sides);
 								update_mesh();
 							}
-
-							/*
-							// Find the outgoing side from the closest vertex,
-							// or -1 if non-quad vertex or boundary
-							int side = -1;
-							if (closest_vertex == 0) {
-								side = fid;
-							}
-							if (closest_vertex == 1) {
-								side = M.flip_side(fid);
-							}
-							if (side >= 0) {
-								//if (M.vertex_in_seam[M.F_t(fid, closest_vertex)]) {
-									//side = M.flip_side(fid);
-								//}
-								if (side >= 0) {
-									M.update_textures();
-									auto loop = M.side_loop(side);
-									int end = 0;
-									std::vector<int> new_seam_sides;
-									for (end = 0; end < loop.size(); ++end) {
-										new_seam_sides.push_back(end);
-										if (M.vertex_in_seam[M.side_v(loop[end])]) {
-											break;
-										}
-									}
-									new_seam_sides = loop;
-									M.add_seam(new_seam_sides);
-									update_mesh();
-								}
-							}
-							*/
 						}
 						return true;
 					}
@@ -330,37 +293,24 @@ namespace hlk {
 
 			int fid;
 			Eigen::Vector3f bc;
+			M.update_textures();
 			if (pick_face(fid, bc)) {
-
 				int edge = M.sides_to_edges[fid];
 				int closest_vertex;
 				bc.maxCoeff(&closest_vertex);
 				int vtx = M.F_t(fid, closest_vertex);
 
+				// If we are hovering over a potential seam, highlight it
 				if (edge >= 0 && M.edges[edge].seam >= 0) {
-					M.update_textures();
 					int seam_id = M.edges[edge].seam;
 					for (int e : M.seam_edges[seam_id]) {
 						M.set_glyph(M.edge_slots[e], glyphs::SOLID_LINE, color::ORANGE);
 					}
-					M.set_glyph(M.vertex_slots[vtx], glyphs::CIRCLE, color::ORANGE);
-					update_mesh();
 				}
-				else {
-
-					// Find the outgoing side from the closest vertex,
-					// or -1 if non-quad vertex or boundary
-
+				else { // Otherwise, highlight a potential seam extending from the nearest vertex
 					M.update_textures();
-					int side = closest_vertex == 1 ? fid : M.flip_side(fid);
+					int side = outgoing_side(fid, bc);
 					if (side >= 0) {
-						int u = M.side_u(side);
-						int v = M.side_v(side);
-
-						if (M.vertex_in_seam[u] && !M.vertex_in_seam[v]) {
-							side = M.flip_side(side);
-						}
-
 						auto edges = M.trace_seam(side);
 						for (auto e : edges) {
 							if (e >= 0) {
@@ -368,43 +318,11 @@ namespace hlk {
 							}
 						}
 					}
-					M.set_glyph(M.vertex_slots[vtx], glyphs::CIRCLE, color::ORANGE);
-					update_mesh();
-					/*
-					int side = -1;
-					if (closest_vertex == 0) {
-						side = fid;
-					}
-					if (closest_vertex == 1) {
-						side = M.flip_side(fid);
-					}
-					if (side >= 0) {
-						if (M.vertex_in_seam[M.F_t(fid, closest_vertex)]) {
-							side = M.flip_side(fid);
-						}
-						if (side >= 0) {
-							M.update_textures();
-							auto loop = M.side_loop(side);
-							int end = 0;
-							for (end = 0; end < loop.size(); ++end) {
-								if (M.vertex_in_seam[M.side_v(loop[end])]) {
-									break;
-								}
-							}
-							for (int i = 0; i < loop.size(); ++i) {
-								int s = loop[i];
-								int e = M.sides_to_edges[s];
-								if (e >= 0) {
-									M.set_glyph(M.edge_slots[e], glyphs::SEAM, color::RED);
-								}
-							}
-							M.set_glyph(M.vertex_slots[vtx], glyphs::CIRCLE, color::ORANGE);
-							update_mesh();
-						}
-					}
-					*/
 				}
+				// Highlight any potential special vertices
+				M.set_glyph(M.vertex_slots[vtx], glyphs::CIRCLE, color::ORANGE);
 			}
+			update_mesh();
 		}
 
 		return false;
@@ -556,6 +474,10 @@ namespace hlk {
 			set_layer(traced_graph_index, show_traced_graph);
 		}
 
+		if (ImGui::Checkbox("Show Debug", &show_debug)) {
+			set_layer(debug_index, show_debug);
+		}
+
 		if (ImGui::DragInt("Minimizer Timeout", &minimizer_timeout, 1.0, 1, 60)) {
 			M.minimizer_timeout = (unsigned int)minimizer_timeout;
 		}
@@ -700,6 +622,15 @@ namespace hlk {
 				bc);
 		}
 		return false;
+	}
+
+	int LabelingUI::outgoing_side(int fid, const Eigen::Vector3f& bc)
+	{
+		if (!mesh_loaded) return -1;
+
+		int opp_side = M.flip_side(fid);
+
+		return bc(0) > bc(1) ? fid : (opp_side >= 0 ? opp_side : fid);
 	}
 
 	// Cannot call this until _after_ a viewer window is open

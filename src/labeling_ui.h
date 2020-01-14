@@ -57,6 +57,7 @@ namespace hlk {
 		int graph_index = -1;
 		int knit_graph_index = -1;
 		int traced_graph_index = -1;
+		int debug_index = -1;
 
 		int minimizer_timeout = (int) M.minimizer_timeout;
 
@@ -64,6 +65,7 @@ namespace hlk {
 		bool show_graph = true;
 		bool show_knit_graph = true;
 		bool show_traced_graph = true;
+		bool show_debug = true;
 		bool planarize = false;
 
 		enum Tool {
@@ -104,6 +106,8 @@ namespace hlk {
 		int last_drag_side = -1;
 
 		bool pick_face(int& fid, Eigen::Vector3f& bc);
+
+		int outgoing_side(int fid, const Eigen::Vector3f& bc);
 
 		// Whether to re-run the solver on mouse-up or not
 		bool auto_solve;
