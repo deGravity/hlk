@@ -137,6 +137,8 @@ namespace hlk {
 
 		Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> R, G, B, A;
 
+		bool white_bg = false;
+
 
 		/*
 		Icon Credits:

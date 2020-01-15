@@ -2684,8 +2684,8 @@ if(0){
 
                 int32_t offset = *to_left - *from_left;
                 //racking limit (attempt!)
-                if (offset <-3) offset = -3;
-                if (offset > 3) offset =  3;
+                if (offset <-2) offset = -2;
+                if (offset > 2) offset =  2;
 
                 //add_instr("h.raw_inst(';stashing for shifting by racking');");
 
@@ -3464,7 +3464,7 @@ if(0){
                 constraints.min_free = std::max(left_max + shift_left, used_min - 1);
                 constraints.max_free = std::min(right_min + shift_right, used_max + 1);
                 // a max racking of 4 + half-gauging can actually cause a max racking of 9
-                constraints.max_racking = 1;
+                constraints.max_racking = 2;
                 // call pre-xfer pass on from,to, step_from, step_to, and constraints
 
                 std::string instr ="";
@@ -3489,7 +3489,7 @@ if(0){
                 constraints.min_free = std::max(left_max + shift_left, used_min - 1);
                 constraints.max_free = std::min(right_min + shift_right, used_max + 1);
                 // a max racking of 4 + half-gauging can actually cause a max racking of 9
-				constraints.max_racking = 1;
+				constraints.max_racking = 2;
 
                 std::vector< Slack > slack;
                 slack.reserve(from.size());

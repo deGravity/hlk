@@ -23,6 +23,8 @@ var EmitStyle = {
 	POST:3,
 };
 
+let in_cast_on = false;
+
 let emitted_instructions = {"1":[],"2":[],"3":[]}
 let last_pass_was_knit = true;
 
@@ -163,7 +165,9 @@ Helpers.prototype.xfer = function xfer(from, to, target = EmitStyle.IMM) {
 	if(target == EmitStyle.IMM){
 		this.pass_commit();
 		this.out("xfer " + bnToHalf(from) + " " + bnToHalf(to));
-		this.out("xfer " + bnToHalf(from) + " " + bnToHalf(to));
+		if (!in_cast_on) {
+			this.out("xfer " + bnToHalf(from) + " " + bnToHalf(to));
+		}
 	}
 	else{
 		let instr = ("xfer " + bnToHalf(from) + " " + bnToHalf(to));
@@ -173,7 +177,9 @@ Helpers.prototype.xfer = function xfer(from, to, target = EmitStyle.IMM) {
 
 
 		emitted_instructions[target].push(pack);
-		emitted_instructions[target].push(pack);
+		if (!in_cast_on) {
+			emitted_instructions[target].push(pack);
+		}
 	}
 	anchors.delete(from); // what you planned on dropping is gone, don't drop something arbitrary
 	mstate.delete(from);
@@ -328,6 +334,7 @@ Helpers.prototype.first_is_left = function first_is_left(bns, dirs){
 };
 
 Helpers.prototype.start_tube = function start_tube(dir, bns, Carrier) {
+	in_cast_on = true;
 	let front = [];
 	let back = [];
 	bns.forEach(function(bn_str){
@@ -432,6 +439,9 @@ Helpers.prototype.start_tube = function start_tube(dir, bns, Carrier) {
 
 	this.out("x-stitch-number " + PlainStitchNumber);
 	//this.out("outhook " + Carrier); 
+
+
+	in_cast_on = false;
 };
 
 

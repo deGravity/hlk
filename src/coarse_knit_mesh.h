@@ -89,6 +89,7 @@ namespace hlk {
 		std::shared_ptr<BoolProp> is_out;
 		std::shared_ptr<IntProp> stitches;
 		std::shared_ptr<IntProp> stitches_backup; // Used for caching for symmetry optimization
+		double get_gauge();
 		void cache_stitches();
 		void uncache_stitches();
 		bool is_representative = true; // If this is a representative of a symmetry
@@ -211,6 +212,8 @@ namespace hlk {
 		double tollerance = 0.01;
 
 		int edge_tollerance = 0;
+		int course_tollerance = 0;
+		int wale_tollerance = 0;
 		int critical_tollerance = 0;
 
 

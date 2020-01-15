@@ -81,6 +81,9 @@ hlk::IGLVisualization hlk::KnitGraph::visualize_stitches(const std::vector<vkmp:
 		else if (stitches[i].data.name == "purl") {
 			point_color = Eigen::RowVector3d(0.0, 0.0, 0.0);
 		}
+		else {
+			std::cout << "Stitch type " << std::to_string(i) << " is " << stitches[i].data.name << std::endl;
+		}
 		vis.add_point(i, point_color);
 		vis.add_label(i, std::to_string(i));
 	}
@@ -476,7 +479,7 @@ vkmp::StData hlk::KnitGraphNode::get_data(bool first_tracing)
 	}
 	// Increases
 	if (top.size() > bottom.size()) {
-		data = STITCH::CASTON;
+		data = internal_knit ? STITCH::KNIT : STITCH::PURL;
 		if (top.size() == 2 && bottom.size() == 1 && left && right) {
 			// TODO - How to make hidden (split) increases?
 			data = STITCH::INCREASE;
@@ -491,6 +494,7 @@ vkmp::StData hlk::KnitGraphNode::get_data(bool first_tracing)
 		if (first_tracing) {
 			data = internal_knit ? STITCH::KNIT : STITCH::PURL;
 		}
+
 	}
 	// Decreases
 	if (bottom.size() == 2 && top.size() == 1 && left && right) {

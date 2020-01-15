@@ -546,6 +546,14 @@ namespace hlk {
 			M.geometry_solved = false;
 		}
 
+		if (ImGui::DragInt("Course Tollerance", &M.course_tollerance, 1.0, 0, 10)) {
+			M.geometry_solved = false;
+		}
+
+		if (ImGui::DragInt("Wale Tollerance", &M.wale_tollerance, 1.0, 0, 10)) {
+			M.geometry_solved = false;
+		}
+
 		if (ImGui::DragInt("Critical Tollerance", &M.critical_tollerance, 1.0, 0, 10)) {
 			M.geometry_solved = false;
 		}
@@ -567,6 +575,16 @@ namespace hlk {
 		}
 		if (ImGui::Checkbox("Symmetrize", &M.symmetrize)) {
 			M.geometry_solved = false;
+		}
+
+		if (ImGui::Checkbox("White BG", &white_bg)) {
+			if (white_bg) {
+				viewer->core(0).background_color = Eigen::Vector4f(1.0, 1.0, 1.0, 1.0);
+			}
+			else {
+				viewer->core(0).background_color = Eigen::Vector4f(8.0, 8.0, 8.0, 1.0);
+
+			}
 		}
 	
 	}
@@ -637,7 +655,7 @@ namespace hlk {
 
 	void LabelingUI::generate_instructions()
 	{
-		optimize_geometry();
+		//optimize_geometry();
 		auto CKG = M.get_dual();
 		auto KG = CKG.build_graph();
 		KG.contract();

@@ -552,11 +552,20 @@ namespace hlk {
 		
 		if (inc_dec_allowed) {
 			if (shaping_distribution == ShapingType::DISTRIBUTED) {
+
+				constraints.push_back(std::make_pair(
+					(loop_in + loop_in*(yarn_in - 1) >= loop_out) &&
+					(loop_out + loop_in*(yarn_in - 1) >= loop_in),
+					"distribuded_increase_quadratic_" + std::to_string(index)
+				));
+
+				/*
 				constraints.push_back(std::make_pair(
 					(loop_in * z3::pw(2, yarn_in - 1) >= loop_out) &&
 					(loop_out * z3::pw(2, yarn_in - 1) >= loop_in),
 					"distributed_doubling_" + std::to_string(index)
 				));
+				*/
 			}
 			else if (shaping_distribution == ShapingType::BOTH_SIDES) {
 
@@ -578,7 +587,7 @@ namespace hlk {
 				constraints.push_back(std::make_pair(
 					(loop_in + (yarn_in - 1) >= loop_out) &&
 					(loop_out + (yarn_in - 1) >= loop_in),
-					"double_side_increase_" + std::to_string(index)
+					"single_side_increase_" + std::to_string(index)
 				));
 				/*
 				constraints.push_back(std::make_pair(
@@ -587,6 +596,14 @@ namespace hlk {
 				));
 				*/
 			}
+		}
+
+		if (sr_allowed) {
+			constraints.push_back(std::make_pair(
+				(yarn_in + (loop_in - 1) >= yarn_out) &&
+				(yarn_out + (loop_in - 1) >= yarn_in),
+				"limited_short_row_" + std::to_string(index)
+			));
 		}
 		
 		return constraints;
@@ -755,6 +772,11 @@ namespace hlk {
 		stitches = geo_opt.get_int_prop(nth_label("side_stitches", i));
 	}
 
+	double CoarseKnitSide::get_gauge()
+	{
+		return is_loop->val ? mesh->stitch_gauge : mesh->row_gauge;;
+	}
+
 	void CoarseKnitSide::cache_stitches()
 	{
 		stitches_backup = stitches;
@@ -770,7 +792,7 @@ namespace hlk {
 	int CoarseKnitSide::target_stitch_count()
 	{
 		double target_length = mesh->side_lengths[index];
-		double gauge = is_loop->val ? mesh->stitch_gauge : mesh->row_gauge;
+		double gauge = get_gauge();
 		int target_stitches = round(target_length * gauge / mesh->scale);
 		target_stitches = target_stitches > 0 ? target_stitches : 1; // At least 1 stitch per side
 		return target_stitches;
@@ -833,7 +855,18 @@ namespace hlk {
 		// Only add for boundary edges
 		if (is_representative) {
 			int target_stitches = target_stitch_count();
-			int tollerance = mesh->edge_tollerance > 0 ? mesh->edge_tollerance : ceil(mesh->tollerance * target_stitches);
+			int tollerance = ceil(mesh->tollerance * target_stitches);
+			if (mesh->edge_tollerance > 0) {
+				tollerance = mesh->edge_tollerance;
+			}
+			if (mesh->course_tollerance > 0 && mesh->wale_tollerance > 0) {
+				if (get_gauge() == mesh->row_gauge) {
+					tollerance = mesh->wale_tollerance;
+				}
+				else {
+					tollerance = mesh->course_tollerance;
+				}
+			}
 			int min_sts = target_stitches - tollerance;
 			int max_sts = target_stitches + tollerance;
 			min_sts = min_sts > 0 ? min_sts : 1;
