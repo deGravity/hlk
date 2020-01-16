@@ -448,10 +448,11 @@ void RemeshingMenu::compute_target_curvature() {
 
 void RemeshingMenu::update_raw_field() {
     int sum = round(cycleIndices.head(cycleIndices.size() - numGenerators).sum());
-    std::cout << "Total indices: " << sum << "/" << N << std::endl;
+    std::cout << "[Info] Total indices: " << sum << "/" << N << std::endl;
     if (eulerChar * N != sum) {
-        std::cout << "Expected: " << eulerChar * N << "/" << N << std::endl;
-        std::cout << "Warning: All non-generator singularities should add up to N * the Euler characteristic." << std::endl;
+        std::cout << "[Info] Expected: " << eulerChar * N << "/" << N << std::endl;
+        std::cout << "[Warn] All non-generator singularities should add up to N * the Euler characteristic." << std::endl;
+        std::cout << "[Info] More " << (eulerChar * N < sum ? "contraction" : "expansion") << " composition guidelines are needed if a trivial connection cannot be found.\n" << std::endl;
     }
 
     Eigen::VectorXd rotationAngles;
