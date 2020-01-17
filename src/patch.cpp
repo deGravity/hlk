@@ -102,9 +102,9 @@ namespace hlk {
 	{
 		std::vector<int> row_widths(rows);
 
-		assert(rows > 0 || first == last); // If there's only one row, you can't have a size change
+		assert(rows > 1 || (rows == 1 && first == last)); // If there's only one row, you can't have a size change
 
-		if (rows == 0) {
+		if (rows == 1) {
 			return std::vector<int>{first};
 		}
 
