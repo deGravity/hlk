@@ -366,6 +366,9 @@ namespace hlk {
 					if (dir == -1) {
 						stitch.input_order = std::vector<int>{ 1, 0 };
 					}
+					if (dir == 0 && j < row_widths[i] / 2) {
+						stitch.input_order = std::vector<int>{ 1, 0 };
+					}
 				}
 				stitch.outputs = std::vector<LoopType>{ LoopType::KNIT };
 				stitch.output_signs = std::vector<LoopSign>{ LoopSign::NONE };
