@@ -207,7 +207,7 @@ void hlk::KnitGraph::propogate_textures()
 		int R = texture.pattern.rows();
 		int C = texture.pattern.cols();
 		int r_i = (R + (texture_r[n] % R)) % R;
-		int r_l = (R + (texture_r[n] + 1 % R)) % R;
+		int r_l = (R + ((texture_r[n] + 1) % R)) % R;
 		int c = (C + (texture_c[n] % C)) % C;
 		nodes[n]->internal_knit = texture.pattern(r_i, c) == 0;
 		for (auto& top : nodes[n]->top) {

@@ -251,7 +251,7 @@ namespace hlk {
 						else {
 							break; // Stop if we can't find a direction to go
 						}
-					} while (!is_start[candidate]);
+ 					} while (!is_start[candidate]);
 					if (candidate != n) {
 						current = candidate;
 						loop.push_back(current);
