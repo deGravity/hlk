@@ -260,8 +260,12 @@ void hlk::KnitGraph::trace()
 		yarn_ids.insert(yarn);
 	}
 	for (int yarn : yarn_ids) {
-		stitches[yarn_ends[yarn].first].data = STITCH::YARNEND;
-		stitches[yarn_ends[yarn].last].data = STITCH::YARNEND;
+		if (stitches[yarn_ends[yarn].first].in[0] == -1U) {
+			stitches[yarn_ends[yarn].first].data = STITCH::YARNEND;
+		}
+		if (stitches[yarn_ends[yarn].last].out[0] == -1U) {
+			stitches[yarn_ends[yarn].last].data = STITCH::YARNEND;
+		}
 	}
 
 	traced = true;

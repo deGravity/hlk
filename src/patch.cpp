@@ -157,6 +157,9 @@ namespace hlk {
 			for (int j = 0; j < right_increases; ++j) {
 				num_outputs[i].push_back(2);
 			}
+			if (dir == 4) {
+				std::random_shuffle(num_outputs[i].begin(), num_outputs[i].end());
+			}
 		}
 
 		rows.resize(height);
@@ -176,6 +179,16 @@ namespace hlk {
 				else {
 					stitch.outputs = std::vector<LoopType>{ LoopType::KNIT, LoopType::KNIT };
 					stitch.output_signs = std::vector<LoopSign>{ LoopSign::NONE, LoopSign::NONE };
+
+					if (dir == -1) {
+						stitch.outputs = std::vector<LoopType>{ LoopType::YARNOVER, LoopType::KNIT };
+						stitch.output_signs = std::vector<LoopSign>{ LoopSign::PLUS, LoopSign::NONE };
+					}
+
+					if (dir == 1) {
+						stitch.outputs = std::vector<LoopType>{ LoopType::KNIT, LoopType::YARNOVER };
+						stitch.output_signs = std::vector<LoopSign>{ LoopSign::NONE, LoopSign::PLUS };
+					}
 				}
 
 				rows[i].push_back(stitch);
@@ -316,6 +329,8 @@ namespace hlk {
 					right_decreases = temp;
 				}
 			}
+			
+			
 			int num_straight = row_widths[i] - num_decreases;
 			for (int j = 0; j < left_decreases; ++j) {
 				num_inputs[i].push_back(2);
@@ -326,6 +341,12 @@ namespace hlk {
 			for (int j = 0; j < right_decreases; ++j) {
 				num_inputs[i].push_back(2);
 			}
+
+			// Distribute randomly for distributed
+			if (dir == 4) {
+				std::random_shuffle(num_inputs[i].begin(), num_inputs[i].end());
+			}
+
 		}
 
 		rows.resize(height);
@@ -341,7 +362,10 @@ namespace hlk {
 				}
 				else {
 					// Todo - this is going to affect learning direction
-					stitch.input_order = std::vector<int>{ 0,1 }; 
+					stitch.input_order = std::vector<int>{ 0,1 };
+					if (dir == -1) {
+						stitch.input_order = std::vector<int>{ 1, 0 };
+					}
 				}
 				stitch.outputs = std::vector<LoopType>{ LoopType::KNIT };
 				stitch.output_signs = std::vector<LoopSign>{ LoopSign::NONE };
@@ -695,6 +719,7 @@ namespace hlk {
 			if (shaping == 1) { leaning_dir = -1; }
 			if (shaping == 2) { leaning_dir = 1; }
 			if (shaping == 3) { leaning_dir = 0; }
+			if (shaping == 4) { leaning_dir = 4; }
 
 			int sr_dir = 0;
 			if (sr_shaping == 1) { sr_dir = -1; }
