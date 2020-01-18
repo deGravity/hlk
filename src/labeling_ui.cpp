@@ -4,6 +4,8 @@
 #include <igl/png/readPNG.h>
 #include <igl/unproject_onto_mesh.h>
 #include <igl/file_dialog_save.h>
+#include <igl/writeDMAT.h>
+
 
 #include "read_quad_mesh.h"
 
@@ -506,6 +508,10 @@ namespace hlk {
 			optimize_geometry();
 		}
 
+		if (ImGui::Button("Save Coarse Graph")) {
+			save_graph(viewer->data(graph_index));
+		}
+
 		if (ImGui::Button("Generate Knitting Instructions")) {
 			generate_instructions();
 		}
@@ -513,9 +519,15 @@ namespace hlk {
 		if (ImGui::Button("Generate Knit Graph")) {
 			extract_fine_graph();
 		}
+		if (ImGui::Button("Save Knit Graph")) {
+			save_graph(viewer->data(knit_graph_index));
+		}
 
 		if (ImGui::Button("Trace Graph")) {
 			trace_graph();
+		}
+		if (ImGui::Button("Save Traced Graph")) {
+			save_graph(viewer->data(traced_graph_index));
 		}
 
 		if (ImGui::Checkbox("Show Mesh", &show_mesh)) {
@@ -701,6 +713,18 @@ namespace hlk {
 
 		update_mesh();
 		// TODO - Handle invalid constraints
+	}
+
+	void LabelingUI::save_graph(const igl::opengl::ViewerData& data)
+	{
+		std::string filebase = igl::file_dialog_save();
+		if (filebase.size() > 0) {
+			auto point_file = filebase + "_points.dmat";
+			auto line_file = filebase + "_lines.dmat";
+			igl::writeDMAT(point_file, data.points, true);
+			igl::writeDMAT(line_file, data.lines, true);
+			data.lines;
+		}
 	}
 
 	bool LabelingUI::pick_face(int& fid, Eigen::Vector3f& bc)

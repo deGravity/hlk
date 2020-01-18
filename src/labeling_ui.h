@@ -46,7 +46,7 @@ namespace hlk {
 
 		void solve_topology();
 
-
+		void save_graph(const igl::opengl::ViewerData& data);
 
 	private:
 
