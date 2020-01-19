@@ -554,23 +554,23 @@ namespace hlk {
 			M.minimizer_timeout = (unsigned int)minimizer_timeout;
 		}
 
-		if (ImGui::DragInt("Side Tollerance", &M.edge_tollerance, 1.0, 0, 10)) {
+		if (ImGui::DragInt("Side Tolerance", &M.edge_tolerance, 1.0, 0, 10)) {
 			M.geometry_solved = false;
 		}
 
-		if (ImGui::DragInt("Course Tollerance", &M.course_tollerance, 1.0, 0, 10)) {
+		if (ImGui::DragInt("Course Tolerance", &M.course_tolerance, 1.0, 0, 10)) {
 			M.geometry_solved = false;
 		}
 
-		if (ImGui::DragInt("Wale Tollerance", &M.wale_tollerance, 1.0, 0, 10)) {
+		if (ImGui::DragInt("Wale Tolerance", &M.wale_tolerance, 1.0, 0, 10)) {
 			M.geometry_solved = false;
 		}
 
-		if (ImGui::DragInt("Critical Tollerance", &M.critical_tollerance, 1.0, 0, 10)) {
+		if (ImGui::DragInt("Critical Tolerance", &M.critical_tolerance, 1.0, 0, 10)) {
 			M.geometry_solved = false;
 		}
 
-		if (ImGui::InputDouble("Tolerance", &M.tollerance)) {
+		if (ImGui::InputDouble("Tolerance", &M.tolerance)) {
 			M.geometry_solved = false;
 		}
 

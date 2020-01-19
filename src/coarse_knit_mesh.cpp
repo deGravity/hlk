@@ -115,7 +115,7 @@ namespace hlk {
 
 		// Other State
 		f << scale << " " << stitch_gauge << " " << row_gauge << " " <<
-			tollerance << " " << min_time << " " << max_time << " " <<
+			tolerance << " " << min_time << " " << max_time << " " <<
 			minimizer_timeout << " " << topology_solved << " " << geometry_solved;
 
 		hlk::save(f, vertex_is_special);
@@ -160,7 +160,7 @@ namespace hlk {
 
 		// Other State
 		f >> scale >> stitch_gauge >>  row_gauge >>
-			tollerance  >> min_time >> max_time >> 
+			tolerance  >> min_time >> max_time >>
 			minimizer_timeout >> topology_solved >> geometry_solved;
 
 		// Optional - older files won't have it
@@ -555,7 +555,7 @@ namespace hlk {
 
 				constraints.push_back(std::make_pair(
 					(loop_in + loop_in*(yarn_in - 1) >= loop_out) &&
-					(loop_out + loop_in*(yarn_in - 1) >= loop_in),
+					(loop_out + loop_out*(yarn_in - 1) >= loop_in),
 					"distribuded_increase_quadratic_" + std::to_string(index)
 				));
 
@@ -855,20 +855,20 @@ namespace hlk {
 		// Only add for boundary edges
 		if (is_representative) {
 			int target_stitches = target_stitch_count();
-			int tollerance = ceil(mesh->tollerance * target_stitches);
-			if (mesh->edge_tollerance > 0) {
-				tollerance = mesh->edge_tollerance;
+			int tolerance = ceil(mesh->tolerance * target_stitches);
+			if (mesh->edge_tolerance > 0) {
+				tolerance = mesh->edge_tolerance;
 			}
-			if (mesh->course_tollerance > 0 && mesh->wale_tollerance > 0) {
+			if (mesh->course_tolerance > 0 && mesh->wale_tolerance > 0) {
 				if (get_gauge() == mesh->row_gauge) {
-					tollerance = mesh->wale_tollerance;
+					tolerance = mesh->wale_tolerance;
 				}
 				else {
-					tollerance = mesh->course_tollerance;
+					tolerance = mesh->course_tolerance;
 				}
 			}
-			int min_sts = target_stitches - tollerance;
-			int max_sts = target_stitches + tollerance;
+			int min_sts = target_stitches - tolerance;
+			int max_sts = target_stitches + tolerance;
 			min_sts = min_sts > 0 ? min_sts : 1;
 
 		
@@ -1053,7 +1053,7 @@ namespace hlk {
 		
 		bool done = false;
 
-		int starting_tollerance = edge_tollerance;
+		int starting_tolerance = edge_tolerance;
 		while (!done) {
 
 			geometry_optimizer.push();
@@ -1106,11 +1106,11 @@ namespace hlk {
 				// TODO - Get Information from the UNSAT core
 				std::cout << result.unsat_core << std::endl;
 				geometry_solved = false;
-				std::cout << "Increasing Tollerance to " << edge_tollerance + 1 << std::endl;
-				++edge_tollerance;
-				if (edge_tollerance > starting_tollerance + 1) {
+				std::cout << "Increasing Tolerance to " << edge_tolerance + 1 << std::endl;
+				++edge_tolerance;
+				if (edge_tolerance > starting_tolerance + 1) {
 					done = true;
-					std::cout << "Stopping increasing tollerance." << std::endl;
+					std::cout << "Stopping increasing tolerance." << std::endl;
 				}
 			}
 
@@ -1203,7 +1203,7 @@ namespace hlk {
 			double gauge = sides[line[0]].is_loop->val ? stitch_gauge : row_gauge;
 
 			int target_stitches = round(target * gauge);
-			int toll = critical_tollerance > 0 ? critical_tollerance : round(tollerance * target_stitches);
+			int toll = critical_tolerance > 0 ? critical_tolerance : round(tolerance * target_stitches);
 			int min_stitches = target_stitches - toll;
 			int max_stitches = target_stitches + toll;
 			min_stitches = min_stitches > 0 ? min_stitches : 1;

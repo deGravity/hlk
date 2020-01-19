@@ -180,20 +180,28 @@ void hlk::KnitGraph::propogate_textures()
 			int current = to_explore.front();
 			to_explore.pop_front();
 			if (nodes[current]->right) {
-				int neighbor = nodes[current]->right->dst->index;
-				explore_neighbor(current, neighbor, 0, 1);
+                if (nodes[current]->right->dst) {
+                    int neighbor = nodes[current]->right->dst->index;
+                    explore_neighbor(current, neighbor, 0, 1);
+                }
 			}
 			if (nodes[current]->left) {
-				int neighbor = nodes[current]->left->src->index;
-				explore_neighbor(current, neighbor, 0, -1);
+                if (nodes[current]->left->src) {
+                    int neighbor = nodes[current]->left->src->index;
+                    explore_neighbor(current, neighbor, 0, -1);
+                }
 			}
 			for (auto& child : nodes[current]->top) {
-				int neighbor = child->dst->index;
-				explore_neighbor(current, neighbor, 1, 2);
+                if (child->dst) {
+                    int neighbor = child->dst->index;
+                    explore_neighbor(current, neighbor, 1, 2);
+                }
 			}
 			for (auto& parent : nodes[current]->bottom) {
-				int neighbor = parent->src->index;
-				explore_neighbor(current, neighbor, 1, -2);
+                if (parent->src) {
+                    int neighbor = parent->src->index;
+                    explore_neighbor(current, neighbor, 1, -2);
+                }
 			}
 		}
 

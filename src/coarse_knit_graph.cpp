@@ -224,7 +224,7 @@ namespace hlk {
 		std::vector<std::vector<int>> end_loops;
 		auto& nodes = G.nodes;
 
-
+        /*
 		// Start Loops
 		for (int n : starts) {
 			if (!used[n]) {
@@ -236,10 +236,10 @@ namespace hlk {
 					int candidate = current;
 					do {
 						auto& cn = nodes[candidate];
-						/*if (current != n && cn->left && cn->left->src && !used[cn->left->src->index]) {
+						if (current != n && cn->left && cn->left->src && !used[cn->left->src->index]) {
 							candidate = cn->left->src->index;
 						}
-						else*/ if (cn->bottom.size() > 0 && cn->bottom[0]->src && (!used[cn->bottom.front()->src->index] || cn->bottom.front()->src->index == n)) {
+						else if (cn->bottom.size() > 0 && cn->bottom[0]->src && (!used[cn->bottom.front()->src->index] || cn->bottom.front()->src->index == n)) {
 							candidate = cn->bottom.front()->src->index;
 						}
 						else if (cn->right && cn->right->dst && (!used[cn->right->dst->index] || cn->right->dst->index == n)) {
@@ -276,10 +276,10 @@ namespace hlk {
 					int candidate = current;
 					do {
 						auto& cn = nodes[candidate];
-						/*if (current != n && cn->left && cn->left->src && !used[cn->left->src->index]) {
+						if (current != n && cn->left && cn->left->src && !used[cn->left->src->index]) {
 							candidate = cn->left->src->index;
 						}
-						else */if (cn->top.size() > 0 && cn->top.back()->dst && !used[cn->top.back()->dst->index]) {
+						else if (cn->top.size() > 0 && cn->top.back()->dst && !used[cn->top.back()->dst->index]) {
 							candidate = cn->top.back()->dst->index;
 						}
 						else if (cn->right && cn->right->dst && (!used[cn->right->dst->index] || cn->right->dst->index == n)) {
@@ -304,6 +304,7 @@ namespace hlk {
 				end_loops.push_back(loop);
 			}
 		}
+        */
 
 		// Now Bind-Off / Cast-On on the boundary loops we found
 

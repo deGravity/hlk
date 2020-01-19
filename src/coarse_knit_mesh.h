@@ -206,22 +206,22 @@ namespace hlk {
 		virtual void init(bool do_opt = true);
 
 		double scale = 1; // In Units / Inches
-		double stitch_gauge = 6.0; // In stitches / inch 
-		double row_gauge = 10.0; // In rows / inch
+		double stitch_gauge = 6.67; // In stitches / inch
+		double row_gauge = 4.16; // In rows / inch
 
-		double tollerance = 0.01;
+		double tolerance = 0.01;
 
-		int edge_tollerance = 0;
-		int course_tollerance = 0;
-		int wale_tollerance = 0;
-		int critical_tollerance = 0;
+		int edge_tolerance = 0;
+		int course_tolerance = 0;
+		int wale_tolerance = 0;
+		int critical_tolerance = 0;
 
 
 		// TODO - be better than this
 		int min_time = 0;
 		int max_time = 1;
 
-		unsigned int minimizer_timeout = 5;
+		unsigned int minimizer_timeout = 1;
 
 		bool topology_solved = false;
 		bool geometry_solved = false;
