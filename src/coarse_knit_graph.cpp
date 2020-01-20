@@ -99,9 +99,9 @@ namespace hlk {
 				}
 
 				// Add a side and stitch-count label
-				//std::string side_label = "(" + std::to_string(p) + "," + std::to_string(i) + ") = " + std::to_string(patch.side_lengths[s][sub_s]);
-				//add_label(A / 3 + 2 * B / 3, side_label);
-				add_label((A + B) / 2, std::to_string(patch.side_lengths[s][sub_s]));
+				std::string side_label = "(" + std::to_string(p) + "," + std::to_string(i) + ") = " + std::to_string(patch.side_lengths[s][sub_s]);
+				add_label(A / 3 + 2 * B / 3, side_label);
+				//add_label((A + B) / 2, std::to_string(patch.side_lengths[s][sub_s]));
 				++sub_s;
 			}
 			// Add a patch-center vertex
@@ -112,7 +112,7 @@ namespace hlk {
 			std::string patch_label = std::to_string(p) + "@" + std::to_string(patch.time);
 
 			add_point(center, Eigen::RowVector3d(.4, .4, .4));
-			//add_label(center, patch_label);
+			add_label(center, patch_label);
 		}
 
 		for (int e = 0; e < edges.size(); ++e) {

@@ -430,27 +430,46 @@ namespace hlk {
 
 		auto sink_source = s0_l && s1_l && s2_l && s3_l && (s0_o == s1_o) && (s1_o == s2_o) && (s2_o == s3_o) && (s3_o == s0_o);
 
+		auto has_yarn = !s0_l || !s1_l || !s2_l || !s3_l;
+
 		auto criss_cross = s0_l && s1_l && s2_l && s3_l && (s0_o != s2_o) && (s1_o != s3_o);
 
 		std::vector<std::pair<z3::expr, std::string>> constraints;
 		
+		int num_nonreg = 0;
+		for (int i = 0; i < 4; ++i) {
+			int u = mesh->side_u(q + i);
+			if (mesh->valence[u] % 4 != 0 || mesh->vertex_is_special[u]) {
+				++num_nonreg;
+			}
+		}
+		
+		if (num_nonreg >= 2) {
+			constraints.push_back(std::make_pair(
+				no_skip_0,
+				"no_skip_0_" + std::to_string(q)
+			));
+
+			constraints.push_back(std::make_pair(
+				no_skip_1,
+				"no_skip_1_" + std::to_string(q)
+			));
+		}
+		
+		if (num_nonreg >= 4) {
+			constraints.push_back(std::make_pair(
+				!criss_cross,
+				"no_criss_cross_" + std::to_string(q)
+			));
+			constraints.push_back(std::make_pair(
+				has_yarn || sink_source,
+				"has_yarn_or_sink_source_" + std::to_string(q)
+			));
+		}
+
+
+		
 		/*
-		constraints.push_back(std::make_pair(
-			no_skip_0,
-			"no_skip_0_" + std::to_string(q)
-		));
-
-		constraints.push_back(std::make_pair(
-			no_skip_1,
-			"no_skip_1_" + std::to_string(q)
-		));
-
-		
-		constraints.push_back(std::make_pair(
-			!criss_cross,
-			"no_criss_cross_" + std::to_string(q)
-		));
-		
 		constraints.push_back(std::make_pair(
 			!sink_source,
 			"no_sink_source_" + std::to_string(q)
@@ -800,6 +819,10 @@ namespace hlk {
 
 	std::vector<std::pair<z3::expr,std::string>> CoarseKnitSide::get_topology_constraints()
 	{
+		if (index / 4 == 96) {
+			std::cout << "Exploring a side of 96!" << std::endl;
+		}
+
 		std::vector<std::pair<z3::expr, std::string>> constraints;
 		int u = mesh->side_u(index);
 		bool is_border = mesh->is_border_vertex[u];
@@ -835,7 +858,7 @@ namespace hlk {
 			// by 1. This looks like the the above constraint, except that loop/yarn are
 			// switched (going "backward") and the entire term is negated (prohibit that path)
 
-			auto no_double_yarn = (is_out == prev_is_out) == is_loop;
+			auto no_double_yarn = (is_out == prev_is_out) == is_loop->var;
 			auto skip_yarn = (is_out != prev_is_out) && is_loop;
 
 			constraints.push_back(
@@ -938,17 +961,23 @@ namespace hlk {
 		for (auto& edge : edges) {
 			for (auto constraint : edge.get_topology_constraints()) {
 				topology_optimizer.add_constraint(constraint.first, constraint.second);
+				std::cout << "Added Constraint: " << constraint.second << std::endl << constraint.first.to_string() << std::endl;
+
 			}
 		}
 		for (auto& side : sides) {
 			for (auto constraint : side.get_topology_constraints()) {
 				topology_optimizer.add_constraint(constraint.first, constraint.second);
+				std::cout << "Added Constraint: " << constraint.second << std::endl << constraint.first.to_string() << std::endl;
+
 			}
 		}
 
 		for (auto& quad : quads) {
 			for (auto constraint : quad.get_topology_constraints()) {
 				topology_optimizer.add_constraint(constraint.first, constraint.second);
+				std::cout << "Added Constraint: " << constraint.second << std::endl << constraint.first.to_string() << std::endl;
+
 			}
 		}
 

@@ -111,6 +111,8 @@ namespace hlk {
         bool is_sat = sat == solver.check();
         Result result;
         if (is_sat) {
+			auto& m = solver.get_model();
+			std::cout << "Model is" << std::endl << m << std::endl;
             result.set_model(solver.get_model());
 		}
 		else {
@@ -304,7 +306,8 @@ namespace hlk {
 
 	void Optimizer::add_constraint(z3::expr constraint, std::string name)
 	{
-		solver.add(constraint, name.c_str());
+		constraint_names.push_back(name);
+		solver.add(constraint, constraint_names.back().c_str());
 	}
 
     void Optimizer::add_constraint(z3::expr constraint)
@@ -324,13 +327,15 @@ namespace hlk {
 
     std::shared_ptr<BoolProp> Optimizer::get_bool_prop(std::string id)
     {
-        bool_properties.push_back(make_shared<BoolProp>(context, id));
+		constraint_names.push_back(id);
+        bool_properties.push_back(make_shared<BoolProp>(context, constraint_names.back()));
         return bool_properties.back();
     }
 
     std::shared_ptr<IntProp> Optimizer::get_int_prop(std::string id)
     {
-        int_properties.push_back(make_shared<IntProp>(context, id));
+		constraint_names.push_back(id);
+        int_properties.push_back(make_shared<IntProp>(context, constraint_names.back()));
         return int_properties.back();
     }
 

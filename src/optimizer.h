@@ -6,6 +6,7 @@
 #include <vector>
 #include <utility>
 #include <fstream>
+#include <string>
 
 namespace hlk {
 
@@ -43,10 +44,10 @@ namespace hlk {
 		friend z3::expr operator!=(const BoolProp& l, const z3::expr& r) { return l.var != r; }
 
         friend z3::expr operator&&(const std::shared_ptr<BoolProp>& l, const std::shared_ptr<BoolProp>& r) {
-            return l->var == r->var;
+            return l->var && r->var;
         }
         friend z3::expr operator||(const std::shared_ptr<BoolProp>& l, const std::shared_ptr<BoolProp>& r) {
-            return l->var == r->var;
+            return l->var || r->var;
         }
         friend z3::expr operator==(const std::shared_ptr<BoolProp>& l, const std::shared_ptr<BoolProp>& r) {
             return l->var == r->var;
@@ -56,10 +57,10 @@ namespace hlk {
 		}
 
         friend z3::expr operator&&(const z3::expr& l, const std::shared_ptr<BoolProp>& r) {
-            return l == r->var;
+            return l && r->var;
         }
         friend z3::expr operator||(const z3::expr& l, const std::shared_ptr<BoolProp>& r) {
-            return l == r->var;
+            return l || r->var;
         }
         friend z3::expr operator==(const z3::expr& l, const std::shared_ptr<BoolProp>& r) {
             return l == r->var;
@@ -69,10 +70,10 @@ namespace hlk {
 		}
 
         friend z3::expr operator&&(const std::shared_ptr<BoolProp>& l, const z3::expr& r) {
-            return l->var == r;
+            return l->var && r;
         }
         friend z3::expr operator||(const std::shared_ptr<BoolProp>& l, const z3::expr& r) {
-            return l->var == r;
+            return l->var || r;
         }
         friend z3::expr operator==(const std::shared_ptr<BoolProp>& l, const z3::expr& r) {
             return l->var == r;
@@ -218,6 +219,8 @@ namespace hlk {
         void add_property_constraints();
         std::vector<std::shared_ptr<BoolProp>> bool_properties;
         std::vector<std::shared_ptr<IntProp>> int_properties;
+
+		std::vector<std::string> constraint_names;
 
         z3::solver solver;
 
