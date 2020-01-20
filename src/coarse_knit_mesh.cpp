@@ -572,51 +572,11 @@ namespace hlk {
 		}
 		
 		if (inc_dec_allowed) {
-			if (shaping_distribution == ShapingType::DISTRIBUTED) {
-
-				constraints.push_back(std::make_pair(
-					(loop_in + loop_in*(yarn_in - 1) >= loop_out) &&
-					(loop_out + loop_out*(yarn_in - 1) >= loop_in),
-					"distribuded_increase_quadratic_" + std::to_string(index)
-				));
-
-				/*
-				constraints.push_back(std::make_pair(
-					(loop_in * z3::pw(2, yarn_in - 1) >= loop_out) &&
-					(loop_out * z3::pw(2, yarn_in - 1) >= loop_in),
-					"distributed_doubling_" + std::to_string(index)
-				));
-				*/
-			}
-			else if (shaping_distribution == ShapingType::BOTH_SIDES) {
-
-				constraints.push_back(std::make_pair(
-					(loop_in + (yarn_in - 1)*2 >= loop_out) &&
-					(loop_out + (yarn_in - 1)*2 >= loop_in),
-					"double_side_increase_" + std::to_string(index)
-				));
-
-				/*
-				constraints.push_back(std::make_pair(
-					loop_min + (rows - 1) * 2 >= loop_max,
-					"double_side_increase_" + std::to_string(index)
-				));
-				*/
-			}
-			else {
-
-				constraints.push_back(std::make_pair(
-					(loop_in + (yarn_in - 1) >= loop_out) &&
-					(loop_out + (yarn_in - 1) >= loop_in),
-					"single_side_increase_" + std::to_string(index)
-				));
-				/*
-				constraints.push_back(std::make_pair(
-					loop_min + (rows - 1) >= loop_max,
-					"single_side_increase_" + std::to_string(index)
-				));
-				*/
-			}
+			constraints.push_back(std::make_pair(
+				(loop_in + loop_in * (yarn_in - 1) >= loop_out) &&
+				(loop_out + loop_out * (yarn_in - 1) >= loop_in),
+				"distribuded_increase_quadratic_" + std::to_string(index)
+			));
 		}
 
 		if (sr_allowed) {
