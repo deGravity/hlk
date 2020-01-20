@@ -477,6 +477,14 @@ namespace hlk {
 			ImGui::Combo("", &current_texture, texture_names);
 			ImGui::PopStyleColor();
 			ImGui::PopItemWidth();
+
+			if (ImGui::Button("Fill")) {
+				for (auto& q : M.quads) {
+					q.texture_id = current_texture;
+				}
+				M.update_textures();
+			}
+
 		}
 		mode_selector(SEAMER, seamer_pressed, seamer_tex, seamer_instructions, "Seaming Tool");
 		if (current_tool == SEAMER) {
