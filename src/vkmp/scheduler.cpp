@@ -629,6 +629,17 @@ bool Scheduler::do_schedule( std::map<int, std::pair<int,int>> yarn_mappings, bo
                     if(stitches[step.end].data.is_basic_type &&
                             stitches[step.end].data.id != stitches[step.begin].data.id) break;
 
+					// BEN ADDITION - CASTING ON SEGMENTS SHOULD BE THEIR OWN STEP
+					/*if ((stitches[step.begin].in[0] == -1U) != (stitches[step.end].in[0] == -1U)) {
+						break;
+					}*/
+
+					/*
+					if (step.end + 1 < stitches.size() && stitches[step.end].in[0] != -1U && stitches[step.end + 1].in[0] == -1U) {
+						break;
+					}
+					*/
+
 					// BEN ADDITION - DON'T ALLOW MULTIPLE BASIC TYPES!
 					if (stitches[step.end].data.is_basic_type) {
 						++num_basics;

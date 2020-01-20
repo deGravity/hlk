@@ -781,9 +781,6 @@ namespace hlk {
 
 	std::vector<std::pair<z3::expr,std::string>> CoarseKnitSide::get_topology_constraints()
 	{
-		if (index / 4 == 96) {
-			std::cout << "Exploring a side of 96!" << std::endl;
-		}
 
 		std::vector<std::pair<z3::expr, std::string>> constraints;
 		int u = mesh->side_u(index);
@@ -923,23 +920,17 @@ namespace hlk {
 		for (auto& edge : edges) {
 			for (auto constraint : edge.get_topology_constraints()) {
 				topology_optimizer.add_constraint(constraint.first, constraint.second);
-				std::cout << "Added Constraint: " << constraint.second << std::endl << constraint.first.to_string() << std::endl;
-
 			}
 		}
 		for (auto& side : sides) {
 			for (auto constraint : side.get_topology_constraints()) {
 				topology_optimizer.add_constraint(constraint.first, constraint.second);
-				std::cout << "Added Constraint: " << constraint.second << std::endl << constraint.first.to_string() << std::endl;
-
 			}
 		}
 
 		for (auto& quad : quads) {
 			for (auto constraint : quad.get_topology_constraints()) {
 				topology_optimizer.add_constraint(constraint.first, constraint.second);
-				std::cout << "Added Constraint: " << constraint.second << std::endl << constraint.first.to_string() << std::endl;
-
 			}
 		}
 

@@ -105,6 +105,10 @@ namespace hlk {
 	};
 
 	struct KnitGraph {
+
+		std::vector<std::shared_ptr<KnitGraph>> separate_components();
+		void recollect_edges();
+
 		std::vector<std::shared_ptr<KnitGraphNode>> nodes;
 		std::vector<std::shared_ptr<KnitGraphEdge>> edges;
 		std::vector<vkmp::Stitch> stitches;

@@ -11,9 +11,57 @@
 
 #include <deque>
 
+#include "disjointset.h"
+
 #include <igl/parula.h>
 
 //#include <igl/copyleft/cgal/wire_mesh.h>
+namespace hlk {
+	std::vector<std::shared_ptr<KnitGraph>> hlk::KnitGraph::separate_components()
+	{
+		re_index();
+		IntUnionFind djs(nodes.size());
+		for (int i = 0; i < nodes.size(); ++i) {
+			std::vector<std::shared_ptr<KnitGraphEdge>> out_edges{ nodes[i]->right };
+			out_edges.insert(out_edges.end(), nodes[i]->top.begin(), nodes[i]->top.end());
+			for (auto& e : out_edges) {
+				if (e->dst) {
+					djs.join(i, e->dst->index);
+				}
+			}
+		}
+
+		std::vector<std::shared_ptr<KnitGraph>> subgraphs;
+
+		auto components = djs.components();
+		for (auto& component : components) {
+			std::shared_ptr<KnitGraph> G = std::make_shared<KnitGraph>();
+			for (int i : component) {
+				G->nodes.push_back(nodes[i]);
+			}
+			subgraphs.push_back(G);
+		}
+
+		for (auto& G : subgraphs) {
+			G->recollect_edges();
+		}
+			
+		return subgraphs;
+	}
+	void KnitGraph::recollect_edges()
+	{
+		edges.clear();
+		for (auto& node : nodes) {
+			if (node->right) {
+				edges.push_back(node->right);
+			}
+			for (auto& up : node -> top) {
+				edges.push_back(up);
+			}
+		}
+		re_index();
+	}
+}
 
 hlk::IGLVisualization hlk::KnitGraph::visualize_stitches(const std::vector<vkmp::Stitch>& stitches)
 {
@@ -125,33 +173,45 @@ void hlk::KnitGraph::contract()
 	re_index();
 }
 
-void hlk::KnitGraph::generate_instructions(std::string filename)
+void hlk::KnitGraph::generate_instructions(std::string base_filename)
 {
+	/*
 	if (!traced) {
 		trace();
 	}
+	*/
+	auto components = separate_components();
+	int component_num = 0;
 
+	for (auto& component : components) {
 
-	vkmp::Scheduler s;
-	s.stitches = stitches;
+		auto filename = base_filename + "_" + std::to_string(component_num);
 
-	vkmp::save_stitches(filename + ".st", stitches);
+		component->trace();
 
-	std::map<int, std::pair<int, int>> yarn_mappings;
-	yarn_mappings[0] = std::make_pair(1, -1);
-	yarn_mappings[1] = std::make_pair(2, -1);
-	s.do_schedule(yarn_mappings, true, -1);
-	s.write_schedule(filename + ".js");
-	std::string scripts_dir = SCRIPTS_DIR;
-	std::string node_path = "NODE_PATH=" + scripts_dir + "\\";
-	putenv(node_path.c_str());
-	std::string command_1 = "node " + filename + ".js";
-	std::cout << "Trying to run:\n" << command_1 << std::endl;
-	system(command_1.c_str());
-	std::string command_2 = "node " + scripts_dir + "\\knitout-to-dat.js " + filename + ".k " + filename + ".dat";
-	std::cout << "Trying to run:\n" << command_2 << std::endl;
-	system(command_2.c_str());
+		vkmp::Scheduler s;
+		s.stitches = component->stitches;
 
+		vkmp::save_stitches(filename + ".st", stitches);
+
+		std::map<int, std::pair<int, int>> yarn_mappings;
+		yarn_mappings[0] = std::make_pair(1, -1);
+		yarn_mappings[1] = std::make_pair(2, -1);
+		s.do_schedule(yarn_mappings, true, -1);
+		s.write_schedule(filename + ".js");
+		std::string scripts_dir = SCRIPTS_DIR;
+		std::string node_path = "NODE_PATH=" + scripts_dir + "\\";
+		putenv(node_path.c_str());
+		std::string command_1 = "node " + filename + ".js";
+		std::cout << "Trying to run:\n" << command_1 << std::endl;
+		system(command_1.c_str());
+		std::string command_2 = "node " + scripts_dir + "\\knitout-to-dat.js " + filename + ".k " + filename + ".dat";
+		std::cout << "Trying to run:\n" << command_2 << std::endl;
+		system(command_2.c_str());
+
+		++component_num;
+	}
+	re_index();
 }
 
 void hlk::KnitGraph::propogate_textures()
