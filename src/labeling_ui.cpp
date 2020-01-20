@@ -14,6 +14,8 @@
 
 #include "texture.h"
 
+#include "vkmp/scheduler.hpp"
+
 #include <fstream>
 
 namespace ImGui
@@ -443,6 +445,24 @@ namespace hlk {
 				vis.display(viewer->data());
 				auto filename2 = igl::file_dialog_save();
 				if (filename2.size() > 0) {
+
+					vkmp::Scheduler s;
+					s.stitches = kg.stitches;
+
+					std::map<int, std::pair<int, int>> yarn_mappings;
+					yarn_mappings[0] = std::make_pair(1, -1);
+					yarn_mappings[1] = std::make_pair(2, -1);
+					s.do_schedule(yarn_mappings, true, -1);
+					s.write_schedule(filename + ".js");
+					std::string scripts_dir = SCRIPTS_DIR;
+					std::string node_path = "NODE_PATH=" + scripts_dir + "\\";
+					putenv(node_path.c_str());
+					std::string command_1 = "node " + filename + ".js";
+					std::cout << "Trying to run:\n" << command_1 << std::endl;
+					system(command_1.c_str());
+					std::string command_2 = "node " + scripts_dir + "\\knitout-to-dat.js " + filename + ".k " + filename + ".dat";
+					std::cout << "Trying to run:\n" << command_2 << std::endl;
+					system(command_2.c_str());
 					kg.generate_instructions(filename2);
 				}
 			}

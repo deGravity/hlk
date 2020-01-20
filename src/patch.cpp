@@ -715,7 +715,18 @@ namespace hlk {
 		}
 		else {
 			// Figure out which case we are in
-			assert(side_counts[0] == side_counts[2] || side_counts[1] == side_counts[3]); // only one shaping operation
+			//assert(side_counts[0] == side_counts[2] || side_counts[1] == side_counts[3]); // only one shaping operation
+
+			int loop_in = side_counts[0];
+			int loop_out = side_counts[2];
+			int yarn_in = side_counts[3];
+			int yarn_out = side_counts[1];
+
+			int wale_height = loop_in < loop_out ? loop_in: loop_out;
+			int sr_height = loop_in < loop_out ? loop_out - loop_in : loop_in - loop_out;
+
+			Chart shaping_chart, sr_chart;
+
 			Chart c;
 
 			int leaning_dir = 0;
@@ -728,6 +739,30 @@ namespace hlk {
 			if (sr_shaping == 1) { sr_dir = -1; }
 			if (sr_shaping == 2) { sr_dir = 1; }
 
+			if (wale_height > 0) {
+				if (loop_in < loop_out) {
+					shaping_chart.increases_leaning(loop_in, loop_out, wale_height, leaning_dir);
+				}
+				else {
+					shaping_chart.decreases_leaning(loop_in, loop_out, wale_height, leaning_dir);
+				}
+				c.rows.insert(c.rows.begin(), shaping_chart.rows.begin(), shaping_chart.rows.end());
+			}
+
+			if (sr_height > 0) {
+				int sr_width = sr_dir < 0 ? loop_in : loop_out;
+				int sr_left = yarn_in < yarn_out ? 0 : yarn_in - yarn_out;
+				int sr_right = yarn_out < yarn_in ? 0 : yarn_out - yarn_in;
+				sr_chart.short_rows(sr_left, sr_right, sr_width, -1*sr_dir);
+				if (sr_dir < 0) {
+					c.rows.insert(c.rows.begin(), sr_chart.rows.begin(), sr_chart.rows.end());
+				}
+				else {
+					c.rows.insert(c.rows.end(), sr_chart.rows.begin(), sr_chart.rows.end());
+				}
+			}
+
+			/*
 			if (side_counts[0] > side_counts[2]) { // Decreases
 				
 				c.decreases_leaning(side_counts[0], side_counts[2], side_counts[1], leaning_dir);
@@ -738,6 +773,7 @@ namespace hlk {
 			else { // Flat or increases
 				c.increases_leaning(side_counts[0], side_counts[2], side_counts[1], leaning_dir);
 			}
+			*/
 
 			make_graph(c.rows);
 		}

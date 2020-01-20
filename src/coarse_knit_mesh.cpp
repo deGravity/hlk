@@ -563,6 +563,8 @@ namespace hlk {
 				));
 			}
 		}
+		
+		/*
 		if (inc_dec_allowed && sr_allowed) {
 			constraints.push_back(std::make_pair(
 				one_shaping_type,
@@ -570,6 +572,7 @@ namespace hlk {
 			));
 
 		}
+		*/
 		
 		if (inc_dec_allowed) {
 			constraints.push_back(std::make_pair(
