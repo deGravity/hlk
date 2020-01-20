@@ -75,6 +75,14 @@ hlk::IGLVisualization hlk::KnitGraph::visualize_stitches(const std::vector<vkmp:
 		last_per_yarn[yarn] = i;
 		
 		Eigen::RowVector3d point_color = yarn_colors.row(yarn);
+
+		if (stitches[i].direction == 'a') {
+			point_color = Eigen::RowVector3d(0.0, 0.0, 0.0);
+		}
+		else {
+			point_color = Eigen::RowVector3d(1.0, 1.0, 1.0);
+		}
+		/*
 		if (stitches[i].data.name == "knit") {
 			point_color = Eigen::RowVector3d(1.0, 1.0, 1.0);
 		}
@@ -82,8 +90,9 @@ hlk::IGLVisualization hlk::KnitGraph::visualize_stitches(const std::vector<vkmp:
 			point_color = Eigen::RowVector3d(0.0, 0.0, 0.0);
 		}
 		else {
-			std::cout << "Stitch type " << std::to_string(i) << " is " << stitches[i].data.name << std::endl;
+			//std::cout << "Stitch type " << std::to_string(i) << " is " << stitches[i].data.name << std::endl;
 		}
+		*/
 		vis.add_point(i, point_color);
 		vis.add_label(i, std::to_string(i));
 	}
@@ -118,7 +127,9 @@ void hlk::KnitGraph::contract()
 
 void hlk::KnitGraph::generate_instructions(std::string filename)
 {
-	trace();
+	if (!traced) {
+		trace();
+	}
 
 
 	vkmp::Scheduler s;
@@ -224,6 +235,12 @@ void hlk::KnitGraph::propogate_textures()
 			}
 		}
 	}
+}
+
+void hlk::KnitGraph::load_st(std::string filename)
+{
+	vkmp::load_stitches(filename, &stitches);
+	traced = true;
 }
 
 void hlk::KnitGraph::trace()

@@ -445,6 +445,7 @@ namespace hlk {
 		}
 		
 		if (num_nonreg >= 2) {
+			/*
 			constraints.push_back(std::make_pair(
 				no_skip_0,
 				"no_skip_0_" + std::to_string(q)
@@ -454,6 +455,7 @@ namespace hlk {
 				no_skip_1,
 				"no_skip_1_" + std::to_string(q)
 			));
+			*/
 		}
 		
 		if (num_nonreg >= 4) {

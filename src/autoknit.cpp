@@ -494,38 +494,45 @@ namespace ak {
 						break;
 					}
 				}
-				if (down == -1U) return false;
-				assert(info[down].knits == 2); //can't be here if parent wasn't knit twice
-
-				//if down has a next neighbor, tuck before turning:
-				uint32_t down_next = get_next(down);
-
-				if (down_next != -1U && is_covered(down_next)) {
-					std::cout << "NOTE: not tucking in rule4 because down_next is covered." << std::endl;
-					down_next = -1U;
+				if (down == -1U) {
+					dir = (dir == Forward ? Backward : Forward);
+					knit(at);
+					return true;
 				}
+				else {
+					assert(info[down].knits == 2); //can't be here if parent wasn't knit twice
 
-				if (down_next != -1U && info[down_next].knits == 2 && vertices[down_next].col_out[0] != -1U && vertices[down_next].col_out[1] != -1U) {
-					down_next = get_prev_child(down_next);
-					std::cout << "NOTE: tucking on child of down_next because of increase." << std::endl;
+					//if down has a next neighbor, tuck before turning:
+					uint32_t down_next = get_next(down);
+
+					if (down_next != -1U && is_covered(down_next)) {
+						std::cout << "NOTE: not tucking in rule4 because down_next is covered." << std::endl;
+						down_next = -1U;
+					}
+
+					if (down_next != -1U && info[down_next].knits == 2 && vertices[down_next].col_out[0] != -1U && vertices[down_next].col_out[1] != -1U) {
+						down_next = get_prev_child(down_next);
+						std::cout << "NOTE: tucking on child of down_next because of increase." << std::endl;
+					}
+					if (down_next != -1U && info[down_next].last_stitch != -1U && traced[info[down_next].last_stitch].type == TracedStitch::End) {
+						std::cout << "NOTE: not tucking on down_next because it is an end." << std::endl;
+						down_next = -1U;
+					}
+
+					if (down_next != -1U) {
+						std::cout << "  TUCKING[4] at " << down_next << " which has " << info[down_next].knits << " knits and outs " << int32_t(vertices[down_next].col_out[0]) << " and " << int32_t(vertices[down_next].col_out[1]) << std::endl;
+					}
+
+
+
+
+					uint32_t here = at; //because tuck() / miss() will change 'at'
+					if (down_next != -1U) tuck(down_next);
+					dir = (dir == Forward ? Backward : Forward);
+					if (down_next != -1U) miss(down_next);
+					knit(here);
+					return true;
 				}
-				if (down_next != -1U && info[down_next].last_stitch != -1U && traced[info[down_next].last_stitch].type == TracedStitch::End) {
-					std::cout << "NOTE: not tucking on down_next because it is an end." << std::endl;
-					down_next = -1U;
-				}
-
-				if (down_next != -1U) {
-					std::cout << "  TUCKING[4] at " << down_next << " which has " << info[down_next].knits << " knits and outs " << int32_t(vertices[down_next].col_out[0]) << " and " << int32_t(vertices[down_next].col_out[1]) << std::endl;
-				}
-
-
-
-				uint32_t here = at; //because tuck() / miss() will change 'at'
-				if (down_next != -1U) tuck(down_next);
-				dir = (dir == Forward ? Backward : Forward);
-				if (down_next != -1U) miss(down_next);
-				knit(here);
-				return true;
 			};
 
 			//Rule 5: walk off the end of short rows:
@@ -554,10 +561,11 @@ namespace ak {
 
 				if (info[par_next].knits == 2) return false;
 
+				/*
 				// BEN'S ADDITION - only allow certain short-row depths before starting a new yarn
 				int max_par_depth = 3;
 				if (par_depth > max_par_depth) return false;
-
+				*/
 				knit(par_next);
 
 				return true;

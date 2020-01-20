@@ -424,6 +424,30 @@ namespace hlk {
 			}
 		}
 
+		if (ImGui::Button("Load Stitches")) {
+			auto filename = igl::file_dialog_open();
+			if (filename.size() > 0) {
+				KnitGraph kg;
+				kg.load_st(filename);
+				auto vis = kg.visualize_stitches(kg.stitches);
+				vis.display(viewer->data());
+			}
+		}
+
+		if (ImGui::Button("Schedule Stitches File")) {
+			auto filename = igl::file_dialog_open();
+			if (filename.size() > 0) {
+				KnitGraph kg;
+				kg.load_st(filename);
+				auto vis = kg.visualize_stitches(kg.stitches);
+				vis.display(viewer->data());
+				auto filename2 = igl::file_dialog_save();
+				if (filename2.size() > 0) {
+					kg.generate_instructions(filename2);
+				}
+			}
+		}
+
 		if (ImGui::Checkbox("Auto-Solve", &auto_solve)) {
 			if (auto_solve) {
 				solve_topology();

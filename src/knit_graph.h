@@ -127,6 +127,8 @@ namespace hlk {
 
 		void propogate_textures();
 
+		void load_st(std::string filename);
+
 		void trace();
 		ak::RowColGraph make_row_col_graph();
 
