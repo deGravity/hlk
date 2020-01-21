@@ -382,12 +382,16 @@ namespace hlk {
 		}
 
 
-		// HACK! Add children to decreases to zero
+		// HACK! Avoid special face corners without children or parents
+		// Technically, no parents is just fine (it's a M1 increase), but the scheduler does not like these
 		for (auto& node : G.nodes) {
+
 			if (node->top.size() == 1 && !node->top[0]->dst) {
 				node->top[0]->contracted = true;
 				node->top.clear();
 			}
+
+			// Clear out any dangling patch edges
 			if (node->top.size() == 0) {
 				if (node->left && node->left->src && node->left->src->top.size() > 0) {
 					auto& child = node->left->src->top.back()->dst;
@@ -399,6 +403,7 @@ namespace hlk {
 						edge->type = LoopType::YARNOVER;
 						node->top.push_back(edge);
 						child->bottom.push_back(edge);
+						G.edges.push_back(edge);
 						continue;
 					}
 				} else if (node->right && node->right->dst && node->right->dst->top.size() > 0) {
@@ -411,10 +416,52 @@ namespace hlk {
 						edge->type = LoopType::YARNOVER;
 						node->top.push_back(edge);
 						child->bottom.insert(child->bottom.begin(), edge);
+						G.edges.push_back(edge);
 						continue;
 					}
 				}
 			}
+
+			
+			// Bottom Side
+			// Clear out any dangling patch edges
+			if (node->bottom.size() == 1 && !node->bottom[0]->src) {
+				node->bottom[0]->contracted = true;
+				node->bottom.clear();
+			}
+
+			if (node->bottom.size() == 0) {
+				if (node->left && node->left->src && node->left->src->bottom.size() > 0) {
+					auto& parent = node->left->src->bottom.back()->src;
+					if (parent && parent->top.size() == 1) {
+						std::shared_ptr<KnitGraphEdge> edge = std::make_shared<KnitGraphEdge>();
+						edge->is_loop = true;
+						edge->src = parent;
+						edge->dst = node;
+						edge->type = LoopType::YARNOVER;
+						node->bottom.push_back(edge);
+						parent->top.push_back(edge);
+						G.edges.push_back(edge);
+						continue;
+					}
+				}
+				else if (node->right && node->right->dst && node->right->dst->bottom.size() > 0) {
+					auto& parent = node->right->dst->bottom.front()->src;
+					if (parent && parent->top.size() == 1) {
+						std::shared_ptr<KnitGraphEdge> edge = std::make_shared<KnitGraphEdge>();
+						edge->is_loop = true;
+						edge->src = parent;
+						edge->dst = node;
+						edge->type = LoopType::YARNOVER;
+						node->bottom.push_back(edge);
+						parent->top.insert(parent->top.begin(), edge);
+						G.edges.push_back(edge);
+						continue;
+					}
+				}
+			}
+			
+
 		}
 		
 		G.re_index();
