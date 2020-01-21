@@ -141,7 +141,7 @@ namespace hlk {
 		// Get Constraints for seams
 		std::vector<std::pair<z3::expr, std::string>> get_seam_costs();
 
-		void add_size_line(std::vector<int> line_sides);
+		double add_size_line(std::vector<int> line_sides, double target = -1.0);
 
 		// Get Constraints for line sizes
 		std::vector<std::pair<z3::expr, std::string>> size_line_constraints();
@@ -222,6 +222,7 @@ namespace hlk {
 		int max_time = 1;
 
 		unsigned int minimizer_timeout = 1;
+
 
 		bool topology_solved = false;
 		bool geometry_solved = false;

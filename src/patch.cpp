@@ -9,6 +9,8 @@
 
 #include <igl/mvc.h>
 
+#include <assert.h>
+
 namespace hlk {
 	
 	void Chart::read_from_file(std::string path) {
@@ -722,8 +724,33 @@ namespace hlk {
 			int yarn_in = side_counts[3];
 			int yarn_out = side_counts[1];
 
-			int wale_height = loop_in < loop_out ? loop_in: loop_out;
-			int sr_height = loop_in < loop_out ? loop_out - loop_in : loop_in - loop_out;
+			// Assert that sizing optimization worked appropriately:
+			if (shaping == 0) {
+				assert(loop_in == loop_out);
+			}
+			else {
+				assert(loop_in + loop_in * (yarn_in - 1) >= loop_out);
+				assert(loop_in + loop_in * (yarn_out - 1) >= loop_out);
+				assert(loop_out + loop_out * (yarn_in - 1) >= loop_in);
+				assert(loop_out + loop_out * (yarn_out - 1) >= loop_in);
+			}
+			if (sr_shaping == 1) {
+				assert(yarn_in + loop_in >= yarn_out);
+				assert(yarn_out + loop_in >= yarn_in);
+			}
+			else if(sr_shaping == 2) {
+				assert(yarn_in + loop_out >= yarn_out);
+				assert(yarn_out + loop_out >= yarn_in);
+			}
+			else {
+				assert(yarn_in == yarn_out);
+			}
+
+
+
+
+			int wale_height = yarn_in < yarn_out ? yarn_in: yarn_out;
+			int sr_height = yarn_in < yarn_out ? yarn_out - yarn_in : yarn_in - yarn_out;
 
 			Chart shaping_chart, sr_chart;
 

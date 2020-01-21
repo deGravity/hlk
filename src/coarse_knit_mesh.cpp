@@ -495,7 +495,7 @@ namespace hlk {
 		std::vector<z3::expr> side_stitches;
 		for (int i = 0; i < 4; ++i) {
 			if (side_exprs[i].size() == 0) {
-				side_stitches.push_back(mesh->geometry_optimizer.zero());
+				side_stitches.push_back(mesh->geometry_optimizer.one());
 			}
 			else {
 				side_stitches.push_back(side_exprs[i][0]);
@@ -528,6 +528,32 @@ namespace hlk {
 		auto loop_max = z3::ite(loop_in > loop_out, loop_in, loop_out);
 		auto yarn_min = z3::ite(yarn_in > yarn_out, yarn_out, yarn_in);
 		auto yarn_max = z3::ite(yarn_in > yarn_out, yarn_in, yarn_out);
+
+
+		// Here are the asserts that we want
+
+		/*
+		if (shaping == NONE) {
+			assert(loop_in == loop_out);
+		}
+		else {
+			assert(loop_in + loop_in * (yarn_in - 1) >= loop_out);
+			assert(loop_in + loop_in * (yarn_out - 1) >= loop_out);
+			assert(loop_out + loop_out * (yarn_in - 1) >= loop_in);
+			assert(loop_out + loop_out * (yarn_out - 1) >= loop_in);
+		}
+		if (sr_shaping == LOOP_IN) {
+			assert(yarn_in + loop_in >= yarn_out);
+			assert(yarn_out + loop_in >= yarn_in);
+		}
+		else if (sr_shaping == LOOP_OUT) {
+			assert(yarn_in + loop_out >= yarn_out);
+			assert(yarn_out + loop_out >= yarn_in);
+		}
+		else { // sr_shaping == NONE
+			assert(yarn_in == yarn_out);
+		}
+		*/
 		
 
 		// Only put constraints on if we definitely need them
@@ -535,6 +561,7 @@ namespace hlk {
 		bool inc_dec_allowed = shaping_distribution != NONE;
 		bool sr_allowed = short_row_distribution != NONE;
 
+		/*
 		if (side_exprs[0].size() == 0 || side_exprs[2].size() == 0) {
 			sr_allowed = false;
 		}
@@ -542,6 +569,7 @@ namespace hlk {
 		if (side_exprs[1].size() == 0 || side_exprs[3].size() == 0) {
 			inc_dec_allowed = false;
 		}
+		*/
 
 		if (!sr_allowed) {
 			// If this is a normal quad with none allowed, this constraint is handled
@@ -574,20 +602,44 @@ namespace hlk {
 		}
 		*/
 		
-		if (inc_dec_allowed) {
+		if (inc_dec_allowed && !sr_allowed) {
 			constraints.push_back(std::make_pair(
 				(loop_in + loop_in * (yarn_in - 1) >= loop_out) &&
 				(loop_out + loop_out * (yarn_in - 1) >= loop_in),
-				"distribuded_increase_quadratic_" + std::to_string(index)
+				"gentle_inc_dec_only_" + std::to_string(index)
 			));
 		}
 
-		if (sr_allowed) {
+		if (sr_allowed && !inc_dec_allowed) {
 			constraints.push_back(std::make_pair(
-				(yarn_in + (loop_in - 1) >= yarn_out) &&
-				(yarn_out + (loop_in - 1) >= yarn_in),
-				"limited_short_row_" + std::to_string(index)
+				(yarn_in + loop_in >= yarn_out) &&
+				(yarn_out + loop_in >= yarn_in),
+				"gentle_short_row_only_" + std::to_string(index)
 			));
+		}
+
+		if (inc_dec_allowed && sr_allowed) {
+			constraints.push_back(std::make_pair(
+				(loop_in + loop_in * (yarn_in - 1) >= loop_out) &&
+				(loop_out + loop_out * (yarn_in - 1) >= loop_in) &&
+				(loop_in + loop_in * (yarn_out - 1) >= loop_out) &&
+				(loop_out + loop_out * (yarn_out - 1) >= loop_in),
+				"gentle_inc_dec_" + std::to_string(index)
+			));
+			if (short_row_distribution == IN_SIDE) {
+				constraints.push_back(std::make_pair(
+					(yarn_in + loop_in >= yarn_out) &&
+					(yarn_out + loop_in >= yarn_in),
+					"gentle_short_row_in_" + std::to_string(index)
+				));
+			}
+			if (short_row_distribution == OUT_SIDE) {
+				constraints.push_back(std::make_pair(
+					(yarn_in + loop_out >= yarn_out) &&
+					(yarn_out + loop_out >= yarn_in),
+					"gentle_short_row_out_" + std::to_string(index)
+				));
+			}
 		}
 		
 		return constraints;
@@ -1158,16 +1210,22 @@ namespace hlk {
 	{
 		return std::vector<std::pair<z3::expr, std::string>>();
 	}
-	void CoarseKnitMesh::add_size_line(std::vector<int> line_sides)
+	double CoarseKnitMesh::add_size_line(std::vector<int> line_sides, double target)
 	{
 		double size = 0;
-		for (int i = 0; i < line_sides.size(); ++i) {
-			size += side_lengths[line_sides[i]];
+		if (target < 0) {
+			for (int i = 0; i < line_sides.size(); ++i) {
+				size += side_lengths[line_sides[i]];
+			}
+		}
+		else {
+			size = target;
 		}
 		auto size_line = std::make_pair(line_sides, size);
 		size_lines.push_back(size_line);
 		std::cout << "Added a size line with target size of " << size << std::endl;
 		update_textures();
+		return size;
 	}
 
 	std::vector<std::pair<z3::expr, std::string>> CoarseKnitMesh::size_line_constraints()

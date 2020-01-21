@@ -139,6 +139,13 @@ namespace hlk {
 
 		bool white_bg = false;
 
+		double last_size_line = -1.0;
+		bool use_last_sizing = false;
+
+		int depth = -1;
+
+		bool use_stacked_planner = false;
+
 
 		/*
 		Icon Credits:

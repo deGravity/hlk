@@ -225,6 +225,7 @@ namespace hlk {
         z3::solver solver;
 
 		z3::expr zero();
+		z3::expr one();
     };
 
 };

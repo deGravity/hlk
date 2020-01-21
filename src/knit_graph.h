@@ -127,7 +127,7 @@ namespace hlk {
 		void split_doubled(); // Split all nodes into two loop-wise connected nodes - pre-req. for scheduling
 		void schedule(); // Order and assign yarns for each node. Fix yarn in/out and create shift-paths
 
-		void generate_instructions(std::string filename);
+		void generate_instructions(std::string filename, int depth = -1, bool cse = true);
 
 		void propogate_textures();
 

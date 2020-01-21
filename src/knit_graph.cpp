@@ -173,7 +173,7 @@ void hlk::KnitGraph::contract()
 	re_index();
 }
 
-void hlk::KnitGraph::generate_instructions(std::string base_filename)
+void hlk::KnitGraph::generate_instructions(std::string base_filename, int depth, bool cse)
 {
 	/*
 	if (!traced) {
@@ -192,12 +192,13 @@ void hlk::KnitGraph::generate_instructions(std::string base_filename)
 		vkmp::Scheduler s;
 		s.stitches = component->stitches;
 
-		vkmp::save_stitches(filename + ".st", stitches);
+		vkmp::save_stitches(filename + ".st", component->stitches);
 
 		std::map<int, std::pair<int, int>> yarn_mappings;
 		yarn_mappings[0] = std::make_pair(1, -1);
 		yarn_mappings[1] = std::make_pair(2, -1);
-		s.do_schedule(yarn_mappings, true, -1);
+		yarn_mappings[2] = std::make_pair(3, -1);
+		s.do_schedule(yarn_mappings, cse, depth);
 		s.write_schedule(filename + ".js");
 		std::string scripts_dir = SCRIPTS_DIR;
 		std::string node_path = "NODE_PATH=" + scripts_dir + "\\";

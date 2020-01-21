@@ -192,7 +192,7 @@ namespace hlk {
 						int side = outgoing_side(fid, bc);
 						if (side >= 0) {
 							auto loop = M.side_loop(side);
-							M.add_size_line(loop);
+							last_size_line = M.add_size_line(loop, use_last_sizing ? last_size_line : -1);
 						}
 					}
 				}
@@ -549,8 +549,16 @@ namespace hlk {
 				ImGui::RadioButton("None", (int*)& short_row_brush, NONE);
 				ImGui::RadioButton("Top (Out)", (int*)& short_row_brush, OUT_SIDE);
 				ImGui::RadioButton("Bottom (In)", (int*)& short_row_brush, IN_SIDE);
+
+				if (ImGui::Button("Apply Everywhere")) {
+					for (int i = 0; i < M.quads.size(); ++i) {
+						M.set_shaping(4 * i, shaping_brush, short_row_brush);
+					}
+				}
+
 			}
 			else {
+				ImGui::Checkbox("Use Last Sizing", &use_last_sizing);
 				ImGui::Text("Click a line to make it a critical line.");
 			}
 		}
@@ -567,6 +575,9 @@ namespace hlk {
 		if (ImGui::Button("Generate Knitting Instructions")) {
 			generate_instructions();
 		}
+
+		ImGui::InputInt("Depth", &depth);
+		ImGui::Checkbox("Use Stacked Planner", &use_stacked_planner);
 
 		if (ImGui::Button("Generate Knit Graph")) {
 			extract_fine_graph();
@@ -723,7 +734,7 @@ namespace hlk {
 		auto CKG = M.get_dual();
 		auto KG = CKG.build_graph();
 		KG.contract();
-		KG.generate_instructions(igl::file_dialog_save());
+		KG.generate_instructions(igl::file_dialog_save(), depth, !use_stacked_planner);
 	}
 
 	void LabelingUI::save_coarse_knit_mesh(std::string filename)
