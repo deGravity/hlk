@@ -124,23 +124,21 @@ hlk::IGLVisualization hlk::KnitGraph::visualize_stitches(const std::vector<vkmp:
 		
 		Eigen::RowVector3d point_color = yarn_colors.row(yarn);
 
+		/*
 		if (stitches[i].direction == 'a') {
 			point_color = Eigen::RowVector3d(0.0, 0.0, 0.0);
 		}
 		else {
 			point_color = Eigen::RowVector3d(1.0, 1.0, 1.0);
 		}
-		/*
-		if (stitches[i].data.name == "knit") {
+		*/
+		if (stitches[i].data.id == 1) {
 			point_color = Eigen::RowVector3d(1.0, 1.0, 1.0);
 		}
-		else if (stitches[i].data.name == "purl") {
+		else {//if (stitches[i].data.name == "purl") {
 			point_color = Eigen::RowVector3d(0.0, 0.0, 0.0);
 		}
-		else {
-			//std::cout << "Stitch type " << std::to_string(i) << " is " << stitches[i].data.name << std::endl;
-		}
-		*/
+
 		vis.add_point(i, point_color);
 		vis.add_label(i, std::to_string(i));
 	}
@@ -233,15 +231,15 @@ void hlk::KnitGraph::propogate_textures()
 
 		to_explore.push_back(n);
 
-		auto explore_neighbor = [&](int curr, int neigh, int axis, int step) {
+		auto explore_neighbor = [&](int curr, int neigh, int axis, int step, int other_step = 0) {
 			if (!explored[neigh] && nodes[curr]->texture_id == nodes[neigh]->texture_id) {
 				if (axis == 0) {
-					texture_r[neigh] = texture_r[curr];
+					texture_r[neigh] = texture_r[curr + other_step];
 					texture_c[neigh] = texture_c[curr] + step;
 				}
 				else {
 					texture_r[neigh] = texture_r[curr] + step;
-					texture_c[neigh] = texture_c[curr];
+					texture_c[neigh] = texture_c[curr + other_step];
 				}
 				explored[neigh] = true;
 				to_explore.push_back(neigh);
@@ -263,16 +261,20 @@ void hlk::KnitGraph::propogate_textures()
                     explore_neighbor(current, neighbor, 0, -1);
                 }
 			}
+			int i = 0;
 			for (auto& child : nodes[current]->top) {
                 if (child->dst) {
                     int neighbor = child->dst->index;
-                    explore_neighbor(current, neighbor, 1, 2);
+                    explore_neighbor(current, neighbor, 1, 2, i);
+					++i;
                 }
 			}
+			i = 0;
 			for (auto& parent : nodes[current]->bottom) {
                 if (parent->src) {
                     int neighbor = parent->src->index;
-                    explore_neighbor(current, neighbor, 1, -2);
+                    explore_neighbor(current, neighbor, 1, -2, i);
+					++i;
                 }
 			}
 		}

@@ -724,7 +724,9 @@ namespace hlk {
 			auto vis = KnitGraph::visualize_stitches(KG.stitches);
 			vis.display(viewer->data(traced_graph_index));
 			viewer->data(traced_graph_index).line_width = 2.5;
-			viewer->data(traced_graph_index).point_size = 10;
+			viewer->data(traced_graph_index).point_size = 20;
+
+			viewer->data(traced_graph_index).clear_labels();
 		}
 	}
 
