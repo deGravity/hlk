@@ -310,6 +310,10 @@ void hlk::KnitGraph::trace()
 	std::vector<ak::TracedStitch> traced_stitches;
 	ak::trace_graph(RCG, &traced_stitches);
 
+	// HACK! - Connect childless nodes to their neighbors' children when possible.
+	// This fixes special faces
+
+
 	stitches.reserve(traced_stitches.size());
 	std::vector<bool> first_trace(nodes.size(), true);
 	for (auto const& ts : traced_stitches) {

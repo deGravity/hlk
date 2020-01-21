@@ -725,25 +725,29 @@ namespace hlk {
 			int yarn_out = side_counts[1];
 
 			// Assert that sizing optimization worked appropriately:
+			int l_in = std::max(1, loop_in);
+			int l_out = std::max(1, loop_out);
+			int y_in = std::max(1, yarn_in);
+			int y_out = std::max(1, yarn_out);
 			if (shaping == 0) {
-				assert(loop_in == loop_out);
+				assert(l_in == l_out);
 			}
-			else {
-				assert(loop_in + loop_in * (yarn_in - 1) >= loop_out);
-				assert(loop_in + loop_in * (yarn_out - 1) >= loop_out);
-				assert(loop_out + loop_out * (yarn_in - 1) >= loop_in);
-				assert(loop_out + loop_out * (yarn_out - 1) >= loop_in);
+			else {		
+				assert(l_in + l_in * (y_in - 1) >= l_out);
+				assert(l_in + l_in * (y_out - 1) >= l_out);
+				assert(l_out + l_out * (y_in - 1) >= l_in);
+				assert(l_out + l_out * (y_out - 1) >= l_in);
 			}
 			if (sr_shaping == 1) {
-				assert(yarn_in + loop_in >= yarn_out);
-				assert(yarn_out + loop_in >= yarn_in);
+				assert(y_in + loop_in >= y_out);
+				assert(y_out + loop_in >= y_in);
 			}
 			else if(sr_shaping == 2) {
-				assert(yarn_in + loop_out >= yarn_out);
-				assert(yarn_out + loop_out >= yarn_in);
+				assert(y_in + loop_out >= y_out);
+				assert(y_out + loop_out >= y_in);
 			}
 			else {
-				assert(yarn_in == yarn_out);
+				assert(y_in == y_out);
 			}
 
 

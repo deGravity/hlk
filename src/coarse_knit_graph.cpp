@@ -380,6 +380,42 @@ namespace hlk {
 				G.edges.back()->is_loop = false;
 			}
 		}
+
+
+		// HACK! Add children to decreases to zero
+		for (auto& node : G.nodes) {
+			if (node->top.size() == 1 && !node->top[0]->dst) {
+				node->top[0]->contracted = true;
+				node->top.clear();
+			}
+			if (node->top.size() == 0) {
+				if (node->left && node->left->src && node->left->src->top.size() > 0) {
+					auto& child = node->left->src->top.back()->dst;
+					if (child && child->bottom.size() == 1) {
+						std::shared_ptr<KnitGraphEdge> edge = std::make_shared<KnitGraphEdge>();
+						edge->is_loop = true;
+						edge->src = node;
+						edge->dst = child;
+						edge->type = LoopType::YARNOVER;
+						node->top.push_back(edge);
+						child->bottom.push_back(edge);
+						continue;
+					}
+				} else if (node->right && node->right->dst && node->right->dst->top.size() > 0) {
+					auto& child = node->right->dst->top.front()->dst;
+					if (child && child->bottom.size() == 1) {
+						std::shared_ptr<KnitGraphEdge> edge = std::make_shared<KnitGraphEdge>();
+						edge->is_loop = true;
+						edge->src = node;
+						edge->dst = child;
+						edge->type = LoopType::YARNOVER;
+						node->top.push_back(edge);
+						child->bottom.insert(child->bottom.begin(), edge);
+						continue;
+					}
+				}
+			}
+		}
 		
 		G.re_index();
 
