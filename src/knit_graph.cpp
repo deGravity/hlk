@@ -25,7 +25,7 @@ namespace hlk {
 			std::vector<std::shared_ptr<KnitGraphEdge>> out_edges{ nodes[i]->right };
 			out_edges.insert(out_edges.end(), nodes[i]->top.begin(), nodes[i]->top.end());
 			for (auto& e : out_edges) {
-				if (e->dst) {
+				if (e && e->dst) {
 					djs.join(i, e->dst->index);
 				}
 			}
