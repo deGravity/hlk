@@ -340,7 +340,7 @@ void RemeshingMenu::draw_custom_window() {
         auto mode_selector = [&](Composition c, GLuint texture, std::string name) {
             if (ImGui::ImageButton((void*)(intptr_t)(texture), ImVec2(80, 80))) {
                 if (composition != c) {
-                    if (!singGroups.empty() && singGroups[singGroups.size() - 1].size() != composition_sing_nums[c]) {
+                    if (!singGroups.empty() && singGroups[singGroups.size() - 1].size() != composition_sing_nums[composition]) {
                         std::cout << "[Warn] you are switching to a new composition rule while the current composition is incomplete; \tthe current changes will be discarded...\n";
                         for (int v : singGroups[singGroups.size() - 1]) {
                             cycleIndices(vertex2cycle(v)) = 0;
