@@ -112,6 +112,32 @@ namespace hlk {
 		mesh_loaded = true;
 	}
 
+	void LabelingUI::load_variation()
+	{
+		LabeledQuadMesh variation;
+		std::string filename = igl::file_dialog_open();
+		read_quad_mesh(filename, variation, planarize);
+		M.V = variation.V;
+		M.LV = variation.LV;
+		for (int q = 0; q < M.m; ++q) {
+			for (int i = 0; i < 4; ++i) {
+				double len = (M.V.row(M.F_q(q, (i + 1) % 4)) - M.V.row(M.F_q(q, i))).norm();
+				M.side_lengths.push_back(len);
+			}
+		}
+		M.update_textures();
+
+		viewer->selected_data_index = overlay_index;
+		viewer->data().clear();
+		viewer->data().set_mesh(M.LV, M.LF);
+		viewer->data().set_texture(R, G, B, A);
+		viewer->data().set_uv(M.UV);
+		viewer->data().show_texture = true;
+		viewer->data().show_lines = false;
+		viewer->data().set_colors(M.C);
+
+	}
+
 
 	bool LabelingUI::mouse_down(int button, int modifier) {
 		if (igl::opengl::glfw::imgui::ImGuiMenu::mouse_down(button, modifier)) return true;
@@ -435,6 +461,11 @@ namespace hlk {
 				vis.display(viewer->data());
 			}
 		}
+
+		if (ImGui::Button("Load Variation")) {
+			load_variation();
+		}
+
 
 		if (ImGui::Button("Schedule Stitches File")) {
 			auto filename = igl::file_dialog_open();

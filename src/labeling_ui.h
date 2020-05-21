@@ -18,6 +18,8 @@ namespace hlk {
 		void load_quad_mesh_file(std::string filename);
 		void init_quad_mesh_display();
 
+		void load_variation();
+
 		bool mouse_down(int button, int modifier);
 
 		bool mouse_up(int button, int modifier);
