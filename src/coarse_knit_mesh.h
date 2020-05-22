@@ -228,5 +228,13 @@ namespace hlk {
 		bool geometry_solved = false;
 
 		bool symmetrize = true;
+
+
+		bool show_seams = true;
+		bool show_shaping = true;
+		bool show_orientation = true;
+		bool show_texture = true;
+		bool show_potential_seams = true;
+		bool show_edges = true;
 	};
 }

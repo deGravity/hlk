@@ -35,8 +35,10 @@ namespace hlk {
 			}
 		}
 
-		for (auto& slot : edge_slots) {
-			set_glyph(slot, glyphs::THIN_SOLID_LINE, color::GREY);
+		if (show_edges) {
+			for (auto& slot : edge_slots) {
+				set_glyph(slot, glyphs::THIN_SOLID_LINE, color::GREY);
+			}
 		}
 
 
@@ -338,19 +340,23 @@ namespace hlk {
 	{
 		if (seam >= 0) {
 			if (mesh->seams[seam]->val) {
-				if (mesh->seams[seam]->is_fixed) {
-					mesh->set_glyph(mesh->edge_slots[index], glyphs::SOLID_LINE, color::BLUE);
-				}
-				else {
-					mesh->set_glyph(mesh->edge_slots[index], glyphs::DASHED_LINE, color::BLUE);
+				if (mesh->show_seams) {
+					if (mesh->seams[seam]->is_fixed) {
+						mesh->set_glyph(mesh->edge_slots[index], glyphs::SOLID_LINE, color::BLUE);
+					}
+					else {
+						mesh->set_glyph(mesh->edge_slots[index], glyphs::DASHED_LINE, color::BLUE);
+					}
 				}
 			}
 			else {
-				if (mesh->seams[seam]->is_fixed) {
-					mesh->set_glyph(mesh->edge_slots[index], glyphs::SOLID_LINE, color::GREY);
-				}
-				else {
-					mesh->set_glyph(mesh->edge_slots[index], glyphs::DASHED_LINE, color::GREY);
+				if (mesh->show_potential_seams) {
+					if (mesh->seams[seam]->is_fixed) {
+						mesh->set_glyph(mesh->edge_slots[index], glyphs::SOLID_LINE, color::GREY);
+					}
+					else {
+						mesh->set_glyph(mesh->edge_slots[index], glyphs::DASHED_LINE, color::GREY);
+					}
 				}
 			}
 
@@ -713,8 +719,14 @@ namespace hlk {
 	{
 		auto slot = mesh->quad_slots[index];
 		auto tex = get_textures();
-		mesh->set_glyph(slot, glyphs::SOLID_LINE, tex[texture_id].color);
-		// TODO - Print Glyphs for inc/dec type
+		if (mesh->show_texture) {
+			mesh->set_glyph(slot, glyphs::SOLID_LINE, tex[texture_id].color);
+		}
+		else {
+			mesh->set_glyph(slot, glyphs::SOLID_LINE, tex[0].color);
+		}
+
+		if (!mesh->show_shaping) return;
 
 		// First identify orientation
 		std::vector<int> gen_indices;
@@ -934,7 +946,9 @@ namespace hlk {
 		auto& line = is_loop->is_fixed ? glyphs::THIN_SOLID_LINE : glyphs::THIN_DASHED_LINE;
 		auto& s_color = is_loop->val ? color::ORANGE : color::GREEN;
 		auto& symbol = is_out->val ? line : arrow;
-		mesh->set_glyph(mesh->dual_half_edge_slots[index], symbol, s_color);
+		if (mesh->show_orientation) {
+			mesh->set_glyph(mesh->dual_half_edge_slots[index], symbol, s_color);
+		}
 	}
 	int CoarseKnitSide::generalized_index()
 	{

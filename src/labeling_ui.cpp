@@ -763,13 +763,42 @@ namespace hlk {
 			M.geometry_solved = false;
 		}
 
-		if (ImGui::Checkbox("White BG", &white_bg)) {
-			if (white_bg) {
-				viewer->core(0).background_color = Eigen::Vector4f(1.0, 1.0, 1.0, 1.0);
-			}
-			else {
-				viewer->core(0).background_color = Eigen::Vector4f(8.0, 8.0, 8.0, 1.0);
+		if (ImGui::CollapsingHeader("Visualization Options", ImGuiTreeNodeFlags_DefaultOpen)) {
+			if (ImGui::Checkbox("White BG", &white_bg)) {
+				if (white_bg) {
+					viewer->core(0).background_color = Eigen::Vector4f(1.0, 1.0, 1.0, 1.0);
+				}
+				else {
+					viewer->core(0).background_color = Eigen::Vector4f(8.0, 8.0, 8.0, 1.0);
 
+				}
+			}
+
+			if (mesh_loaded) {
+				if (ImGui::Checkbox("Show Seams", &M.show_seams)) {
+					M.update_textures();
+					update_mesh();
+				}
+				if (ImGui::Checkbox("Show Shaping", &M.show_shaping)) {
+					M.update_textures();
+					update_mesh();
+				}
+				if (ImGui::Checkbox("Show Orientation", &M.show_orientation)) {
+					M.update_textures();
+					update_mesh();
+				}
+				if (ImGui::Checkbox("Show Texture", &M.show_texture)) {
+					M.update_textures();
+					update_mesh();
+				}
+				if (ImGui::Checkbox("Show Potential Seams", &M.show_potential_seams)) {
+					M.update_textures();
+					update_mesh();
+				}
+				if (ImGui::Checkbox("Show Edges", &M.show_edges)) {
+					M.update_textures();
+					update_mesh();
+				}
 			}
 		}
 	
