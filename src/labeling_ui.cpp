@@ -774,6 +774,8 @@ namespace hlk {
 				}
 			}
 
+			ImGui::DragFloat("Zoom", &(viewer->core().camera_zoom), 0.05f, 0.1f, 20.0f);
+
 			if (mesh_loaded) {
 				if (ImGui::Checkbox("Show Seams", &M.show_seams)) {
 					M.update_textures();
