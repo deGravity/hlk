@@ -133,7 +133,7 @@ hlk::IGLVisualization hlk::KnitGraph::visualize_stitches(const std::vector<vkmp:
 		}
 		*/
 		if (stitches[i].data.id == 1) {
-			point_color = Eigen::RowVector3d(1.0, 1.0, 1.0);
+			point_color = Eigen::RowVector3d(.8, .8, .8);
 		}
 		else {//if (stitches[i].data.name == "purl") {
 			point_color = Eigen::RowVector3d(0.0, 0.0, 0.0);

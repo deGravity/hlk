@@ -18,6 +18,13 @@ namespace hlk {
 		void load_quad_mesh_file(std::string filename);
 		void init_quad_mesh_display();
 
+		void load_generator();
+		bool has_generator = false;
+		std::string generator_path = "";
+		Eigen::MatrixXd gen_coords;
+		Eigen::VectorXi gen_indices;
+		void generate_variation(std::string args);
+
 		void load_variation();
 
 		bool mouse_down(int button, int modifier);

@@ -5,7 +5,11 @@
 #include <igl/unproject_onto_mesh.h>
 #include <igl/file_dialog_save.h>
 #include <igl/writeDMAT.h>
-
+#include <igl/read_triangle_mesh.h>
+#include <igl/readDMAT.h>
+#include <igl/barycentric_to_global.h>
+#include <igl/barycentric_coordinates.h>
+#include <igl/readOBJ.h>
 
 #include "read_quad_mesh.h"
 
@@ -112,6 +116,67 @@ namespace hlk {
 		mesh_loaded = true;
 	}
 
+	void LabelingUI::load_generator()
+	{
+		generator_path = igl::file_dialog_open();
+		if (generator_path.size() > 0) {
+			has_generator = true;
+			int last_sep = generator_path.find_last_of('\\');
+			std::string c_file = generator_path.substr(0, last_sep) + "/C.dmat";
+			std::string i_file = generator_path.substr(0, last_sep) + "/I.list";
+
+			igl::readDMAT(c_file, gen_coords);
+			std::ifstream i_stream(i_file);
+			gen_indices.resize(M.n);
+			for (int i = 0; i < M.n; ++i) {
+				int index;
+				i_stream >> index;
+				gen_indices[i] = index;
+			}
+			i_stream.close();
+
+		}
+	}
+
+	void LabelingUI::generate_variation(std::string args)
+	{
+		std::string command = generator_path + " " + args + " gen_temp.obj";
+		system(command.c_str());
+		Eigen::MatrixXd V;
+		Eigen::MatrixXi F;
+		igl::read_triangle_mesh("gen_temp.obj", V, F);
+
+
+
+		for (int i = 0; i < M.n; ++i) {
+			M.V.row(i) = 
+				gen_coords(i, 0) * V.row(F(gen_indices(i), 0)) + 
+				gen_coords(i, 1) * V.row(F(gen_indices(i), 1)) + 
+				gen_coords(i, 2) * V.row(F(gen_indices(i), 2));
+		}
+		for (int i = 0; i < M.F_q.rows(); ++i) {
+			M.V.row(M.n + i) = M.V.row(M.F_q(i, 0)) / 4 + M.V.row(M.F_q(i, 1)) / 4 + M.V.row(M.F_q(i, 2)) / 4 + M.V.row(M.F_q(i, 3)) / 4;
+		}
+		M.side_lengths.clear();
+		for (int q = 0; q < M.m; ++q) {
+			for (int i = 0; i < 4; ++i) {
+				double len = (M.V.row(M.F_q(q, (i + 1) % 4)) - M.V.row(M.F_q(q, i))).norm();
+				M.side_lengths.push_back(len);
+			}
+		}
+		((LabeledQuadMesh)(M)).init();
+		M.update_textures();
+
+		viewer->selected_data_index = overlay_index;
+		viewer->data().clear();
+		viewer->data().set_mesh(M.LV, M.LF);
+		viewer->data().set_texture(R, G, B, A);
+		viewer->data().set_uv(M.UV);
+		viewer->data().show_texture = true;
+		viewer->data().show_lines = false;
+		viewer->data().set_colors(M.C);
+	}
+
 	void LabelingUI::load_variation()
 	{
 		LabeledQuadMesh variation;
@@ -119,6 +184,7 @@ namespace hlk {
 		read_quad_mesh(filename, variation, planarize);
 		M.V = variation.V;
 		M.LV = variation.LV;
+		M.side_lengths.clear();
 		for (int q = 0; q < M.m; ++q) {
 			for (int i = 0; i < 4; ++i) {
 				double len = (M.V.row(M.F_q(q, (i + 1) % 4)) - M.V.row(M.F_q(q, i))).norm();
@@ -466,6 +532,20 @@ namespace hlk {
 			load_variation();
 		}
 
+		if (ImGui::Button("Load Generator")) {
+			load_generator();
+		}
+
+		if (has_generator) {
+			static char args_buff[128] = "1 1 1 1 1";
+			ImGui::InputText("Generator args", args_buff, IM_ARRAYSIZE(args_buff));
+
+			if (ImGui::Button("Generate Variation")) {
+				std::string args(args_buff);
+				generate_variation(args);
+			}
+		}
+
 
 		if (ImGui::Button("Schedule Stitches File")) {
 			auto filename = igl::file_dialog_open();
@@ -738,7 +818,7 @@ namespace hlk {
 		G.build_mesh(0.1, 4, V, E, C);
 		viewer->data(knit_graph_index).set_points(V, Eigen::RowVector3d(1.0, 1.0, 1.0));
 		for (int i = 0; i < V.rows(); ++i) {
-			viewer->data(knit_graph_index).add_label(V.row(i), std::to_string(i));
+			//viewer->data(knit_graph_index).add_label(V.row(i), std::to_string(i));
 		}
 
 		viewer->data(knit_graph_index).set_edges(V, E, C);
@@ -755,7 +835,7 @@ namespace hlk {
 			auto vis = KnitGraph::visualize_stitches(KG.stitches);
 			vis.display(viewer->data(traced_graph_index));
 			viewer->data(traced_graph_index).line_width = 2.5;
-			viewer->data(traced_graph_index).point_size = 20;
+			viewer->data(traced_graph_index).point_size = 10;
 
 			viewer->data(traced_graph_index).clear_labels();
 		}
