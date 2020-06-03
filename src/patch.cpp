@@ -8,6 +8,7 @@
 #include <regex>
 
 #include <igl/mvc.h>
+#include <ceres/ceres.h>
 
 #include <assert.h>
 
@@ -551,6 +552,47 @@ namespace hlk {
 		}
 	}
 
+	/*
+	struct RelaxationError {
+		RelaxationError(
+			const Eigen::MatrixXi& row_edges,
+			const Eigen::MatrixXi& col_edges,
+			const Eigen::MatrixXi& row_boundaries,
+			const Eigen::MatrixXi& col_boundaries,
+			const Eigen::MatrixXd& boundary_positions,
+			const double row_length,
+			const double col_length
+		) : row_edges_(row_edges),
+			col_edges_(col_edges),
+			row_boundaries_(row_boundaries),
+			col_boundaries_(col_boundaries),
+			boundary_positions_(boundary_positions),
+			row_length_(row_length),
+			col_length_(col_length) {}
+
+
+		template <typename T>
+		bool operator()(const T* vertex_positions, T* error) {
+			Eigen::MatrixXd V(vertex_positions);
+
+			for (int i = 0; i < row_edges.size(); ++i) {
+				double diff = (V.row(row_edges(i, 0)) - V.row(row_edges(i, 1))).norm();
+				error[0] += 0;
+			}
+
+		}
+
+
+		Eigen::MatrixXi row_edges_;
+		Eigen::MatrixXi col_edges_;
+		Eigen::MatrixXi row_boundaries_;
+		Eigen::MatrixXi col_boundaries_;
+		Eigen::MatrixXd boundary_positions_;
+		double row_length_;
+		double col_length_;
+	};
+	*/
+
 	void Patch::interpolate_coordinates()
 	{
 		Eigen::MatrixXd V, V3d;
@@ -642,6 +684,7 @@ namespace hlk {
 		for (int i = 0; i < W.rows(); ++i) {
 			graph.nodes[i]->pos = node_positions.row(i);
 		}
+		
 	}
 
 	Patch::Patch(std::vector<std::vector<int>> sides, const Eigen::MatrixXd& corners, int shaping, int sr_shaping)

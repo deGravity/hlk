@@ -22,10 +22,9 @@ namespace hlk {
 		bool has_generator = false;
 		std::string generator_path = "";
 		Eigen::MatrixXd gen_coords;
-		Eigen::VectorXi gen_indices;
 		void generate_variation(std::string args);
 
-		void load_variation();
+		void load_variation(std::string filename);
 
 		bool mouse_down(int button, int modifier);
 

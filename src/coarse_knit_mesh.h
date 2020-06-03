@@ -138,6 +138,8 @@ namespace hlk {
 
 		CoarseKnitGraph get_dual();
 
+		void export_data(std::string filename);
+
 		// Get Constraints for seams
 		std::vector<std::pair<z3::expr, std::string>> get_seam_costs();
 
