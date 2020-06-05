@@ -10,6 +10,7 @@
 #include <igl/barycentric_to_global.h>
 #include <igl/barycentric_coordinates.h>
 #include <igl/readOBJ.h>
+#include <igl/writeOBJ.h>
 
 #include "read_quad_mesh.h"
 
@@ -122,19 +123,8 @@ namespace hlk {
 		if (generator_path.size() > 0) {
 			has_generator = true;
 			int last_sep = generator_path.find_last_of('\\');
-			std::string c_file = generator_path.substr(0, last_sep) + "/C.dmat";
-			std::string i_file = generator_path.substr(0, last_sep) + "/I.list";
-
-			igl::readDMAT(c_file, gen_coords);
-			std::ifstream i_stream(i_file);
-			gen_indices.resize(M.n);
-			for (int i = 0; i < M.n; ++i) {
-				int index;
-				i_stream >> index;
-				gen_indices[i] = index;
-			}
-			i_stream.close();
-
+			std::string bc_file = generator_path.substr(0, last_sep) + "/bc.dmat";
+			igl::readDMAT(bc_file, gen_coords);
 		}
 	}
 
@@ -146,22 +136,21 @@ namespace hlk {
 		Eigen::MatrixXi F;
 		igl::read_triangle_mesh("gen_temp.obj", V, F);
 
+		Eigen::MatrixXd new_coords = igl::barycentric_to_global(V, F, gen_coords);
 
+		igl::writeOBJ("coarse_temp.obj", new_coords, M.F_q);
 
-		for (int i = 0; i < M.n; ++i) {
-			M.V.row(i) = 
-				gen_coords(i, 0) * V.row(F(gen_indices(i), 0)) + 
-				gen_coords(i, 1) * V.row(F(gen_indices(i), 1)) + 
-				gen_coords(i, 2) * V.row(F(gen_indices(i), 2));
-		}
-		for (int i = 0; i < M.F_q.rows(); ++i) {
-			M.V.row(M.n + i) = M.V.row(M.F_q(i, 0)) / 4 + M.V.row(M.F_q(i, 1)) / 4 + M.V.row(M.F_q(i, 2)) / 4 + M.V.row(M.F_q(i, 3)) / 4;
-		}
+		load_variation("coarse_temp.obj");
+
+		/*
+		M.V.block(0, 0, new_coords.rows(), 3) = new_coords;
+		
 		M.side_lengths.clear();
 		for (int q = 0; q < M.m; ++q) {
 			for (int i = 0; i < 4; ++i) {
+				M.V.row(M.n + q) = M.V.row(4 * q + 0) / 4 + M.V.row(4 * q + 1) / 4 + M.V.row(4 * q + 2) / 4 + M.V.row(4 * q + 3) / 4;
 				double len = (M.V.row(M.F_q(q, (i + 1) % 4)) - M.V.row(M.F_q(q, i))).norm();
-				M.side_lengths.push_back(len);
+				M.side_lengths.push_back(len);	
 			}
 		}
 		((LabeledQuadMesh)(M)).init();
@@ -169,18 +158,22 @@ namespace hlk {
 
 		viewer->selected_data_index = overlay_index;
 		viewer->data().clear();
+
+		viewer->data().set_mesh(M.V, M.F_t);
+		
 		viewer->data().set_mesh(M.LV, M.LF);
 		viewer->data().set_texture(R, G, B, A);
 		viewer->data().set_uv(M.UV);
 		viewer->data().show_texture = true;
 		viewer->data().show_lines = false;
 		viewer->data().set_colors(M.C);
+		*/
 	}
 
-	void LabelingUI::load_variation()
+	void LabelingUI::load_variation(std::string filename)
 	{
 		LabeledQuadMesh variation;
-		std::string filename = igl::file_dialog_open();
+		
 		read_quad_mesh(filename, variation, planarize);
 		M.V = variation.V;
 		M.LV = variation.LV;
@@ -518,6 +511,13 @@ namespace hlk {
 			}
 		}
 
+		if (ImGui::Button("Export Coarse Knit Mesh")) {
+			auto filename = igl::file_dialog_save();
+			if (filename.size() > 0) {
+				M.export_data(filename);
+			}
+		}
+
 		if (ImGui::Button("Load Stitches")) {
 			auto filename = igl::file_dialog_open();
 			if (filename.size() > 0) {
@@ -529,7 +529,8 @@ namespace hlk {
 		}
 
 		if (ImGui::Button("Load Variation")) {
-			load_variation();
+			std::string filename = igl::file_dialog_open();
+			load_variation(filename);
 		}
 
 		if (ImGui::Button("Load Generator")) {

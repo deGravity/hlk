@@ -1537,12 +1537,12 @@ namespace hlk {
 		// Swap the old seam for the first new seam, then add all of the new ones
 		seam_edges[seam] = new_seams[0];
 		for (int i = 1; i < new_seams.size(); ++i) {
-			int new_seam_id = seams.size();
-			seams.emplace_back(topology_optimizer.get_bool_prop(nth_label("seam", new_seam_id)));
-			seam_edges.push_back(new_seams[i]);
-			for (int e : new_seams[i]) {
-				edges[e].seam = new_seam_id;
-			}
+int new_seam_id = seams.size();
+seams.emplace_back(topology_optimizer.get_bool_prop(nth_label("seam", new_seam_id)));
+seam_edges.push_back(new_seams[i]);
+for (int e : new_seams[i]) {
+	edges[e].seam = new_seam_id;
+}
 		}
 
 
@@ -1617,4 +1617,212 @@ namespace hlk {
 
 		geometry_solved = false;
 	}
+
+	void import_data(
+		std::string filename,
+		Eigen::MatrixXd& V,
+		Eigen::MatrixXi& F,
+		Eigen::VectorXi& F_sh, // Face Shaping 
+		Eigen::VectorXi& F_sr, // Face Short Rows
+		Eigen::VectorXi& F_tx, // Face Texture ID
+
+		Eigen::MatrixXi& O_yl, // Orientation is yarn (0) or loop (1)
+		Eigen::MatrixXi& O_io, // Orientation is in (0) or out (1)
+		Eigen::MatrixXi& O_fx, // Orientation is fixed?
+
+		Eigen::MatrixXi& S_op, // Side is part of a seam (not necessarily used)
+		Eigen::MatrixXi& S_on, // Side's seam is used
+		Eigen::MatrixXi& S_fx // Side's seam is fixed
+		)
+	{
+		
+		auto read_matrix_d = [](std::ifstream& f, Eigen::MatrixXd& M) {
+			int r, c;
+			f >> r >> c;
+			M.resize(r, c);
+			for (int i = 0; i < r; ++r) {
+				for (int j = 0; j < c; ++j) {
+					double v;
+					f >> v;
+					M(i, j) = v;
+				}
+			}
+		};
+
+		auto read_matrix_i = [](std::ifstream& f, Eigen::MatrixXi& M) {
+			int r, c;
+			f >> r >> c;
+			M.resize(r, c);
+			for (int i = 0; i < r; ++r) {
+				for (int j = 0; j < c; ++j) {
+					int v;
+					f >> v;
+					M(i, j) = v;
+				}
+			}
+		};
+
+		auto read_vector_i = [](std::ifstream& f, Eigen::VectorXi& V) {
+			int r;
+			f >> r;
+			V.conservativeResize(r);
+			for (int i = 0; i < r; ++r) {
+				int v;
+				f >> v;
+				V(i) = v;
+			}
+		};
+
+		
+		std::ifstream file(filename);
+		read_matrix_d(file, V);
+		read_matrix_i(file, F);
+		read_vector_i(file, F_sh);
+		read_vector_i(file, F_sr);
+		read_vector_i(file, F_tx);
+
+		read_matrix_i(file, O_yl);
+		read_matrix_i(file, O_io);
+		read_matrix_i(file, O_fx);
+
+		read_matrix_i(file, S_op);
+		read_matrix_i(file, S_on);
+		read_matrix_i(file, S_fx);
+
+	}
+
+	void CoarseKnitMesh::export_data(std::string filename)
+	{
+		// =============
+		// Geometry Data
+		// =============
+
+		Eigen::MatrixXd V = this->V.block(0,0, n, 3); // Vertex Positions
+		Eigen::MatrixXi F = this->F_q; // Face Vertices
+
+		
+		// =============
+		// Per-Face Data
+		// =============
+		
+		// Shaping and Short Rows:
+		//   0 = NONE,
+		//   1 = IN_SIDE,
+		//   2 = OUT_SIDE,
+		//   3 = BOTH_SIDES,
+		//   4 = DISTRIBUTED
+		// F_sr can only be 0-2
+		Eigen::VectorXi F_sh(m); // Face Shaping 
+		Eigen::VectorXi F_sr(m); // Face Short Rows
+		Eigen::VectorXi F_tx(m); // Face Texture ID
+
+		// =========================
+		// Per Side (Half-Edge) Data
+		// =========================
+
+		// Orientation Data
+		Eigen::MatrixXi O_yl(m, 4); // Orientation is yarn (0) or loop (1)
+		Eigen::MatrixXi O_io(m, 4); // Orientation is in (0) or out (1)
+		Eigen::MatrixXi O_fx(m, 4); // Orientation is fixed?
+
+		// Seam Data
+		// In our system, a "seam" is a path of edges that we can turn on or off as a unit.
+		// Each of these seams can be "on" or "off", and also be fixed or not.
+		// In this format, we have per-side information, so each side can be
+		//   part of a seam?
+		//   is that seam on or off?
+		//   is that seam fixed?
+		Eigen::MatrixXi S_op(m, 4); // Side is part of a seam (not necessarily used)
+		Eigen::MatrixXi S_on(m, 4); // Side's seam is used
+		Eigen::MatrixXi S_fx(m, 4); // Side's seam is fixed
+
+
+		for (int i = 0; i < quads.size(); ++i) {
+			auto& q = quads[i];
+			F_sh(i) = (int) q.shaping_distribution;
+			F_sr(i) = (int)q.short_row_distribution;
+			F_tx(i) = q.texture_id;
+
+			for (int j = 0; j < 4; ++j) {
+				int k = 4 * i + j;
+				
+				O_yl(i, j) = (int)sides[k].is_loop->val;
+				O_io(i, j) = (int)sides[k].is_out->val;
+				O_fx(i, j) = (int)sides[k].is_loop->is_fixed;
+
+				S_op(i, j) = 0;
+				S_on(i, j) = 0;
+				S_fx(i, j) = 0;
+				int edge = sides_to_edges[k];
+				if (edge >= 0) {
+					int s = edges[edge].seam;
+					if (s >= 0) {
+						S_op(i, j) = 1;
+						S_on(i, j) = (int)seams[s]->val;
+						S_fx(i, j) = (int)seams[s]->is_fixed;
+					}
+				}
+			}
+		}
+
+		std::ofstream file(filename);
+
+		// Write Mesh
+		file << V.rows() << " " << V.cols() << "\n";
+		for (int i = 0; i < V.rows(); ++i) {
+			file << V(i, 0) << " " << V(i, 1) << " " << V(i, 2) << "\n";
+		}
+		file << F.rows() << " " << F.cols() << "\n";
+		for (int i = 0; i < F.rows(); ++i) {
+			file << F(i, 0) << " " << F(i, 1) << " " << F(i, 2) << " " << F(i, 3) << "\n";
+		}
+
+		file << F_sh.size() << "\n";
+		for (int i = 0; i < F_sh.size(); ++i) {
+			file << F_sh(i) << "\n";
+		}
+
+		file << F_sr.size() << "\n";
+		for (int i = 0; i < F_sr.size(); ++i) {
+			file << F_sr(i) << "\n";
+		}
+
+		file << F_tx.size() << "\n";
+		for (int i = 0; i < F_tx.size(); ++i) {
+			file << F_tx(i) << "\n";
+		}
+
+		file << O_yl.rows() << " " << O_yl.cols() << "\n";
+		for (int i = 0; i < O_yl.rows(); ++i) {
+			file << O_yl(i, 0) << " " << O_yl(i, 1) << " " << O_yl(i, 2) << " " << O_yl(i, 3) << "\n";
+		}
+
+		file << O_io.rows() << " " << O_io.cols() << "\n";
+		for (int i = 0; i < O_io.rows(); ++i) {
+			file << O_io(i, 0) << " " << O_io(i, 1) << " " << O_io(i, 2) << " " << O_io(i, 3) << "\n";
+		}
+
+		file << O_fx.rows() << " " << O_fx.cols() << "\n";
+		for (int i = 0; i < O_fx.rows(); ++i) {
+			file << O_fx(i, 0) << " " << O_fx(i, 1) << " " << O_fx(i, 2) << " " << O_fx(i, 3) << "\n";
+		}
+
+		file << S_op.rows() << " " << S_op.cols() << "\n";
+		for (int i = 0; i < S_op.rows(); ++i) {
+			file << S_op(i, 0) << " " << S_op(i, 1) << " " << S_op(i, 2) << " " << S_op(i, 3) << "\n";
+		}
+
+		file << S_on.rows() << " " << S_on.cols() << "\n";
+		for (int i = 0; i < S_on.rows(); ++i) {
+			file << S_on(i, 0) << " " << S_on(i, 1) << " " << S_on(i, 2) << " " << S_on(i, 3) << "\n";
+		}
+
+		file << S_fx.rows() << " " << S_fx.cols() << "\n";
+		for (int i = 0; i < S_fx.rows(); ++i) {
+			file << S_fx(i, 0) << " " << S_fx(i, 1) << " " << S_fx(i, 2) << " " << S_fx(i, 3) << "\n";
+		}
+
+		file.close();
+	}
+
 }

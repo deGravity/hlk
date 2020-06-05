@@ -11,6 +11,7 @@
 #include <igl/point_mesh_squared_distance.h>
 #include <igl/per_face_normals.h>
 #include <igl/cat.h>
+#include <Eigen/StdVector>
 #include "glyph.h"
 
 #include <vector>

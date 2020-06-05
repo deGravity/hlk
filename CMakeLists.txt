@@ -28,6 +28,7 @@ option(LIBIGL_USE_STATIC_LIBRARY "Use libigl as static library" ON)
 # Hack for libigl linking: https://github.com/libigl/libigl/issues/1229
 set(MSVC_RUNTIME "dynamic")
 
+find_package(Ceres REQUIRED)
 find_package(LIBIGL REQUIRED)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(Z3 REQUIRED CONFIG)
@@ -54,7 +55,11 @@ add_executable(${PROJECT_NAME}
 	${VKMP_HEADER} 
 	${XFERPLAN_HEADER})
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${Z3_CXX_INCLUDE_DIRS} ${QEX_INCLUDE_DIRS} ext/Directional/include)
+target_include_directories(${PROJECT_NAME} PRIVATE 
+	${Z3_CXX_INCLUDE_DIRS}
+	${QEX_INCLUDE_DIRS}
+	ext/Directional/include
+	${CERES_INCLUDE_DIRS})
 
 target_link_libraries(${PROJECT_NAME} 
 	Eigen3::Eigen 
@@ -67,6 +72,7 @@ target_link_libraries(${PROJECT_NAME}
 	igl::opengl_glfw_imgui 
 	igl::comiso
 	${Z3_LIBRARIES}
+	${CERES_LIBRARIES}
 	QEx)
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC _USE_MATH_DEFINES)
