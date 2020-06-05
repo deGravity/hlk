@@ -1756,7 +1756,7 @@ for (int e : new_seams[i]) {
 		for (int i = 0; i < n; ++i) {
 			int target = is_border_vertex[i] ? 3 : 4;
 			int val = target - valence[i];
-			if (target != 0) {
+			if (val != 0) {
 				s_locs.push_back(i);
 				s_inds.push_back(val);
 			}
