@@ -1632,7 +1632,8 @@ for (int e : new_seams[i]) {
 
 		Eigen::MatrixXi& S_op, // Side is part of a seam (not necessarily used)
 		Eigen::MatrixXi& S_on, // Side's seam is used
-		Eigen::MatrixXi& S_fx // Side's seam is fixed
+		Eigen::MatrixXi& S_fx, // Side's seam is fixed
+		Eigen::MatrixXi& singularities // Singularities. First col in vertex index, 2nd is singularity type
 		)
 	{
 		
@@ -1689,6 +1690,8 @@ for (int e : new_seams[i]) {
 		read_matrix_i(file, S_on);
 		read_matrix_i(file, S_fx);
 
+		read_matrix_i(file, singularities);
+
 	}
 
 	void CoarseKnitMesh::export_data(std::string filename)
@@ -1735,6 +1738,38 @@ for (int e : new_seams[i]) {
 		Eigen::MatrixXi S_op(m, 4); // Side is part of a seam (not necessarily used)
 		Eigen::MatrixXi S_on(m, 4); // Side's seam is used
 		Eigen::MatrixXi S_fx(m, 4); // Side's seam is fixed
+
+		// Singularities
+		// Color Codes - See Figure 4 in the paper:
+		//
+		// -4 Red
+		// -2 Orange
+		// -1 Yellow
+		// 0 Grey (Not actually a singularity, but we treat it like one)
+		// +1 Lighter Blue
+		// +2 Darker Blue
+		Eigen::MatrixXi singularities; // First col = vertex index, Second col = type
+		
+
+		
+		std::vector<int> s_locs, s_inds;
+		for (int i = 0; i < n; ++i) {
+			int target = is_border_vertex[i] ? 3 : 4;
+			int val = target - valence[i];
+			if (target != 0) {
+				s_locs.push_back(i);
+				s_inds.push_back(val);
+			}
+			else if (vertex_is_special[i]) {
+				s_locs.push_back(i);
+				s_inds.push_back(0);
+			}
+		}
+		singularities.resize(s_locs.size(), 2);
+		for (int i = 0; i < s_locs.size(); ++i) {
+			singularities(i, 0) = s_locs[i];
+			singularities(i, 1) = s_inds[i];
+		}
 
 
 		for (int i = 0; i < quads.size(); ++i) {
@@ -1820,6 +1855,11 @@ for (int e : new_seams[i]) {
 		file << S_fx.rows() << " " << S_fx.cols() << "\n";
 		for (int i = 0; i < S_fx.rows(); ++i) {
 			file << S_fx(i, 0) << " " << S_fx(i, 1) << " " << S_fx(i, 2) << " " << S_fx(i, 3) << "\n";
+		}
+
+		file << singularities.rows() << " " << singularities.cols() << "\n";
+		for (int i = 0; i < singularities.rows(); ++i) {
+			file << singularities(i, 0) << " " << singularities(i, 1) << "\n";
 		}
 
 		file.close();
