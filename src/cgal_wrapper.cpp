@@ -1,5 +1,7 @@
 #include "cgal_wrapper.h"
 
+#include <Eigen/Geometry>  // For MatrixBase::cross() definition
+
 #define min(a,b) a < b ? a : b
 
 namespace hlk {

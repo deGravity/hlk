@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include "ScheduleCost.hpp"
 
 #include <vector>

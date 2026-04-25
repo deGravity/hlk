@@ -1,3 +1,4 @@
+#include <cstdint>
 #include "autoknit.h"
 
 #include <iostream>

@@ -16,7 +16,12 @@ option(LIBIGL_WITH_OPENGL "Use OpenGL" ON)
 option(LIBIGL_WITH_OPENGL_GLFW "Use GLFW" ON)
 option(LIBIGL_WITH_OPENGL_GLFW_IMGUI "Use imGUI" ON)
 option(LIBIGL_WITH_COMISO "Use CoMiso" ON)
-option(LIBIGL_WITH_CGAL "Use CGAL" ON)
+# libigl 350ab15's CGAL bindings (igl/copyleft/cgal/*) use CGAL APIs that
+# were removed in CGAL 6.x. We use vcpkg-managed CGAL ≥ 6 directly from our
+# own translation units instead — see src/remeshing_plugin.cpp's polyhedron
+# builder. The only hlk source that ever called into igl::copyleft::cgal was
+# remeshing_plugin.cpp:1884 (mesh_to_polyhedron), which has been replaced.
+option(LIBIGL_WITH_CGAL "Use CGAL" OFF)
 
 # Note - many LIBIGL functions do not work as a static library
 # (for example, igl::copyleft::cgal::wire_mesh), and you have less
@@ -28,10 +33,57 @@ option(LIBIGL_USE_STATIC_LIBRARY "Use libigl as static library" ON)
 # Hack for libigl linking: https://github.com/libigl/libigl/issues/1229
 set(MSVC_RUNTIME "dynamic")
 
-find_package(Ceres REQUIRED)
-find_package(LIBIGL REQUIRED)
+# Resolve Eigen3 and CGAL via vcpkg (or system) before bringing in libigl,
+# so that libigl's CMake scripts skip their own download paths and reuse
+# our targets. Z3 is a separate find_package call below for symmetry.
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(CGAL CONFIG REQUIRED COMPONENTS Core)
 find_package(Z3 REQUIRED CONFIG)
+find_package(glm CONFIG REQUIRED)
+
+# Patch libigl to use a reachable CoMISo source.
+#
+# The vendored libigl submodule's cmake/LibiglDownloadExternal.cmake hardcodes
+# CoMISo at git@gitlab.cs.washington.edu:knitting-research/external/libigl-comiso.git
+# at SHA 90e795b6, which is no longer accessible. Patch the submodule file in
+# place to point at the public libigl/CoMISo.
+set(HLK_COMISO_GIT_URL "https://github.com/libigl/CoMISo.git" CACHE STRING
+    "Git URL libigl will clone CoMISo from")
+set(HLK_COMISO_GIT_TAG "562efe333edc8e649dc101469614f43378b1eb55" CACHE STRING
+    "CoMISo commit libigl will check out (master HEAD as of 2026-04-24)")
+
+set(_hlk_dl_cmake "${CMAKE_CURRENT_SOURCE_DIR}/ext/libigl/cmake/LibiglDownloadExternal.cmake")
+file(READ "${_hlk_dl_cmake}" _hlk_dl_content)
+string(REPLACE
+    "git@gitlab.cs.washington.edu:knitting-research/external/libigl-comiso.git"
+    "${HLK_COMISO_GIT_URL}"
+    _hlk_dl_content_new "${_hlk_dl_content}")
+string(REPLACE
+    "90e795b6662c4ceccc2ab98093e8b69aa9bb0478"
+    "${HLK_COMISO_GIT_TAG}"
+    _hlk_dl_content_new "${_hlk_dl_content_new}")
+if(NOT _hlk_dl_content STREQUAL _hlk_dl_content_new)
+    message(STATUS "Patching ext/libigl/cmake/LibiglDownloadExternal.cmake to point CoMISo at ${HLK_COMISO_GIT_URL}")
+    file(WRITE "${_hlk_dl_cmake}" "${_hlk_dl_content_new}")
+endif()
+
+# libigl 350ab15 predates GCC 13's stricter handling of transitive STL
+# includes; a handful of its files use stdint types without #include <cstdint>.
+foreach(_hlk_libigl_patch
+    "ext/libigl/include/igl/sparse_voxel_grid.cpp"
+    "ext/libigl/include/igl/Timer.h"
+    "ext/libigl/include/igl/opengl/MeshGL.h")
+    set(_hlk_path "${CMAKE_CURRENT_SOURCE_DIR}/${_hlk_libigl_patch}")
+    if(EXISTS "${_hlk_path}")
+        file(READ "${_hlk_path}" _hlk_content)
+        if(NOT _hlk_content MATCHES "(cstdint|stdint\\.h)")
+            message(STATUS "Patching ${_hlk_libigl_patch} to add #include <cstdint>")
+            file(WRITE "${_hlk_path}" "#include <cstdint>\n${_hlk_content}")
+        endif()
+    endif()
+endforeach()
+
+find_package(LIBIGL REQUIRED)
 
 add_subdirectory(ext/libQEx EXCLUDE_FROM_ALL)
 target_compile_definitions(QEx PRIVATE _USE_MATH_DEFINES)
@@ -55,24 +107,22 @@ add_executable(${PROJECT_NAME}
 	${VKMP_HEADER} 
 	${XFERPLAN_HEADER})
 
-target_include_directories(${PROJECT_NAME} PRIVATE 
+target_include_directories(${PROJECT_NAME} PRIVATE
 	${Z3_CXX_INCLUDE_DIRS}
 	${QEX_INCLUDE_DIRS}
-	ext/Directional/include
-	${CERES_INCLUDE_DIRS})
+	ext/Directional/include)
 
-target_link_libraries(${PROJECT_NAME} 
-	Eigen3::Eigen 
+target_link_libraries(${PROJECT_NAME}
+	Eigen3::Eigen
 	CGAL::CGAL
-	igl::cgal
-	igl::core 
-	igl::opengl 
-	igl::opengl_glfw 
+	glm::glm
+	igl::core
+	igl::opengl
+	igl::opengl_glfw
 	igl::png
-	igl::opengl_glfw_imgui 
+	igl::opengl_glfw_imgui
 	igl::comiso
 	${Z3_LIBRARIES}
-	${CERES_LIBRARIES}
 	QEx)
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC _USE_MATH_DEFINES)

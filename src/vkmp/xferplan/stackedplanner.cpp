@@ -1,3 +1,4 @@
+#include <cstdint>
 #include "stackedplanner.h"
 #include <iostream>
 #include <set>

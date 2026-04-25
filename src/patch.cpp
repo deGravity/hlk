@@ -8,7 +8,6 @@
 #include <regex>
 
 #include <igl/mvc.h>
-#include <ceres/ceres.h>
 
 #include <assert.h>
 

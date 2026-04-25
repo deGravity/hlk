@@ -1022,7 +1022,7 @@ namespace hlk {
 		}
 		else {
 			// TODO - Get Information from the UNSAT core
-			std::cout << result.unsat_core << std::endl;
+			if (result.unsat_core) std::cout << *result.unsat_core << std::endl;
 			topology_solved = false;
 		}
 
@@ -1155,7 +1155,7 @@ namespace hlk {
 			}
 			else {
 				// TODO - Get Information from the UNSAT core
-				std::cout << result.unsat_core << std::endl;
+				if (result.unsat_core) std::cout << *result.unsat_core << std::endl;
 				geometry_solved = false;
 				std::cout << "Increasing Tolerance to " << edge_tolerance + 1 << std::endl;
 				++edge_tolerance;

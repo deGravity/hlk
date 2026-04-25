@@ -1,3 +1,4 @@
+#include <cstdint>
 #include "ScheduleCost.hpp"
 #include "plan_transfers.hpp"
 

@@ -5,7 +5,10 @@
 #include <igl/adjacency_list.h>
 #include <igl/avg_edge_length.h>
 #include <igl/barycenter.h>
-#include <igl/copyleft/cgal/mesh_to_polyhedron.h>
+// igl::copyleft::cgal::mesh_to_polyhedron is unavailable here because libigl's
+// vendored CGAL bindings don't compile against modern CGAL; we build the
+// Polyhedron directly via Polyhedron_incremental_builder_3 below.
+#include <CGAL/Polyhedron_incremental_builder_3.h>
 #include <igl/doublearea.h>
 #include <igl/edges.h>
 #include <igl/edge_topology.h>
@@ -1878,11 +1881,39 @@ void RemeshingMenu::update_visualization() {
 }
 
 /////////////////////////////////////////////////////////////////////////////
+namespace {
+	// Replacement for igl::copyleft::cgal::mesh_to_polyhedron — builds a
+	// Polyhedron_3 from an Eigen V/F triangle mesh via incremental builder.
+	struct EigenMeshToPolyhedron : public CGAL::Modifier_base<Poly3_HalfedgeDS> {
+		const Eigen::MatrixXd& V;
+		const Eigen::MatrixXi& F;
+		EigenMeshToPolyhedron(const Eigen::MatrixXd& V_, const Eigen::MatrixXi& F_)
+			: V(V_), F(F_) {}
+		void operator()(Poly3_HalfedgeDS& hds) override {
+			CGAL::Polyhedron_incremental_builder_3<Poly3_HalfedgeDS> b(hds, true);
+			b.begin_surface(V.rows(), F.rows());
+			for (int i = 0; i < V.rows(); ++i) {
+				b.add_vertex(Poly_point_3(V(i, 0), V(i, 1), V(i, 2)));
+			}
+			for (int i = 0; i < F.rows(); ++i) {
+				b.begin_facet();
+				for (int j = 0; j < F.cols(); ++j) b.add_vertex_to_facet(F(i, j));
+				b.end_facet();
+			}
+			b.end_surface();
+		}
+	};
+}
+
 void RemeshingMenu::update_polyhedron_tree(const std::vector<int> & face_refs) {
 	///////////////////////////////////////
 	igl_polyhedron.clear();
-	if (!igl::copyleft::cgal::mesh_to_polyhedron(V, F, igl_polyhedron)) {
-		std::cerr << "Cannot build CGAL polyhedron; ignoring...\n";
+	{
+		EigenMeshToPolyhedron build(V, F);
+		igl_polyhedron.delegate(build);
+		if (!igl_polyhedron.is_valid()) {
+			std::cerr << "Cannot build CGAL polyhedron; ignoring...\n";
+		}
 	}
 	CGAL::set_halfedgeds_items_id(igl_polyhedron);
 	igl_tree.clear();

@@ -1,6 +1,7 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 // Modified autoknit scheduler
+#include <cstdint>
 #include "xferplan/Stitch.hpp"
 #include "xferplan/Shape.hpp"
 #include "xferplan/ScheduleCost.hpp"

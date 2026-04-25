@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include "plan_transfers.hpp"
 
 #include <cassert>

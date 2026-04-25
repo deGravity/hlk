@@ -1,3 +1,4 @@
+#include <cstdint>
 #include "Stitch.hpp"
 
 #include <iostream>

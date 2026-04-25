@@ -1,3 +1,4 @@
+#include <cstdint>
 #include "embed_DAG.hpp"
 
 #include <set>

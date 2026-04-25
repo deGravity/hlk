@@ -1,3 +1,4 @@
+#include <cstdint>
 #include "knit_graph.h"
 #include "glyph.h"
 
@@ -199,12 +200,12 @@ void hlk::KnitGraph::generate_instructions(std::string base_filename, int depth,
 		s.do_schedule(yarn_mappings, cse, depth);
 		s.write_schedule(filename + ".js");
 		std::string scripts_dir = SCRIPTS_DIR;
-		std::string node_path = "NODE_PATH=" + scripts_dir + "\\";
-		putenv(node_path.c_str());
+		std::string node_path = "NODE_PATH=" + scripts_dir + "/";
+		putenv(const_cast<char*>(node_path.c_str()));
 		std::string command_1 = "node " + filename + ".js";
 		std::cout << "Trying to run:\n" << command_1 << std::endl;
 		system(command_1.c_str());
-		std::string command_2 = "node " + scripts_dir + "\\knitout-to-dat.js " + filename + ".k " + filename + ".dat";
+		std::string command_2 = "node " + scripts_dir + "/knitout-to-dat.js " + filename + ".k " + filename + ".dat";
 		std::cout << "Trying to run:\n" << command_2 << std::endl;
 		system(command_2.c_str());
 

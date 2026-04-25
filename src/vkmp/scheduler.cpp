@@ -1,3 +1,4 @@
+#include <cstdint>
 #include "scheduler.hpp"
 #include <deque>
 #include <map>

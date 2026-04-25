@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "hlk",
+  "version-string": "0.1.0",
+  "description": "high-level-knitting: a coarse-to-fine design tool for machine knitting",
+  "homepage": "https://github.com/deGravity/hlk",
+  "builtin-baseline": "89dd0f4d241136b843fb55813b2f0fa6448c204d",
+  "dependencies": [
+    "eigen3",
+    "z3",
+    "openmesh",
+    "glm",
+    {
+      "name": "cgal",
+      "default-features": false
+    }
+  ],
+  "overrides": [
+    {
+      "name": "eigen3",
+      "version": "3.3.7-2"
+    }
+  ]
+}

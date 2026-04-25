@@ -15,6 +15,21 @@ namespace hlk {
 	void save(std::ofstream& f, const Eigen::VectorXi& V);
 	void load(std::ifstream& f, Eigen::VectorXi& V);
 
+	// Forward declarations so the template bodies below can reference each
+	// other in any order (two-phase lookup; required by modern GCC).
+	template <typename T>
+	void save(std::ofstream& f, const std::vector<T>& V);
+	template <typename T>
+	void load(std::ifstream& f, std::vector<T>& V);
+	template <typename T>
+	void save(std::ofstream& f, const std::vector<std::vector<T>>& V);
+	template <typename T>
+	void load(std::ifstream& f, std::vector<std::vector<T>>& V);
+	template <typename T1, typename T2>
+	void save(std::ofstream& f, const std::vector<std::pair<std::vector<T1>, T2>>& V);
+	template <typename T1, typename T2>
+	void load(std::ifstream& f, std::vector<std::pair<std::vector<T1>, T2>>& V);
+
 	template <typename T>
 	void save(std::ofstream& f, const std::vector<std::vector<T>>& V) {
 		f << V.size() << std::endl;

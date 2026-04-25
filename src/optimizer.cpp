@@ -1,5 +1,7 @@
 #include "optimizer.h"
 
+#include <iostream>
+
 using namespace std;
 using namespace z3;
 
@@ -111,9 +113,9 @@ namespace hlk {
         bool is_sat = sat == solver.check();
         Result result;
         if (is_sat) {
-			auto& m = solver.get_model();
+			z3::model m = solver.get_model();
 			std::cout << "Model is" << std::endl << m << std::endl;
-            result.set_model(solver.get_model());
+            result.set_model(m);
 		}
 		else {
 			result.set_unsat_core(solver.unsat_core());
