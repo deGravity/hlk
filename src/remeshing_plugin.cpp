@@ -147,6 +147,8 @@ void RemeshingMenu::init(igl::opengl::glfw::Viewer* _viewer) {
     auto post_resize = [&](igl::opengl::glfw::Viewer& viewer, int w, int h) {
         window_width = w;
         window_height = h;
+        ImGui::SetWindowPos("Remeshing", ImVec2(window_width - 450, 30));
+        ImGui::SetWindowSize("Remeshing", ImVec2(420, max(300, window_height - 200)));
         return false;
     };
 
@@ -191,8 +193,7 @@ void RemeshingMenu::draw_viewer_menu() {
             if (ImGui::Button("Reset Field##Mesh", ImVec2((w - p) / 2.7f, 0))) {
                 reset_field();
             }
-            ImGui::SameLine(0, p);
-            if (ImGui::Button("Refine##Mesh", ImVec2((w - p) / 4.6f, 0))) {
+            if (ImGui::Button("Refine Mesh##Mesh", ImVec2((w - p) / 4.6f, 0))) {
                 apply_subdivision();
             }
             // Expose symmetry variables.
@@ -287,8 +288,8 @@ void RemeshingMenu::draw_custom_window() {
     if (!model_loaded()) return;
 
     // Define next window position + size
-    ImGui::SetNextWindowPos(ImVec2(window_width - 300, 0), ImGuiSetCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(300, max(300, window_height - 100)), ImGuiSetCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(window_width - 420, 0), ImGuiSetCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(420, max(300, window_height - 100)), ImGuiSetCond_FirstUseEver);
     ImGui::Begin(
         "Remeshing", nullptr,
         ImGuiWindowFlags_NoSavedSettings
@@ -297,10 +298,11 @@ void RemeshingMenu::draw_custom_window() {
     float w = ImGui::GetContentRegionAvailWidth();
     float p = ImGui::GetStyle().FramePadding.x;
 
+    ImGui::PushItemWidth(100);
+
     if (ImGui::CollapsingHeader("Seaming/Feature Lines", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::DragFloat("Loops Drawing Threshold", &loops_threshold, 0.05f, 0.0f, 0.5f);
         ImGui::Checkbox("Use Optimized Loops", &use_optim_loop);
-        ImGui::SameLine(0, p);
         ImGui::Checkbox("Symmetrize Seaming Loops", &symmetrize_loops);
         // seaming mode options.
         ImGui::Text("Click to select the seaming mode.");
@@ -331,27 +333,35 @@ void RemeshingMenu::draw_custom_window() {
         auto tooltip = [](std::string text) {
             if (ImGui::IsItemHovered()) {
                 ImGui::BeginTooltip();
-                ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+                ImGui::PushTextWrapPos(ImGui::GetFontSize() * 40.0f);
                 ImGui::TextUnformatted(text.c_str());
                 ImGui::PopTextWrapPos();
                 ImGui::EndTooltip();
             }
         };
         auto mode_selector = [&](Composition c, GLuint texture, std::string name) {
-            if (ImGui::ImageButton((void*)(intptr_t)(texture), ImVec2(80, 80))) {
+            if (ImGui::ImageButton((void*)(intptr_t)(texture), ImVec2(120, 120))) {
                 if (composition != c) {
-                    if (!singGroups.empty() && singGroups[singGroups.size() - 1].size() != composition_sing_nums[composition]) {
+                    if (!singGroups.empty() && !singGroups[singGroups.size() - 1].empty() &&
+                        singGroups[singGroups.size() - 1].size() != composition_sing_nums[singGroupComp[singGroups.size() - 1]]) {
+
                         std::cout << "[Warn] you are switching to a new composition rule while the current composition is incomplete; \tthe current changes will be discarded...\n";
                         for (int v : singGroups[singGroups.size() - 1]) {
                             cycleIndices(vertex2cycle(v)) = 0;
                             vertex2singGroup.erase(v);
                         }
                         singGroups.pop_back();
+                        singGroupComp.pop_back();
                         update_singularities();
                         update_visualization();
                     }
                     composition = c;
-                    singGroups.push_back(std::vector<int>());
+                    if (!singGroups.empty() && singGroups[singGroups.size() - 1].empty()) {
+                        singGroupComp[singGroups.size() - 1] = composition;
+                    } else {
+                        singGroups.push_back(std::vector<int>());
+                        singGroupComp.push_back(composition);
+                    }
                 }
             }
             tooltip(name);
@@ -369,9 +379,9 @@ void RemeshingMenu::draw_custom_window() {
         mode_selector(Composition::HOLE_QUARTER, hole_quarter, "Cut-out hole 4 x -1/4");
         mode_selector(Composition::PATCH_HALF, patch_half, "Line-seam patch 2 x +1/2");
         ImGui::SameLine(0, p);
-        mode_selector(Composition::PATCH_QUARTER_IN, patch_quarter_in, "Flat patch 4 x +1/4");
+        mode_selector(Composition::PATCH_QUARTER_IN, patch_quarter_in, "Small flap 4 x +1/4");
         ImGui::SameLine(0, p);
-        mode_selector(Composition::PATCH_QUARTER_OUT, patch_quarter_out, "Small flap 4 x +1/4");
+        mode_selector(Composition::PATCH_QUARTER_OUT, patch_quarter_out, "Flat patch 4 x +1/4");
         if (in_composition_mode) ImGui::Text(composition_instructions[composition].c_str());
         if (constrainedRoot) {
             std::string text = "Constrained Global Rotation: \n" + std::to_string(constrainedRootAngle);
@@ -455,7 +465,6 @@ void RemeshingMenu::draw_custom_window() {
                 viewing_mode = ViewingMode::MESH_TCON; update_visualization();
             }
             if (is_quad_meshed) {
-                ImGui::SameLine(0, p);
                 if (ImGui::RadioButton("Mesh+Quad", viewing_mode == ViewingMode::MESH_QUAD)) {
                     viewing_mode = ViewingMode::MESH_QUAD; update_visualization();
                 }
@@ -466,6 +475,8 @@ void RemeshingMenu::draw_custom_window() {
             }
         }
     }
+
+    ImGui::PopItemWidth();
 
     ImGui::End();
 }
@@ -487,6 +498,7 @@ void RemeshingMenu::setup_mesh() {
     symmetrizer = Symmetrizer(V, F);
 
     singGroups.clear();
+    singGroupComp.clear();
     vertex2singGroup.clear();
 
     viewer->data().clear();
@@ -653,6 +665,7 @@ void RemeshingMenu::clear() {
     std::vector<std::vector<double>>().swap(graph_adj);
     cycleFaces.clear();
     singGroups.clear();
+    singGroupComp.clear();
     vertex2singGroup.clear();
     clear_loops();
     // reset values
@@ -998,46 +1011,73 @@ bool RemeshingMenu::mouse_up(int button, int modifier) {
 
             std::vector<int> symmetric_verts = symmetrizer.symmetric_vertices(currVertex, v_symmetry_axes());
             if (button == 0) {
-                if (singGroups.empty()) singGroups.push_back(std::vector<int>());
-                if (singGroups[singGroups.size() - 1].size() < composition_sing_nums[composition]) {
-                    // keep adding to the group
+                if (singGroups.empty()) {
+                    singGroups.push_back(std::vector<int>());
+                    singGroupComp.push_back(composition);
+                }
+                if (singGroups[singGroups.size() - 1].size() <= 
+                    composition_sing_nums[singGroupComp[singGroups.size() - 1]] - symmetric_verts.size()) {
+                    // keep adding to the group until we complete adding the required num of singularities
                     for (int v : symmetric_verts) {
-                        cycleIndices(vertex2cycle(v)) = composition_indices[composition];
+                        cycleIndices(vertex2cycle(v)) = composition_indices[singGroupComp[singGroups.size() - 1]];
                         vertex2singGroup[v] = singGroups.size() - 1;
-                        singGroups[vertex2singGroup[v]].push_back(v);
+                        if (std::find(singGroups[singGroups.size() - 1].begin(), singGroups[singGroups.size() - 1].end(), v)
+                            == singGroups[singGroups.size() - 1].end()) {
+                            singGroups[singGroups.size() - 1].push_back(v);
+                        }
                     }
                     should_redraw = true;
-                    // until we complete adding the required num of singularities
                 }
-                if (singGroups[singGroups.size() - 1].size() == composition_sing_nums[composition]) {
+                if (singGroups[singGroups.size() - 1].size() == composition_sing_nums[singGroupComp[singGroups.size() - 1]]) {
                     std::cout << "[Info] the current composition is complete.\n";
+                } else {
+                    std::cout << "[Info] need to add " 
+                              << composition_sing_nums[singGroupComp[singGroups.size() - 1]] - singGroups[singGroups.size() - 1].size()
+                              << " more points to complete the current composition.\n";
                 }
             } else if (!singGroups.empty()) {
-                if (singGroups[singGroups.size() - 1].size() < composition_sing_nums[composition]) {
+                if (singGroups[singGroups.size() - 1].size() >= symmetric_verts.size() &&
+                    singGroups[singGroups.size() - 1].size() < composition_sing_nums[singGroupComp[singGroups.size() - 1]]) {
+                    // default to understand that only the current composition can be deleted one point
                     for (int v : symmetric_verts) {
                         cycleIndices(vertex2cycle(v)) = 0;
-                        std::vector<int>& currGroup = singGroups[vertex2singGroup[v]];
-                        if (currGroup.empty()) continue;
+                        std::vector<int>& currGroup = singGroups[singGroups.size() - 1];
                         currGroup.erase(find(currGroup.begin(), currGroup.end(), v));
                         vertex2singGroup.erase(v);
                     }
+                    /*if (singGroups[singGroups.size() - 1].empty()) {
+                        singGroups.pop_back();
+                        singGroupComp.pop_back();
+                        std::cout << "[Info] removed this composition. \n";
+                    }*/
                 } else {
                     std::vector<bool> singGroupsToKeep(singGroups.size(), true);
+                    
                     for (int v : symmetric_verts) {
                         singGroupsToKeep[vertex2singGroup[v]] = false;
                     }
+
                     std::vector<std::vector<int>> newSingGroups;
+                    std::vector<Composition> newSingGroupComp;
+                    std::map<int, int> newV2SG;
+
                     for (int i = 0; i < singGroups.size(); ++i) {
-                        if (singGroupsToKeep[i]) {
+                        if (singGroupsToKeep[i] && !singGroups[i].empty()) {
                             newSingGroups.push_back(singGroups[i]);
+                            newSingGroupComp.push_back(singGroupComp[i]);
+                            for (int v : singGroups[i]) {
+                                newV2SG[v] = newSingGroups.size() - 1;
+                            }
                         } else {
                             for (int v : singGroups[i]) {
                                 cycleIndices(vertex2cycle(v)) = 0;
-                                vertex2singGroup.erase(v);
                             }
                         }
                     }
                     newSingGroups.swap(singGroups);
+                    newSingGroupComp.swap(singGroupComp);
+                    newV2SG.swap(vertex2singGroup);
+                    std::cout << "[Info] removed this current composition.\n";
                 }
                 should_redraw = true;
             }

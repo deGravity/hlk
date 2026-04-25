@@ -83,16 +83,16 @@ int main(int argc, char* argv[]) {
     if (args.size() == 0) std::cout << "Running in GUI mode.\n";
 
     int mode = 1;
-    std::cout << 
-        "Choose an Interface\n"
-        "1) Remeshing\n"
-        "2) Labeling\n";
-
-#ifdef HAISEN
-    mode = 1;
-#else
-    // std::cin >> mode;
-#endif
+//    std::cout << 
+//        "Choose an Interface\n"
+//        "1) Remeshing\n"
+//        "2) Labeling\n";
+//
+//#ifdef HAISEN
+//    mode = 1;
+//#else
+//    std::cin >> mode;
+//#endif
 
     igl::opengl::glfw::Viewer viewer;
     if (mode == 1) {

@@ -278,6 +278,7 @@ public:
     float globalRotation, constrainedRootAngle;
     bool singularitySelect, constrainedRoot;
     std::vector<std::vector<int>> singGroups;
+    std::vector<Composition> singGroupComp;
     std::map<int, int> vertex2singGroup;
 
     /////////////////// UI ///////////////////
