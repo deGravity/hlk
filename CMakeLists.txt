@@ -39,84 +39,12 @@ find_package(CGAL CONFIG REQUIRED COMPONENTS Core)
 find_package(Z3 REQUIRED CONFIG)
 find_package(glm CONFIG REQUIRED)
 
-# Patch libigl to use a reachable CoMISo source.
-#
-# The vendored libigl submodule's cmake/LibiglDownloadExternal.cmake hardcodes
-# CoMISo at git@gitlab.cs.washington.edu:knitting-research/external/libigl-comiso.git
-# at SHA 90e795b6, which is no longer accessible. Patch the submodule file in
-# place to point at the public libigl/CoMISo.
-set(HLK_COMISO_GIT_URL "https://github.com/libigl/CoMISo.git" CACHE STRING
-    "Git URL libigl will clone CoMISo from")
-set(HLK_COMISO_GIT_TAG "562efe333edc8e649dc101469614f43378b1eb55" CACHE STRING
-    "CoMISo commit libigl will check out (master HEAD as of 2026-04-24)")
-
-set(_hlk_dl_cmake "${CMAKE_CURRENT_SOURCE_DIR}/ext/libigl/cmake/LibiglDownloadExternal.cmake")
-file(READ "${_hlk_dl_cmake}" _hlk_dl_content)
-string(REPLACE
-    "git@gitlab.cs.washington.edu:knitting-research/external/libigl-comiso.git"
-    "${HLK_COMISO_GIT_URL}"
-    _hlk_dl_content_new "${_hlk_dl_content}")
-string(REPLACE
-    "90e795b6662c4ceccc2ab98093e8b69aa9bb0478"
-    "${HLK_COMISO_GIT_TAG}"
-    _hlk_dl_content_new "${_hlk_dl_content_new}")
-if(NOT _hlk_dl_content STREQUAL _hlk_dl_content_new)
-    message(STATUS "Patching ext/libigl/cmake/LibiglDownloadExternal.cmake to point CoMISo at ${HLK_COMISO_GIT_URL}")
-    file(WRITE "${_hlk_dl_cmake}" "${_hlk_dl_content_new}")
-endif()
-
-# libigl 350ab15 predates GCC 13's stricter handling of transitive STL
-# includes; a handful of its files use stdint types without #include <cstdint>.
-foreach(_hlk_libigl_patch
-    "ext/libigl/include/igl/sparse_voxel_grid.cpp"
-    "ext/libigl/include/igl/Timer.h"
-    "ext/libigl/include/igl/opengl/MeshGL.h")
-    set(_hlk_path "${CMAKE_CURRENT_SOURCE_DIR}/${_hlk_libigl_patch}")
-    if(EXISTS "${_hlk_path}")
-        file(READ "${_hlk_path}" _hlk_content)
-        if(NOT _hlk_content MATCHES "(cstdint|stdint\\.h)")
-            message(STATUS "Patching ${_hlk_libigl_patch} to add #include <cstdint>")
-            file(WRITE "${_hlk_path}" "#include <cstdint>\n${_hlk_content}")
-        endif()
-    endif()
-endforeach()
-
-# Two small Directional submodule fixes:
-#  1. write_singularities.h has a typo `< <std::endl` (parsed as two
-#     less-thans) where it meant `<< std::endl`.
-#  2. index_prescription.h uses `igl::PI` which doesn't exist in the
-#     vendored libigl on this branch — replace with M_PI.
-set(_hlk_dir_ws "${CMAKE_CURRENT_SOURCE_DIR}/ext/Directional/include/directional/write_singularities.h")
-if(EXISTS "${_hlk_dir_ws}")
-    file(READ "${_hlk_dir_ws}" _hlk_content)
-    string(REPLACE "< <std::endl" "<< std::endl" _hlk_content_new "${_hlk_content}")
-    if(NOT _hlk_content STREQUAL _hlk_content_new)
-        message(STATUS "Patching ${_hlk_dir_ws} (write_singularities typo)")
-        file(WRITE "${_hlk_dir_ws}" "${_hlk_content_new}")
-    endif()
-endif()
-set(_hlk_dir_ip "${CMAKE_CURRENT_SOURCE_DIR}/ext/Directional/include/directional/index_prescription.h")
-if(EXISTS "${_hlk_dir_ip}")
-    file(READ "${_hlk_dir_ip}" _hlk_content)
-    string(REPLACE "igl::PI" "M_PI" _hlk_content_new "${_hlk_content}")
-    if(NOT _hlk_content STREQUAL _hlk_content_new)
-        message(STATUS "Patching ${_hlk_dir_ip} (igl::PI -> M_PI)")
-        file(WRITE "${_hlk_dir_ip}" "${_hlk_content_new}")
-    endif()
-endif()
-# directional::tree is IGL_INLINE → empty under IGL_STATIC_LIBRARY, so it
-# would emit a non-inline body in every TU that pulls in <directional/tree.h>
-# (transitively via dual_cycles.h). Force the keyword to `inline` so the
-# multiple TUs in hlk_remesh_lib don't trip ODR.
-set(_hlk_dir_tree "${CMAKE_CURRENT_SOURCE_DIR}/ext/Directional/include/directional/tree.h")
-if(EXISTS "${_hlk_dir_tree}")
-    file(READ "${_hlk_dir_tree}" _hlk_content)
-    string(REPLACE "IGL_INLINE void tree" "inline void tree" _hlk_content_new "${_hlk_content}")
-    if(NOT _hlk_content STREQUAL _hlk_content_new)
-        message(STATUS "Patching ${_hlk_dir_tree} (IGL_INLINE -> inline on tree)")
-        file(WRITE "${_hlk_dir_tree}" "${_hlk_content_new}")
-    endif()
-endif()
+# All of the libigl + Directional patches that hlk used to apply at
+# configure time are now part of the submodules' integration-dev branches:
+#   - libigl: cstdint includes + reachable CoMISo URL (libigl/CoMISo HEAD)
+#   - Directional: igl::PI -> M_PI, write_singularities typo, IGL_INLINE
+#     -> inline on directional::tree (ODR safety)
+# Bumping the submodule pins is enough; no in-tree CMake patching needed.
 
 find_package(LIBIGL REQUIRED)
 
