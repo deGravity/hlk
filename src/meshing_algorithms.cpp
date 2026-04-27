@@ -1,226 +1,55 @@
 #include <directional/combing.h>
-#include <directional/cut_mesh_with_singularities.h>
-#include <directional/curl_matching.h>
-#include <directional/effort_to_indices.h>
-#include <directional/parameterize.h>
 #include <directional/principal_matching.h>
-#include <directional/polycurl_reduction.h>
-#include <igl/avg_edge_length.h>
-#include <igl/barycenter.h>
-#include <igl/comb_cross_field.h>
-#include <igl/comb_frame_field.h>
-#include <igl/compute_frame_field_bisectors.h>
 #include <igl/copyleft/comiso/miq.h>
-#include <igl/cross_field_mismatch.h>
-#include <igl/cut_mesh_from_singularities.h>
-#include <igl/edge_topology.h>
-#include <igl/find_cross_field_singularities.h>
 #include <igl/rotate_vectors.h>
 #include <igl/PI.h>
 
 #include "meshing_algorithms.h"
 
 namespace hlk {
-
-void Meshing::polyvector_parametrize(
-    const Eigen::MatrixXd& VMeshWhole, const Eigen::MatrixXi& FMeshWhole, const int N,
+void Meshing::comb_field_from_connection(
+    const Eigen::MatrixXd& VMesh, const Eigen::MatrixXi& FMesh,
     const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
     const Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
-    Eigen::VectorXi& matching, Eigen::VectorXi& combedMatching,
-    Eigen::VectorXd& effort, Eigen::VectorXd& combedEffort,
-    Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices,
-    Eigen::MatrixXd& VMeshCut, Eigen::MatrixXi& FMeshCut,
-    Eigen::MatrixXd& cutUV, double gradientSize, bool isInteger) {
+    Eigen::VectorXi& combedMatching, Eigen::VectorXd& combedEffort) {
 
-    // combing and cutting
-    directional::principal_matching(VMeshWhole, FMeshWhole, EV, EF, FE, rawField, matching, effort);
-    directional::effort_to_indices(VMeshWhole, FMeshWhole, EV, EF, effort, matching, N, singVertices, singIndices);
-    directional::ParameterizationData pd;
-    directional::cut_mesh_with_singularities(VMeshWhole, FMeshWhole, singVertices, pd.face2cut);
-    directional::combing(VMeshWhole, FMeshWhole, EV, EF, FE, pd.face2cut, rawField, matching, combedField, combedMatching);
-    // parametrizing
-    std::cout << "[meshing] Setting up parameterization\n";
-    directional::setup_parameterization(N, VMeshWhole, FMeshWhole, EV, EF, FE, combedMatching, singVertices, pd, VMeshCut, FMeshCut);
-    std::cout << "[meshing] Solving parameterization\n";
-    directional::parameterize(VMeshWhole, FMeshWhole, FE, combedField, gradientSize, pd, VMeshCut, FMeshCut, isInteger, cutUV);
-    std::cout << "[meshing] Done!\n";
+    // combing
+    Eigen::VectorXi matching;
+    Eigen::VectorXd effort;
+    directional::principal_matching(VMesh, FMesh, EV, EF, FE, rawField, matching, effort);
+    directional::combing(VMesh, FMesh, EV, EF, FE, rawField, matching, combedField);
+    directional::principal_matching(VMesh, FMesh, EV, EF, FE, combedField, combedMatching, combedEffort);
 }
 
-void Meshing::frame_field_miq(const Eigen::MatrixXd& X1, const Eigen::MatrixXd& X2,
-    const Eigen::MatrixXd& V_deformed, const Eigen::MatrixXi& F,
-    double gradient_size, double stiffness, 
+void Meshing::cross_field_miq(const Eigen::MatrixXd& X1,
+    const Eigen::MatrixXd& V, const Eigen::MatrixXi& F,
+    const std::vector<std::vector<int>>& hard_edges,
+    double gradient_size, int stiffen_iter,
     Eigen::MatrixXd& UV, Eigen::MatrixXi& FUV) {
 
-    // Global seamless parametrization
-    igl::copyleft::comiso::miq(V_deformed,
+    // Find the orthogonal field
+    Eigen::MatrixXd B1, B2, B3;
+    igl::local_basis(V, F, B1, B2, B3);
+    Eigen::MatrixXd X2 = igl::rotate_vectors(X1, Eigen::VectorXd::Constant(1, igl::PI / 2), B1, B2);
+
+    // Global parametrization
+    igl::copyleft::comiso::miq(
+        V,
         F,
         X1,
         X2,
         UV,
         FUV,
         gradient_size,
-        stiffness,
-        false
-    );
-}
-
-void Meshing::cross_field_miq(const Eigen::MatrixXd& R,
-    const Eigen::MatrixXd& V, const Eigen::MatrixXi& F,
-    const std::vector<int>& vertices_to_round, 
-    const std::vector<std::vector<int>>& hard_edges,
-    double gradient_size, double stiffness,
-    Eigen::MatrixXd& UV, Eigen::MatrixXi& FUV) {
-
-    // Cross field
-    Eigen::MatrixXd X1, X2;
-
-    // Bisector field
-    Eigen::MatrixXd BIS1, BIS2;
-
-    // Combed Bisector
-    Eigen::MatrixXd BIS1_combed, BIS2_combed;
-
-    // Per-corner, integener mismatches
-    Eigen::Matrix<int, Eigen::Dynamic, 3> MMatch;
-
-    // Field singularities
-    Eigen::Matrix<int, Eigen::Dynamic, 1> isSingularity, singularityIndex;
-
-    // Per corner seams
-    Eigen::Matrix<int, Eigen::Dynamic, 3> Seams;
-
-    // Combed field
-    Eigen::MatrixXd X1_combed, X2_combed;
-
-    // N-Rosy
-    X1 = R;
-
-    // Find the orthogonal vector
-    Eigen::MatrixXd B1, B2, B3;
-    igl::local_basis(V, F, B1, B2, B3);
-    X2 = igl::rotate_vectors(X1, Eigen::VectorXd::Constant(1, igl::PI / 2), B1, B2);
-
-    // Always work on the bisectors, it is more general
-    igl::compute_frame_field_bisectors(V, F, X1, X2, BIS1, BIS2);
-
-    // Comb the field, implicitly defining the seams
-    igl::comb_cross_field(V, F, BIS1, BIS2, BIS1_combed, BIS2_combed);
-
-    // Find the integer mismatches
-    igl::cross_field_mismatch(V, F, BIS1_combed, BIS2_combed, true, MMatch);
-
-    // Find the singularities
-    igl::find_cross_field_singularities(V, F, MMatch, isSingularity, singularityIndex);
-
-    // Cut the mesh, duplicating all vertices on the seams
-    igl::cut_mesh_from_singularities(V, F, MMatch, Seams);
-
-    // Comb the frame-field accordingly
-    igl::comb_frame_field(V, F, X1, X2, BIS1_combed, BIS2_combed, X1_combed, X2_combed);
-
-    // Global parametrization
-    igl::copyleft::comiso::miq(
-        V,
-        F,
-        X1_combed,
-        X2_combed,
-        MMatch,
-        isSingularity,
-        Seams,
-        UV,
-        FUV,
-        gradient_size,
-        stiffness,
-        false, // direct round
-        0,     // iter
-        5,     // local iter
-        true,  // do round = seamless
+        5.0,   // stiffness, reserved but unused
+        false, // direct round, default to the greedy rounding proposed in the MIQ paper
+        stiffen_iter,
+        5,     // local # iter of integer rounding
+        true,  // do round = isInteger in Directional's parameterize()
         true,  // singularity round
-        vertices_to_round,
-        hard_edges);
-}
-
-// Solver data (needed for precomputation)
-directional::PolyCurlReductionSolverData pcrdata;
-
-int iter = 0;
-
-void Meshing::init_curl(
-    const Eigen::MatrixXd& VMesh, const Eigen::MatrixXi& FMesh, const int N,
-    const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
-    const Eigen::VectorXi& b, const Eigen::MatrixXd& bc, const Eigen::VectorXi& blevel,
-    const Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
-    Eigen::VectorXi& matching, Eigen::VectorXi& combedMatching,
-    Eigen::VectorXd& effort, Eigen::VectorXd& combedEffort,
-    Eigen::VectorXd& curl, Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices,
-    Eigen::SparseMatrix<double>& AE2F, double& curlMax, double& curlMaxOrig) {
-
-    directional::curl_matching(VMesh, FMesh, EV, EF, FE, rawField, matching, effort, curl);
-    directional::effort_to_indices(VMesh, FMesh, EV, EF, effort, matching, N, singVertices, singIndices);
-    directional::combing(VMesh, FMesh, EV, EF, FE, rawField, matching, combedField);
-    directional::curl_matching(VMesh, FMesh, EV, EF, FE, combedField, combedMatching, combedEffort, curl);
-    curlMaxOrig = curl.maxCoeff();
-    curlMax = curlMaxOrig;
-    std::cout << "curlMax original: " << curlMax << "\n";
-
-    directional::polycurl_reduction_precompute(VMesh, FMesh, b, bc, blevel, rawField, pcrdata);
-    iter = 0;
-
-    // creating the AE2F operator
-    std::vector<Eigen::Triplet<double>> AE2FTriplets;
-    for (int i = 0; i < EF.rows(); i++) {
-        if (EF(i,0) >= 0 && EF(i,0) < FMesh.rows()) AE2FTriplets.push_back(Eigen::Triplet<double>(EF(i,0), i, 1.0));
-        if (EF(i,1) >= 0 && EF(i,1) < FMesh.rows()) AE2FTriplets.push_back(Eigen::Triplet<double>(EF(i,1), i, 1.0));
-    }
-    AE2F.resize(FMesh.rows(), EF.rows());
-    AE2F.setFromTriplets(AE2FTriplets.begin(), AE2FTriplets.end());
-}
-
-// The set of parameters for calculating the curl-free fields
-directional::polycurl_reduction_parameters params;
-
-void Meshing::reduce_curl(
-    const Eigen::MatrixXd& VMesh, const Eigen::MatrixXi& FMesh, const int N,
-    const Eigen::MatrixXi& EV, const Eigen::MatrixXi& EF, const Eigen::MatrixXi& FE,
-    Eigen::MatrixXd& rawField, Eigen::MatrixXd& combedField,
-    Eigen::VectorXi& matching, Eigen::VectorXi& combedMatching,
-    Eigen::VectorXd& effort, Eigen::VectorXd& combedEffort,
-    Eigen::VectorXd& curl, Eigen::VectorXi& singVertices, Eigen::VectorXi& singIndices,
-    double& curlMax) {
-    
-    Eigen::MatrixXd rawFieldNew, combedFieldNew;
-    Eigen::VectorXi matchingNew, combedMatchingNew;
-    Eigen::VectorXd effortNew, combedEffortNew;
-    Eigen::VectorXd curlNew;
-    Eigen::VectorXi singVerticesNew, singIndicesNew;
-    rawFieldNew = rawField;
-
-    // do a batch of iterations
-    std::cout << "--Improving Curl--\n";
-    std::cout << "**** Batch " << iter << " ****\n";
-    directional::polycurl_reduction_solve(pcrdata, params, rawFieldNew, iter == 0);
-    ++iter;
-    params.wSmooth *= params.redFactor_wsmooth;
-
-    directional::curl_matching(VMesh, FMesh, EV, EF, FE, rawFieldNew, matchingNew, effortNew, curlNew);
-    directional::effort_to_indices(VMesh, FMesh, EV, EF, effortNew, matchingNew, N, singVerticesNew, singIndicesNew);
-    directional::combing(VMesh, FMesh, EV, EF, FE, rawFieldNew, matchingNew, combedFieldNew);
-    directional::curl_matching(VMesh, FMesh, EV, EF, FE, combedFieldNew, combedMatchingNew, combedEffortNew, curlNew);
-    double curlMaxNew = curlNew.maxCoeff();
-    if (curlMaxNew < curlMax) {
-        std::cout << "curlMax optimized: " << curlMaxNew << "\n";
-        rawField = rawFieldNew;
-        combedField = combedFieldNew;
-        matching = matchingNew;
-        combedMatching = combedMatchingNew;
-        effort = effortNew;
-        combedEffort = combedEffortNew;
-        curl = curlNew;
-        singVertices = singVerticesNew;
-        singIndices = singIndicesNew;
-    } else {
-        std::cout << "curlMax failed to improve.\n";
-    }
+        std::vector<int>(), // vertices to round, none other than singularities
+        hard_edges
+    );
 }
 
 }

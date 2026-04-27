@@ -36,9 +36,9 @@ struct FaceVector {
     int face_id = -1;
     bool is_hard = false;
     
-    bool assigned[2];
-    Eigen::Vector3d frame[2];
-	Eigen::Vector3d base_vector; // perpendicular to frame[1]
+    std::vector<bool> assigned; // size 2, using stl for serialization
+    std::vector<Eigen::Vector3d> frame; // size 2, using stl for serialization
+    Eigen::Vector3d base_vector; // perpendicular to frame[1]
 
     Eigen::Vector3d center;
     Eigen::Vector3d normal;
@@ -52,15 +52,57 @@ struct SplitEdge {
 
 enum ViewingMode {
     MESH_ONLY,
-    MESH_CURL,
-    MESH_FIELD,
+    MESH_TCON,
     MESH_QUAD,
-    QUAD_ONLY,
-    QUAD_INTERACT,
-    FRAME_FIELD,
-    DEFORMED_FRAME_FIELD,
-    DEFORMED_CROSS_FIELD,
-    DEFORMED_QUAD
+    QUAD_ONLY
+};
+
+enum Composition {
+    PATCH_QUARTER_OUT,
+    PATCH_HALF,
+    PATCH_QUARTER_IN,
+    Y_ONE,
+    Y_HALF,
+    T_HALF,
+    T_QUARTER,
+    HOLE_HALF,
+    HOLE_QUARTER
+};
+
+static const std::vector<int> composition_indices = {
+    +1,
+    +2,
+    +1,
+    -4,
+    -2,
+    -2,
+    -1,
+    -2,
+    -1
+};
+
+static const std::vector<int> composition_sing_nums = {
+    4,
+    2,
+    4,
+    1,
+    2,
+    2,
+    4,
+    2,
+    4
+};
+
+static const std::vector<std::string> composition_instructions = {
+    "Create a flat patch (four +1/4 singularities)",
+    "Create a line seam (two +1/2 singularities)",
+    "Create a small flap (four +1/4 singularities)",
+    "Define a split/merge at a point (one -1 singularity)",
+    "Define a split/merge at a line (two -1/2 singularities)",
+    "Define a T-joint of tubes (two -1/2 singularities)",
+    "Define a T-joint of tubes (four -1/4 singularities",
+    "Create a small slit (two -1/2 singularities)",
+    "Create a hole cut-out (four -1/4 singularities)"
 };
 
 enum DrawingMode {
@@ -68,11 +110,28 @@ enum DrawingMode {
     WALE
 };
 
-enum MIQMode {
-    CROSS,
-    FRAME,
-    POLYVECTOR
+enum SeamingMode {
+    CUT,
+    SEAM,
+    SPLIT
 };
+
+struct CTRLZSL {
+    bool ctrl = false;
+    bool z = false;
+    bool s = false;
+    bool l = false;
+};
+
+struct TEMPDATA {
+    std::string mesh;
+    std::string face;
+    std::string edge;
+    std::string sing;
+};
+
+void get_edge_face_path(const std::string& filename, std::string& mesh_path_temp,
+    std::string& face_path_temp, std::string& edge_path_temp, std::string& sing_path_temp);
 
 double angle_between(Eigen::Vector3d v1, Eigen::Vector3d v2);
 double angle_coordinate_system(const Eigen::Vector3d& v, const Eigen::Vector3d& x, const Eigen::Vector3d& y);
@@ -99,11 +158,15 @@ void line_texture(
 
 Eigen::Vector3d plane_project(
     Eigen::Vector3d planar_location, 
-	Eigen::Vector3d planar_direction, 
+    Eigen::Vector3d planar_direction, 
     Eigen::Vector3d p);
 
 std::vector<Eigen::Vector3d> UniformSampling(
-	const std::vector<Eigen::Vector3d>& input_points, 
-	const int sample_nb);
+    const std::vector<Eigen::Vector3d>& input_points, 
+    const int sample_nb);
 
 }
+
+// SERIALIZE_TYPE invocations live in remeshing_utils.cpp so they are
+// emitted in only one translation unit; the macro defines a non-inline
+// free function and would otherwise violate ODR.

@@ -74,6 +74,15 @@ namespace hlk {
         std::vector<int> singular_quads;
         // edges or unique_edge_map
 
+		// Set by remeshing flow only — labeling pipeline doesn't populate it.
+		// One bool per side (4*m) marking the seam edges produced by the
+		// integer-grid parametrization.
+		std::vector<bool> is_seam_edge;
+
+		// Set by remeshing flow only — per-side triangle-edge length, used
+		// during quad extraction. Empty otherwise.
+		std::vector<double> tri_side_lengths;
+
 		// boundary information
 		std::vector<bool> is_border_vertex;
 		Eigen::MatrixXi boundary_edges; // vertex pairs

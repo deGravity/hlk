@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(hlk)
 
-set(PROJECT_NAME hlk)
-
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake
                       ${CMAKE_CURRENT_SOURCE_DIR}/ext/libQEx/cmake
                       ${CMAKE_MODULE_PATH})
@@ -10,7 +8,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake
 # Get path to scripts directory for calling node with dsl.js
 add_definitions(-DSCRIPTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/scripts")
 
-# LibIGL options - may neet to use option instead of set
+# LibIGL options
 option(LIBIGL_WITH_PNG "Use PNG" ON)
 option(LIBIGL_WITH_OPENGL "Use OpenGL" ON)
 option(LIBIGL_WITH_OPENGL_GLFW "Use GLFW" ON)
@@ -33,9 +31,9 @@ option(LIBIGL_USE_STATIC_LIBRARY "Use libigl as static library" ON)
 # Hack for libigl linking: https://github.com/libigl/libigl/issues/1229
 set(MSVC_RUNTIME "dynamic")
 
-# Resolve Eigen3 and CGAL via vcpkg (or system) before bringing in libigl,
+# Resolve Eigen3 / CGAL / Z3 / glm via vcpkg before bringing in libigl,
 # so that libigl's CMake scripts skip their own download paths and reuse
-# our targets. Z3 is a separate find_package call below for symmetry.
+# our targets.
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(CGAL CONFIG REQUIRED COMPONENTS Core)
 find_package(Z3 REQUIRED CONFIG)
@@ -83,52 +81,151 @@ foreach(_hlk_libigl_patch
     endif()
 endforeach()
 
+# Two small Directional submodule fixes:
+#  1. write_singularities.h has a typo `< <std::endl` (parsed as two
+#     less-thans) where it meant `<< std::endl`.
+#  2. index_prescription.h uses `igl::PI` which doesn't exist in the
+#     vendored libigl on this branch — replace with M_PI.
+set(_hlk_dir_ws "${CMAKE_CURRENT_SOURCE_DIR}/ext/Directional/include/directional/write_singularities.h")
+if(EXISTS "${_hlk_dir_ws}")
+    file(READ "${_hlk_dir_ws}" _hlk_content)
+    string(REPLACE "< <std::endl" "<< std::endl" _hlk_content_new "${_hlk_content}")
+    if(NOT _hlk_content STREQUAL _hlk_content_new)
+        message(STATUS "Patching ${_hlk_dir_ws} (write_singularities typo)")
+        file(WRITE "${_hlk_dir_ws}" "${_hlk_content_new}")
+    endif()
+endif()
+set(_hlk_dir_ip "${CMAKE_CURRENT_SOURCE_DIR}/ext/Directional/include/directional/index_prescription.h")
+if(EXISTS "${_hlk_dir_ip}")
+    file(READ "${_hlk_dir_ip}" _hlk_content)
+    string(REPLACE "igl::PI" "M_PI" _hlk_content_new "${_hlk_content}")
+    if(NOT _hlk_content STREQUAL _hlk_content_new)
+        message(STATUS "Patching ${_hlk_dir_ip} (igl::PI -> M_PI)")
+        file(WRITE "${_hlk_dir_ip}" "${_hlk_content_new}")
+    endif()
+endif()
+# directional::tree is IGL_INLINE → empty under IGL_STATIC_LIBRARY, so it
+# would emit a non-inline body in every TU that pulls in <directional/tree.h>
+# (transitively via dual_cycles.h). Force the keyword to `inline` so the
+# multiple TUs in hlk_remesh_lib don't trip ODR.
+set(_hlk_dir_tree "${CMAKE_CURRENT_SOURCE_DIR}/ext/Directional/include/directional/tree.h")
+if(EXISTS "${_hlk_dir_tree}")
+    file(READ "${_hlk_dir_tree}" _hlk_content)
+    string(REPLACE "IGL_INLINE void tree" "inline void tree" _hlk_content_new "${_hlk_content}")
+    if(NOT _hlk_content STREQUAL _hlk_content_new)
+        message(STATUS "Patching ${_hlk_dir_tree} (IGL_INLINE -> inline on tree)")
+        file(WRITE "${_hlk_dir_tree}" "${_hlk_content_new}")
+    endif()
+endif()
+
 find_package(LIBIGL REQUIRED)
 
 add_subdirectory(ext/libQEx EXCLUDE_FROM_ALL)
 target_compile_definitions(QEx PRIVATE _USE_MATH_DEFINES)
 
-# Just grab all C++ files
-file(GLOB SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp)
-file(GLOB HEADER_FILES ${PROJECT_SOURCE_DIR}/src/*.h)
-file(GLOB DEBUG_FILES ${PROJECT_SOURCE_DIR}/src/*.natvis)
+###############################################################################
+# Source layout
+###############################################################################
+#
+# Three internal libraries plus two thin executables:
+#
+#   hlk_core          shared core (quad mesh, optimizer, symmetrizer, …)
+#   hlk_remesh_lib    remeshing UI + CGAL/MIQ pipeline
+#   hlk_label_lib     labeling UI + downstream knit graph + scheduler
+#   hlk_remesh        executable: just main_remesh.cpp + hlk_remesh_lib + core
+#   hlk_label         executable: just main_label.cpp  + hlk_label_lib  + core
+#
+# The two executables share hlk_core and never link each other's libraries.
 
-file(GLOB VKMP_SRC ${PROJECT_SOURCE_DIR}/src/vkmp/*.cpp)
-file(GLOB XFERPLAN_SRC ${PROJECT_SOURCE_DIR}/src/vkmp/xferplan/*.cpp)
-file(GLOB VKMP_HEADER ${PROJECT_SOURCE_DIR}/src/vkmp/*.hpp)
-file(GLOB XFERPLAN_HEADER ${PROJECT_SOURCE_DIR}/src/vkmp/xferplan/*.h*)
+set(HLK_CORE_SOURCES
+    src/quad_mesh.cpp src/quad_mesh.h
+    src/read_quad_mesh.cpp src/read_quad_mesh.h
+    src/optimizer.cpp src/optimizer.h
+    src/symmetrizer.cpp src/symmetrizer.h
+    src/serialization.cpp src/serialization.h)
 
-add_executable(${PROJECT_NAME} 
-	${SRC_FILES} 
-	${HEADER_FILES} 
-	${DEBUG_FILES} 
-	${VKMP_SRC} 
-	${XFERPLAN_SRC} 
-	${VKMP_HEADER} 
-	${XFERPLAN_HEADER})
+set(HLK_REMESH_SOURCES
+    src/cgal_wrapper.cpp src/cgal_wrapper.h
+    src/extract_quad_mesh.cpp src/extract_quad_mesh.h
+    src/meshing_algorithms.cpp src/meshing_algorithms.h
+    src/remeshing_plugin.cpp src/remeshing_plugin.h
+    src/remeshing_field.cpp
+    src/remeshing_loops.cpp
+    src/remeshing_utils.cpp src/remeshing_utils.h
+    src/stack_layers.cpp src/stack_layers.h)
 
-target_include_directories(${PROJECT_NAME} PRIVATE
-	${Z3_CXX_INCLUDE_DIRS}
-	${QEX_INCLUDE_DIRS}
-	ext/Directional/include)
+set(HLK_LABEL_SOURCES
+    src/labeled_quad_mesh.cpp src/labeled_quad_mesh.h
+    src/coarse_knit_mesh.cpp src/coarse_knit_mesh.h
+    src/coarse_knit_graph.cpp src/coarse_knit_graph.h
+    src/glyph.cpp src/glyph.h src/glyphs.h
+    src/texture.cpp src/texture.h
+    src/disjointset.cpp src/disjointset.h
+    src/graph_vis.cpp src/graph_vis.h
+    src/grid.cpp src/grid.h
+    src/patch.cpp src/patch.h
+    src/knit_graph.cpp src/knit_graph.h
+    src/autoknit.cpp src/autoknit.h
+    src/labeling_ui.cpp src/labeling_ui.h
+    src/vkmp/scheduler.cpp src/vkmp/scheduler.hpp
+    src/vkmp/driver.cpp
+    src/vkmp/xferplan/embed_DAG.cpp src/vkmp/xferplan/embed_DAG.hpp
+    src/vkmp/xferplan/plan_transfers.cpp src/vkmp/xferplan/plan_transfers.hpp
+    src/vkmp/xferplan/plan_transfers-best_collapse.cpp
+    src/vkmp/xferplan/plan_transfers-best_expand.cpp
+    src/vkmp/xferplan/plan_transfers-best_shift.cpp
+    src/vkmp/xferplan/plan_transfers-draw_beds.cpp
+    src/vkmp/xferplan/plan_transfers-helpers.hpp
+    src/vkmp/xferplan/plan_transfers-minimize_winding.cpp
+    src/vkmp/xferplan/plan_transfers-run_transfers.cpp
+    src/vkmp/xferplan/ScheduleCost.cpp src/vkmp/xferplan/ScheduleCost.hpp
+    src/vkmp/xferplan/Shape.hpp
+    src/vkmp/xferplan/stackedplanner.cpp src/vkmp/xferplan/stackedplanner.h
+    src/vkmp/xferplan/Stitch.cpp src/vkmp/xferplan/Stitch.hpp
+    src/vkmp/xferplan/typeset.hpp)
 
-target_link_libraries(${PROJECT_NAME}
-	Eigen3::Eigen
-	CGAL::CGAL
-	glm::glm
-	igl::core
-	igl::opengl
-	igl::opengl_glfw
-	igl::png
-	igl::opengl_glfw_imgui
-	igl::comiso
-	${Z3_LIBRARIES}
-	QEx)
+file(GLOB HLK_NATVIS ${PROJECT_SOURCE_DIR}/src/*.natvis)
 
-target_compile_definitions(${PROJECT_NAME} PUBLIC _USE_MATH_DEFINES)
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_14)
+add_library(hlk_core STATIC ${HLK_CORE_SOURCES})
+target_include_directories(hlk_core PUBLIC
+    ${PROJECT_SOURCE_DIR}/src
+    ${Z3_CXX_INCLUDE_DIRS}
+    ext/Directional/include)
+target_link_libraries(hlk_core PUBLIC
+    Eigen3::Eigen
+    igl::core
+    igl::png
+    ${Z3_LIBRARIES})
+target_compile_definitions(hlk_core PUBLIC _USE_MATH_DEFINES)
+target_compile_features(hlk_core PUBLIC cxx_std_14)
 
-# Copy Runtime Resources to Binary Directory
+add_library(hlk_remesh_lib STATIC ${HLK_REMESH_SOURCES})
+target_link_libraries(hlk_remesh_lib PUBLIC
+    hlk_core
+    CGAL::CGAL
+    igl::opengl
+    igl::opengl_glfw
+    igl::opengl_glfw_imgui
+    igl::comiso
+    QEx)
+target_include_directories(hlk_remesh_lib PUBLIC ${QEX_INCLUDE_DIRS})
+
+add_library(hlk_label_lib STATIC ${HLK_LABEL_SOURCES})
+target_link_libraries(hlk_label_lib PUBLIC
+    hlk_core
+    glm::glm
+    igl::opengl
+    igl::opengl_glfw
+    igl::opengl_glfw_imgui)
+
+# Executables — each is just a thin main() linking its UI lib.
+add_executable(hlk_remesh src/main_remesh.cpp ${HLK_NATVIS})
+target_link_libraries(hlk_remesh PRIVATE hlk_remesh_lib)
+
+add_executable(hlk_label src/main_label.cpp ${HLK_NATVIS})
+target_link_libraries(hlk_label PRIVATE hlk_label_lib)
+
+# Copy runtime resources to binary directory (icons, glyph PNGs, etc.)
 file(GLOB RESOURCE_FILES ${PROJECT_SOURCE_DIR}/resources/*)
 foreach(RESOURCE_FILE ${RESOURCE_FILES})
   file(COPY ${RESOURCE_FILE} DESTINATION ${PROJECT_BINARY_DIR})
@@ -136,42 +233,28 @@ endforeach(RESOURCE_FILE)
 
 # Copy shared libraries to binary directory on Windows
 if("${CMAKE_SYSTEM_NAME}" MATCHES "[Ww]indows")
-  set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
-  igl_copy_imported_dll(CoMISo stitchgraph)
-  foreach (z3_lib ${Z3_LIBRARIES})
-    message(STATUS "Adding copy rule for ${z3_lib}")
-    add_custom_command(TARGET ${PROJECT_NAME}
-      POST_BUILD
-      COMMAND
-        ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:${z3_lib}>
-        $<TARGET_FILE_DIR:${PROJECT_NAME}>
-    )
+  set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT hlk_remesh)
+  foreach(_target hlk_remesh hlk_label)
+    igl_copy_imported_dll(CoMISo ${_target})
+    foreach (z3_lib ${Z3_LIBRARIES})
+      add_custom_command(TARGET ${_target} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                $<TARGET_FILE:${z3_lib}> $<TARGET_FILE_DIR:${_target}>)
+    endforeach()
+    foreach (qex_lib ${QEX_LIBRARIES})
+      add_custom_command(TARGET ${_target} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                $<TARGET_FILE:${qex_lib}> $<TARGET_FILE_DIR:${_target}>)
+    endforeach()
   endforeach()
 
-  foreach (qex_lib ${QEX_LIBRARIES})
-    message(STATUS "Adding copy rule for ${qex_lib}")
-	add_custom_command(TARGET ${PROJECT_NAME}
-	  POST_BUILD
-	  COMMAND
-	    ${CMAKE_COMMAND} -E copy_if_different
-		$<TARGET_FILE:${qex_lib}>
-		$<TARGET_FILE_DIR:${PROJECT_NAME}>
-	)
-  endforeach()
-  
   set(COMISO_OPENBLAS_DLL_LOC "${LIBIGL_INCLUDE_DIR}/../external/CoMISo/ext/OpenBLAS-v0.2.14-Win64-int64/bin")
   file(GLOB COMISO_OPENBLAS_DLLS ${COMISO_OPENBLAS_DLL_LOC}/*.dll)
   foreach (openblas_lib ${COMISO_OPENBLAS_DLLS})
-	message(STATUS "Copying ${openblas_lib} to build directory.")
-	file(COPY ${openblas_lib} DESTINATION ${PROJECT_BINARY_DIR})
+    file(COPY ${openblas_lib} DESTINATION ${PROJECT_BINARY_DIR})
   endforeach()
-  
 endif()
 
-source_group("Header Files" FILES ${HEADER_FILES})
-source_group("Source Files" FILES ${SRC_FILES})
-source_group("Header Files\\vkmp" FILES ${VKMP_HEADER})
-source_group("Source Files\\vkmp" FILES ${VKMP_SRC})
-source_group("Header Files\\vkmp\\xferplan" FILES ${XFERPLAN_HEADER})
-source_group("Source Files\\vkmp\\xferplan" FILES ${XFERPLAN_SRC})
+source_group("hlk_core"        FILES ${HLK_CORE_SOURCES})
+source_group("hlk_remesh_lib"  FILES ${HLK_REMESH_SOURCES})
+source_group("hlk_label_lib"   FILES ${HLK_LABEL_SOURCES})
