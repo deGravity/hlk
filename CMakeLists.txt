@@ -159,34 +159,75 @@ target_link_libraries(hlk_label PRIVATE hlk_label_lib)
 add_executable(hlk src/main_hlk.cpp src/unified_ui.cpp src/unified_ui.h ${HLK_NATVIS})
 target_link_libraries(hlk PRIVATE hlk_remesh_lib hlk_label_lib)
 
-# Copy runtime resources to binary directory (icons, glyph PNGs, etc.)
-file(GLOB RESOURCE_FILES ${PROJECT_SOURCE_DIR}/resources/*)
-foreach(RESOURCE_FILE ${RESOURCE_FILES})
-  file(COPY ${RESOURCE_FILE} DESTINATION ${PROJECT_BINARY_DIR})
-endforeach(RESOURCE_FILE)
+# Copy runtime resources next to each executable. Done as a POST_BUILD
+# step (via TARGET_FILE_DIR generator-expression) instead of a
+# configure-time `file(COPY)` so it works under multi-config generators
+# (Visual Studio, Xcode) where the binary ends up in build/<Config>/
+# rather than at the top of build/.
+file(GLOB HLK_RESOURCE_FILES ${PROJECT_SOURCE_DIR}/resources/*)
+foreach(_target hlk_remesh hlk_label hlk)
+  add_custom_command(TARGET ${_target} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${PROJECT_SOURCE_DIR}/resources
+            $<TARGET_FILE_DIR:${_target}>/resources
+    COMMENT "Copying resources/ next to ${_target}")
+  # Also flatten the top-level files (icons, glyph PNGs, .pdn) into the
+  # binary dir, since the existing code reads them via filenames relative
+  # to cwd rather than via a `resources/` prefix.
+  foreach(_f ${HLK_RESOURCE_FILES})
+    if(NOT IS_DIRECTORY ${_f})
+      add_custom_command(TARGET ${_target} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${_f} $<TARGET_FILE_DIR:${_target}>)
+    endif()
+  endforeach()
+endforeach()
 
-# Copy shared libraries to binary directory on Windows
-if("${CMAKE_SYSTEM_NAME}" MATCHES "[Ww]indows")
-  set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT hlk)
+# Windows: copy the runtime DLLs each executable depends on so it can be
+# launched directly from build/<Config>/ without a manual PATH dance.
+# Linux and macOS resolve these via rpath / DYLD instead and don't need
+# this step.
+if(WIN32)
+  set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+               PROPERTY VS_STARTUP_PROJECT hlk)
+
+  # Per-target DLL copies: CoMISo (built by libigl), Z3 (vcpkg), QEx
+  # (built by ext/libQEx). Generator-expression $<TARGET_FILE_DIR:…>
+  # resolves to the right per-config output dir under VS / Xcode.
   foreach(_target hlk_remesh hlk_label hlk)
-    igl_copy_imported_dll(CoMISo ${_target})
-    foreach (z3_lib ${Z3_LIBRARIES})
-      add_custom_command(TARGET ${_target} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                $<TARGET_FILE:${z3_lib}> $<TARGET_FILE_DIR:${_target}>)
+    if(TARGET CoMISo)
+      igl_copy_imported_dll(CoMISo ${_target})
+    endif()
+    foreach(_z3_lib ${Z3_LIBRARIES})
+      if(TARGET ${_z3_lib})
+        add_custom_command(TARGET ${_target} POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                  $<TARGET_FILE:${_z3_lib}> $<TARGET_FILE_DIR:${_target}>)
+      endif()
     endforeach()
-    foreach (qex_lib ${QEX_LIBRARIES})
-      add_custom_command(TARGET ${_target} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                $<TARGET_FILE:${qex_lib}> $<TARGET_FILE_DIR:${_target}>)
+    foreach(_qex_lib ${QEX_LIBRARIES})
+      if(TARGET ${_qex_lib})
+        add_custom_command(TARGET ${_target} POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                  $<TARGET_FILE:${_qex_lib}> $<TARGET_FILE_DIR:${_target}>)
+      endif()
     endforeach()
   endforeach()
 
-  set(COMISO_OPENBLAS_DLL_LOC "${LIBIGL_INCLUDE_DIR}/../external/CoMISo/ext/OpenBLAS-v0.2.14-Win64-int64/bin")
-  file(GLOB COMISO_OPENBLAS_DLLS ${COMISO_OPENBLAS_DLL_LOC}/*.dll)
-  foreach (openblas_lib ${COMISO_OPENBLAS_DLLS})
-    file(COPY ${openblas_lib} DESTINATION ${PROJECT_BINARY_DIR})
-  endforeach()
+  # libigl's vendored CoMISo bundles a Windows OpenBLAS build that
+  # libCoMISo links against — copy its DLLs next to each executable.
+  set(_hlk_openblas_dir
+      "${LIBIGL_INCLUDE_DIR}/../external/CoMISo/ext/OpenBLAS-v0.2.14-Win64-int64/bin")
+  if(EXISTS "${_hlk_openblas_dir}")
+    file(GLOB _hlk_openblas_dlls "${_hlk_openblas_dir}/*.dll")
+    foreach(_target hlk_remesh hlk_label hlk)
+      foreach(_dll ${_hlk_openblas_dlls})
+        add_custom_command(TARGET ${_target} POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                  ${_dll} $<TARGET_FILE_DIR:${_target}>)
+      endforeach()
+    endforeach()
+  endif()
 endif()
 
 source_group("hlk_core"        FILES ${HLK_CORE_SOURCES})

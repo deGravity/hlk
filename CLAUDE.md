@@ -18,7 +18,15 @@ cmake --build --preset default -j
 ./build/hlk                             # cwd must be build/ for resources/ to be found
 ```
 
-System prereqs are not in vcpkg — install with `scripts/setup-deps-linux.sh` on Debian/Ubuntu (autotools chain + xorg/GL dev headers; the latter are needed because libigl downloads and builds GLFW). See `readme.md` for macOS / Windows equivalents.
+System prereqs are not in vcpkg — install with the right script for your platform:
+
+| platform | script | what it covers |
+|---|---|---|
+| Linux (Debian/Ubuntu) | `scripts/setup-deps-linux.sh` | `build-essential`, autotools chain, parser/codegen helpers, X11/GL dev headers (libigl's bundled GLFW), `libopenblas-dev` (libigl's bundled CoMISo) |
+| macOS (Intel + Apple Silicon) | `scripts/setup-deps-macos.sh` | autotools chain + helpers via Homebrew. No X11 (Cocoa) or OpenBLAS (Apple Accelerate) needed. |
+| Windows 10/11 | (no script) | Visual Studio 2022 with the C++ workload — provides MSVC, CMake, and the MSYS2 environment vcpkg uses internally for autotools-based ports. |
+
+See `readme.md` for the full per-platform clone-to-launch flow.
 
 vcpkg builds gmp/mpfr/boost/CGAL/Z3 from source on first configure (15–30 min). Subsequent configures hit the vcpkg cache.
 
