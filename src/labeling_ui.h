@@ -16,7 +16,13 @@ namespace hlk {
 
 		bool load_quad_mesh_file();
 		void load_quad_mesh_file(std::string filename);
+		// In-memory loader used by the unified UI to hand off the
+		// remeshing-stage quad mesh without a disk roundtrip.
+		void load_quad_mesh_in_memory(const Eigen::MatrixXd& V_in,
+		                              const Eigen::MatrixXi& F_in);
 		void init_quad_mesh_display();
+
+		bool has_loaded_mesh() const { return mesh_loaded; }
 
 		void load_generator();
 		bool has_generator = false;

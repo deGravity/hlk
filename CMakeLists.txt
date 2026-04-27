@@ -225,6 +225,12 @@ target_link_libraries(hlk_remesh PRIVATE hlk_remesh_lib)
 add_executable(hlk_label src/main_label.cpp ${HLK_NATVIS})
 target_link_libraries(hlk_label PRIVATE hlk_label_lib)
 
+# Combined 2-phase UI: remesh + label in one binary, with in-memory
+# quad-mesh handoff. unified_ui.cpp is the only source that touches both
+# lib APIs, so it lives in the executable target rather than in either lib.
+add_executable(hlk src/main_hlk.cpp src/unified_ui.cpp src/unified_ui.h ${HLK_NATVIS})
+target_link_libraries(hlk PRIVATE hlk_remesh_lib hlk_label_lib)
+
 # Copy runtime resources to binary directory (icons, glyph PNGs, etc.)
 file(GLOB RESOURCE_FILES ${PROJECT_SOURCE_DIR}/resources/*)
 foreach(RESOURCE_FILE ${RESOURCE_FILES})
@@ -233,8 +239,8 @@ endforeach(RESOURCE_FILE)
 
 # Copy shared libraries to binary directory on Windows
 if("${CMAKE_SYSTEM_NAME}" MATCHES "[Ww]indows")
-  set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT hlk_remesh)
-  foreach(_target hlk_remesh hlk_label)
+  set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT hlk)
+  foreach(_target hlk_remesh hlk_label hlk)
     igl_copy_imported_dll(CoMISo ${_target})
     foreach (z3_lib ${Z3_LIBRARIES})
       add_custom_command(TARGET ${_target} POST_BUILD

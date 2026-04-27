@@ -71,6 +71,17 @@ namespace hlk {
 		init_quad_mesh_display();
 	}
 
+	void LabelingUI::load_quad_mesh_in_memory(const Eigen::MatrixXd& V_in,
+	                                          const Eigen::MatrixXi& F_in)
+	{
+		// Disambiguate from the member function of the same name.
+		hlk::load_quad_mesh_in_memory(V_in, F_in, M, planarize);
+		if (auto_solve) {
+			M.optimize_topology();
+		}
+		init_quad_mesh_display();
+	}
+
 	void LabelingUI::init_quad_mesh_display()
 	{
 		// Setup the base mesh

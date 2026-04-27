@@ -38,9 +38,15 @@ namespace hlk {
             }
         }
 
-        // Copy vertex and face list to QuadMesh while removing unused vertices
-        Eigen::VectorXi t1, t2; // Unused - needed to keep clang happy
-        igl::remove_unreferenced(V, F, Q.V, Q.F_q, t1, t2);
+        load_quad_mesh_in_memory(V, F, Q, planarize);
+    }
+
+    void load_quad_mesh_in_memory(const Eigen::MatrixXd& V_in,
+                                  const Eigen::MatrixXi& F_in,
+                                  QuadMesh& Q,
+                                  bool planarize) {
+        Eigen::VectorXi t1, t2; // unused, present to keep igl::remove_unreferenced happy
+        igl::remove_unreferenced(V_in, F_in, Q.V, Q.F_q, t1, t2);
 
         if (planarize) {
             Eigen::MatrixXd VP;

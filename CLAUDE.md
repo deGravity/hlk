@@ -36,15 +36,17 @@ Both are invoked by the C++ app, not run standalone in a normal workflow:
 - `scripts/knitout-to-dat.js` — converts `.k` to machine `.dat`.
 - `scripts/process_texture.py <name>` — regenerates `src/<name>.h` from `resources/<name>.png` (+ optional `.txt` key file) as compile-time `Eigen::MatrixXd` glyph tables. Run from inside `scripts/`; depends on `imageio` and `numpy`.
 
-## Entry point and modes
+## Entry points
 
-`src/main.cpp` hard-codes `int mode = 2;` — the commented `cin >> mode` block shows the menu. Change the literal to switch between:
+Three executables, all built from `src/`:
 
-- `1` — Remeshing UI (`RemeshingMenu` in `remeshing_plugin.h`). Loads a triangle mesh, designs a cross/frame field, reduces curl, and extracts a quad mesh via MIQ / libQEx.
-- `2` — Labeling UI (`LabelingUI` in `labeling_ui.h`). The main design surface: paints orientations/seams/textures/size constraints on a loaded quad mesh, solves topology + geometry with Z3, extracts the knit graph, traces, and generates machine instructions.
-- `3`, `4`, `5`, else — Test/demo harnesses for `Patch`, `ak::RowColGraph` tracing, and multi-patch `CoarseKnitGraph`. These bypass the UI entirely.
+- **`hlk`** (`src/main_hlk.cpp` + `src/unified_ui.{h,cpp}`) — the unified 2-phase UI. Single libigl viewer that hosts both `RemeshingMenu` and `LabelingUI` via a `UnifiedUI` wrapper plugin. Stage panel at the top of the side menu toggles modes; "Send quad mesh -> Label" hands `RemeshingMenu::quad_mesh` over to `LabelingUI::M` in-memory via `LabelingUI::load_quad_mesh_in_memory(V, F)`. UnifiedUI manages data-slot visibility so the off-mode UI's overlays are hidden.
+- **`hlk_remesh`** (`src/main_remesh.cpp`) — remeshing UI alone. Designs a cross/frame field on a triangle mesh, reduces curl, extracts a quad mesh via MIQ / libQEx, writes a quad OBJ.
+- **`hlk_label`** (`src/main_label.cpp`) — labeling UI alone. Reads a quad OBJ, paints orientations/seams/textures/size constraints, solves topology + geometry with Z3, extracts the knit graph, traces, generates machine instructions.
 
-Both UIs are libigl `ImGuiMenu` plugins pushed onto an `igl::opengl::glfw::Viewer`.
+The unified binary is the user-facing path; the two single-mode binaries are kept for debugging and for scripting a file-based pipeline.
+
+All three are libigl `ImGuiMenu` plugins pushed onto an `igl::opengl::glfw::Viewer`. `UnifiedUI` itself inherits `ImGuiMenu` and forwards mouse/keyboard/draw to the active child; the children are NOT pushed onto `viewer.plugins` (only `UnifiedUI` is), but their `viewer` pointer is set via their own `init()` so they can still call `viewer->data()` etc.
 
 ## Architecture
 

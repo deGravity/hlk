@@ -43,3 +43,17 @@ and z3 from source — typically 15–30 minutes). Subsequent configures use the
 vcpkg cache and are fast.
 
 A `debug` preset is also available: `cmake --preset debug && cmake --build --preset debug`.
+
+### Executables
+
+| target        | what it is                                                  |
+|---------------|-------------------------------------------------------------|
+| `hlk`         | full 2-phase UI: remesh → label in one binary, in-memory handoff |
+| `hlk_remesh`  | remeshing UI only (writes a quad OBJ when done)             |
+| `hlk_label`   | labeling UI only (loads a quad OBJ via File menu)           |
+
+In `hlk`, the **Stage** panel at the top of the side menu switches between
+modes; once a quad mesh has been extracted on the remesh side, click
+*Send quad mesh -> Label* to hand it over without an OBJ roundtrip. The
+two single-mode binaries are kept around for debugging and when you want
+to script the file-based pipeline.
